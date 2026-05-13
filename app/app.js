@@ -202,10 +202,12 @@ async function boot() {
   renderTabs();
   selectTab(currentTab);
   document.addEventListener('keydown', e=>{
-    if (e.target.tagName === 'INPUT') return;
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    if (e.target.isContentEditable) return;
     if (e.key === 'ArrowRight') step(1);
     if (e.key === 'ArrowLeft') step(-1);
     if ((e.key === 's' || e.key === 'S') && FILES.find(f=>f.id===currentTab)) onToggleStar();
+    if ((e.key === 'y' || e.key === 'Y') && FILES.find(f=>f.id===currentTab)) hlSelected(currentTab, currentPage);
   });
 }
 
@@ -352,27 +354,37 @@ function showPage() {
 
 function renderExplain(e, fileId, pageNum) {
   const target = document.getElementById('explain');
-  let html = '';
+  let aiHtml = '';
   if (!e) {
-    html = `<h2>AI 讲解</h2>
+    aiHtml = `<h2>AI 讲解</h2>
       <p class="skeleton">骨架未生成 — 这一页 AI 讲解还在生成中。</p>
       <p class="subtle">提示：键盘 ← / → 翻页 · S 收藏。</p>`;
   } else {
-    html = `<h2>${e.title || ''}</h2>`;
-    if (e.topics) html += `<div>${e.topics.map(t=>`<span class="tag">${t}</span>`).join('')}</div>`;
-    if (e.summary) html += `<p><b>这一页讲了什么 —</b> ${e.summary}</p>`;
+    aiHtml = `<h2>${e.title || ''}</h2>`;
+    if (e.topics) aiHtml += `<div>${e.topics.map(t=>`<span class="tag">${t}</span>`).join('')}</div>`;
+    if (e.summary) aiHtml += `<p><b>这一页讲了什么 —</b> ${e.summary}</p>`;
     if (e.key_points && e.key_points.length) {
-      html += `<h3>关键点</h3><ul>${e.key_points.map(k=>`<li>${k}</li>`).join('')}</ul>`;
+      aiHtml += `<h3>关键点</h3><ul>${e.key_points.map(k=>`<li>${k}</li>`).join('')}</ul>`;
     }
     if (e.explanation) {
-      html += `<h3>详解</h3>${marked.parse(e.explanation)}`;
+      aiHtml += `<h3>详解</h3>${marked.parse(e.explanation)}`;
     } else if (!e.summary) {
-      html += `<p class="skeleton">详解尚未生成 — 这页主要是图示/标题页，留意上面的关键词即可。</p>`;
+      aiHtml += `<p class="skeleton">详解尚未生成 — 这页主要是图示/标题页，留意上面的关键词即可。</p>`;
     }
     if (e.gotcha) {
-      html += `<blockquote><b>易错点 / Final 考点：</b><br>${e.gotcha}</blockquote>`;
+      aiHtml += `<blockquote><b>易错点 / Final 考点：</b><br>${e.gotcha}</blockquote>`;
     }
   }
+  // Restore saved highlights for this page if present
+  const savedHl = getHighlightHtml(fileId, pageNum);
+  if (savedHl) aiHtml = savedHl;
+
+  let html = `<div class="hl-toolbar">
+    <button onclick="hlSelected('${fileId}', ${pageNum})" title="选中文字后点这里高亮 (Y 键也行)">🖍️ 高亮选中</button>
+    <button onclick="hlClearPage('${fileId}', ${pageNum})" class="ghost" title="清除本页所有高亮">🧹 清除</button>
+    <span class="subtle hl-hint">提示：双击黄色文本可取消单条高亮</span>
+  </div>
+  <div id="aiExplain">${aiHtml}</div>`;
   // Q&A section (only for paged lecture views)
   const isLecture = !!FILES.find(f=>f.id===fileId);
   if (isLecture) {
@@ -408,6 +420,9 @@ function renderExplain(e, fileId, pageNum) {
         askQuestion(fileId, pageNum);
       }
     });
+    // double-click on a <mark> removes that highlight
+    const aiExplain = document.getElementById('aiExplain');
+    if (aiExplain) aiExplain.addEventListener('dblclick', _onMarkDblClick);
   }
 }
 
@@ -651,21 +666,289 @@ function clearAllStars() {
   renderStars();
 }
 
-// ============ Cheat Sheet ============
+// ============ Cheat Sheet (interactive editor) ============
+const KEY_CHEAT = '4119:cheatsheet:html';
+
 async function renderCheatSheet() {
   const content = document.getElementById('content');
-  let html = await fetch('cheatsheet.html').then(r=>r.text()).catch(()=>'<p>cheatsheet.html not found</p>');
+  const saved = localStorage.getItem(KEY_CHEAT);
+  let bodyHtml;
+  if (saved) {
+    bodyHtml = saved;
+  } else {
+    bodyHtml = await fetch('cheatsheet.html').then(r=>r.text()).catch(()=>'<p>cheatsheet.html not found</p>');
+  }
   content.innerHTML = `<div class="toolbar">
-      <div class="title"><b>🖨️ Cheat Sheet</b> <span class="subtle">A4 双面 · 打印用：右上角 Print → 缩放 100% · 边距 None</span></div>
-      <div class="pager"><button onclick="window.print()">🖨️ 打印</button></div>
+      <div class="title"><b>🖨️ Cheat Sheet</b> <span class="subtle">直接点击编辑 · ✕ 删 section · 📷 加图 · 自动存</span></div>
+      <div class="pager">
+        <button onclick="cheatInsertAuto()" title="把你的收藏/笔记/期中要点拉过来">📥 拉取重点</button>
+        <button onclick="cheatAddSection()">➕ Section</button>
+        <button onclick="cheatReset()" title="丢弃所有编辑">↻ Reset</button>
+        <button onclick="window.print()">🖨️ Print</button>
+      </div>
     </div>
-    <div class="cheat-host">${html}</div>`;
+    <div class="cheat-host" id="cheatHost">${bodyHtml}</div>`;
+  attachCheatHandlers();
   if (window.renderMathInElement) {
     renderMathInElement(content, { delimiters: [
       {left:'$$',right:'$$',display:true},
       {left:'$', right:'$', display:false}
     ]});
   }
+}
+
+function attachCheatHandlers() {
+  const host = document.getElementById('cheatHost');
+  if (!host) return;
+  host.querySelectorAll('section').forEach(section => {
+    if (section.dataset.wired) return;
+    section.dataset.wired = '1';
+    section.contentEditable = 'true';
+    section.spellcheck = false;
+    // overlay buttons (non-editable)
+    const overlay = document.createElement('div');
+    overlay.className = 'section-overlay';
+    overlay.contentEditable = 'false';
+    overlay.innerHTML = `
+      <button title="加图" onclick="cheatAddImage(this); event.stopPropagation();">📷</button>
+      <button title="删除" onclick="cheatDeleteSection(this); event.stopPropagation();">✕</button>`;
+    section.appendChild(overlay);
+  });
+  // single input listener, debounced
+  if (!host.dataset.listenerWired) {
+    host.dataset.listenerWired = '1';
+    host.addEventListener('input', debouncedSaveCheat);
+  }
+}
+
+let _cheatSaveTimer;
+function debouncedSaveCheat() {
+  clearTimeout(_cheatSaveTimer);
+  _cheatSaveTimer = setTimeout(saveCheatSheet, 400);
+}
+
+function saveCheatSheet() {
+  const host = document.getElementById('cheatHost');
+  if (!host) return;
+  // clone, strip overlays + ephemeral attrs
+  const clone = host.cloneNode(true);
+  clone.querySelectorAll('.section-overlay').forEach(o => o.remove());
+  clone.querySelectorAll('[contenteditable]').forEach(e => e.removeAttribute('contenteditable'));
+  clone.querySelectorAll('[data-wired]').forEach(e => e.removeAttribute('data-wired'));
+  clone.querySelectorAll('[spellcheck]').forEach(e => e.removeAttribute('spellcheck'));
+  localStorage.setItem(KEY_CHEAT, clone.innerHTML);
+}
+
+function cheatDeleteSection(btn) {
+  const section = btn.closest('section');
+  const title = section.querySelector('h2')?.textContent || '(no title)';
+  if (!confirm(`删除这个 section?\n\n标题: ${title}`)) return;
+  section.remove();
+  saveCheatSheet();
+}
+
+function cheatAddImage(btn) {
+  const section = btn.closest('section');
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.onchange = async (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    if (file.size > 8 * 1024 * 1024) { alert('图太大 (>8MB)'); return; }
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const dataUrl = reader.result;
+      try {
+        const resp = await fetch('/api/upload', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ dataUrl, filename: file.name }),
+        });
+        const data = await resp.json();
+        if (!resp.ok) throw new Error(data.error || 'upload failed');
+        const fig = document.createElement('figure');
+        fig.contentEditable = 'false';
+        fig.innerHTML = `<img src="${data.path}" alt=""><figcaption contenteditable="true">caption</figcaption>`;
+        const overlay = section.querySelector('.section-overlay');
+        section.insertBefore(fig, overlay);
+        saveCheatSheet();
+      } catch (err) {
+        alert('上传失败: ' + err.message);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+  input.click();
+}
+
+function cheatAddSection() {
+  const host = document.getElementById('cheatHost');
+  const sheets = host.querySelectorAll('.sheet');
+  const lastSheet = sheets[sheets.length - 1];
+  const cols = lastSheet?.querySelector('.cols') || lastSheet;
+  if (!cols) { alert('没找到 sheet 容器'); return; }
+  const sec = document.createElement('section');
+  sec.innerHTML = '<h2>New section</h2><p>Edit me…</p>';
+  cols.appendChild(sec);
+  attachCheatHandlers();
+  saveCheatSheet();
+  sec.scrollIntoView({behavior:'smooth', block:'center'});
+}
+
+function cheatReset() {
+  if (!confirm('丢弃所有编辑，恢复默认 cheatsheet?')) return;
+  localStorage.removeItem(KEY_CHEAT);
+  renderCheatSheet();
+}
+
+// Pull from your collected content: midterm takeaways, starred slides, Q&A, highlights
+function cheatInsertAuto() {
+  const host = document.getElementById('cheatHost');
+  if (!host) return;
+  // Build a new sheet that aggregates user-collected importance
+  const sheet = document.createElement('div');
+  sheet.className = 'sheet';
+  sheet.innerHTML = `<h1>YOUR COLLECTED IMPORTANT POINTS</h1><div class="cols"></div>`;
+  const cols = sheet.querySelector('.cols');
+  let count = 0;
+
+  // 1) Midterm takeaways
+  (MIDTERM || []).forEach((q, i) => {
+    if (q.takeaway) {
+      const sec = document.createElement('section');
+      sec.innerHTML = `<h2>📝 Mid Q${i+1}: ${escapeHtml(q.title || '').slice(0,40)}</h2>
+        <p>${escapeHtml(q.takeaway)}</p>`;
+      cols.appendChild(sec);
+      count++;
+    }
+  });
+
+  // 2) Starred slides
+  const stars = loadStars();
+  if (stars.length > 0) {
+    const sec = document.createElement('section');
+    const items = stars.map(k => {
+      const [f, p] = k.split(':');
+      const e = (EXPL[f] || [])[parseInt(p) - 1] || {};
+      return `<li><b>${f} p${p}</b>: ${escapeHtml(e.title || '')}</li>`;
+    }).join('');
+    sec.innerHTML = `<h2>⭐ Starred slides (${stars.length})</h2><ul>${items}</ul>`;
+    cols.appendChild(sec);
+    count++;
+  }
+
+  // 3) Q&A entries
+  const qa = loadQAMap();
+  let qaCount = 0;
+  Object.entries(qa).forEach(([k, list]) => {
+    if (!list || !list.length) return;
+    const [f, p] = k.split(':');
+    list.forEach(item => {
+      const sec = document.createElement('section');
+      const aHtml = marked.parse(item.a || '').replace(/<\/?p[^>]*>/g, '');
+      sec.innerHTML = `<h2>💬 Q&A · ${f} p${p}</h2>
+        <p><b>Q:</b> ${escapeHtml(item.q || '')}</p>
+        <p>${aHtml}</p>`;
+      cols.appendChild(sec);
+      count++;
+      qaCount++;
+    });
+  });
+
+  // 4) Highlighted text from AI explanations
+  const hl = loadHighlights();
+  const hlEntries = Object.entries(hl);
+  if (hlEntries.length > 0) {
+    const sec = document.createElement('section');
+    const items = hlEntries.map(([k, marks]) => {
+      const [f, p] = k.split(':');
+      const e = (EXPL[f] || [])[parseInt(p) - 1] || {};
+      const lines = marks.map(t => `<li>${escapeHtml(t)}</li>`).join('');
+      return `<div><b>${f} p${p}</b> — ${escapeHtml(e.title || '')}<ul>${lines}</ul></div>`;
+    }).join('');
+    sec.innerHTML = `<h2>🖍️ Highlights</h2>${items}`;
+    cols.appendChild(sec);
+    count++;
+  }
+
+  if (count === 0) {
+    alert('还没有可拉取的内容。先去:\n• 讲义页按 S 收藏重点\n• 在 AI 解释里划词点高亮\n• 在 Q&A 框里问问题\n• 看期中复盘');
+    return;
+  }
+  host.appendChild(sheet);
+  attachCheatHandlers();
+  saveCheatSheet();
+  sheet.scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+// ============ Highlights for AI explanations ============
+const KEY_HL = '4119:highlights';  // map "{fileId}:{page}" -> [text strings]
+
+function loadHighlights() {
+  try { return JSON.parse(localStorage.getItem(KEY_HL) || '{}'); }
+  catch { return {}; }
+}
+function getHighlightHtml(fileId, page) {
+  const m = loadHighlights();
+  return m[`${fileId}:${page}__html`] || '';
+}
+function setHighlightHtml(fileId, page, html, marksList) {
+  const m = loadHighlights();
+  m[`${fileId}:${page}__html`] = html;
+  m[`${fileId}:${page}`] = marksList || [];
+  localStorage.setItem(KEY_HL, JSON.stringify(m));
+}
+function clearHighlights(fileId, page) {
+  const m = loadHighlights();
+  delete m[`${fileId}:${page}__html`];
+  delete m[`${fileId}:${page}`];
+  localStorage.setItem(KEY_HL, JSON.stringify(m));
+}
+
+function hlSelected(fileId, pageNum) {
+  const sel = window.getSelection();
+  if (!sel || sel.isCollapsed) { alert('先用鼠标选中要高亮的文字'); return; }
+  const range = sel.getRangeAt(0);
+  const aiExplain = document.getElementById('aiExplain');
+  if (!aiExplain || !aiExplain.contains(range.commonAncestorContainer)) {
+    alert('请在 AI 讲解区域内选择');
+    return;
+  }
+  const mark = document.createElement('mark');
+  try {
+    range.surroundContents(mark);
+  } catch (e) {
+    // selection crosses element boundaries
+    mark.appendChild(range.extractContents());
+    range.insertNode(mark);
+  }
+  sel.removeAllRanges();
+  persistHighlights(fileId, pageNum);
+}
+
+function hlClearPage(fileId, pageNum) {
+  if (!confirm('清除这一页所有高亮？')) return;
+  clearHighlights(fileId, pageNum);
+  showPage(); // re-render
+}
+
+function persistHighlights(fileId, pageNum) {
+  const aiExplain = document.getElementById('aiExplain');
+  if (!aiExplain) return;
+  const marks = Array.from(aiExplain.querySelectorAll('mark')).map(m => m.textContent.trim()).filter(Boolean);
+  setHighlightHtml(fileId, pageNum, aiExplain.innerHTML, marks);
+}
+
+// Allow double-click on a mark to remove it
+function _onMarkDblClick(ev) {
+  if (ev.target.tagName !== 'MARK') return;
+  const mark = ev.target;
+  const parent = mark.parentNode;
+  while (mark.firstChild) parent.insertBefore(mark.firstChild, mark);
+  mark.remove();
+  parent.normalize();
+  persistHighlights(currentTab, currentPage);
 }
 
 boot();

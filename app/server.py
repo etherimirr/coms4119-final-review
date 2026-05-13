@@ -27,7 +27,53 @@ class Handler(SimpleHTTPRequestHandler):
     def do_POST(self):
         if self.path == "/api/ask":
             return self._handle_ask()
+        if self.path == "/api/upload":
+            return self._handle_upload()
         self.send_error(404, "POST not allowed for that path")
+
+    def _handle_upload(self):
+        """Accept JSON {dataUrl, filename?} and save the image to cheatsheet-assets/.
+        Returns {path}.
+        """
+        try:
+            body = self._read_json_body()
+        except Exception as exc:
+            return self._send_json({"error": f"bad JSON body: {exc}"}, 400)
+
+        data_url = (body.get("dataUrl") or "").strip()
+        if not data_url.startswith("data:"):
+            return self._send_json({"error": "dataUrl must start with 'data:'"}, 400)
+        header, _, b64 = data_url.partition(",")
+        ext = "png"
+        if "jpeg" in header or "jpg" in header:
+            ext = "jpg"
+        elif "gif" in header:
+            ext = "gif"
+        elif "webp" in header:
+            ext = "webp"
+        elif "svg" in header:
+            ext = "svg"
+
+        import base64
+        import secrets
+        import time
+
+        try:
+            data = base64.b64decode(b64, validate=True)
+        except Exception as exc:
+            return self._send_json({"error": f"bad base64: {exc}"}, 400)
+        if len(data) > 8 * 1024 * 1024:
+            return self._send_json({"error": "image too large (>8MB)"}, 413)
+
+        ts = int(time.time() * 1000)
+        suffix = secrets.token_hex(3)
+        filename = f"cheat-{ts}-{suffix}.{ext}"
+        here = os.path.dirname(os.path.abspath(__file__))
+        out_dir = os.path.join(here, "cheatsheet-assets")
+        os.makedirs(out_dir, exist_ok=True)
+        with open(os.path.join(out_dir, filename), "wb") as f:
+            f.write(data)
+        return self._send_json({"path": f"cheatsheet-assets/{filename}", "filename": filename, "size": len(data)})
 
     def _read_json_body(self):
         length = int(self.headers.get("content-length", "0") or "0")
