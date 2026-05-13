@@ -1,0 +1,1712 @@
+{
+  "lec14:1": {
+    "title": "QUIZ: 文件分发时间（client-server vs P2P）",
+    "summary": "比较 client-server 和 BitTorrent 在 100 个 client 下载 50MB 时的总时间。",
+    "key_points": [
+      "Client-server 瓶颈是 server 上传：100 × (50M×8 / 1Mbps) = 4000s（因为 server 一次只能服务 10 个并发）",
+      "BitTorrent 瓶颈是 peer 集体上传：50M×8×100 / (0.5Mbps×100) = 800s",
+      "P2P 关键优势：每个 peer 都在上传 → 集体带宽随用户数增长"
+    ],
+    "explanation": "**Client-server 算法**：server 一次只能开 10 个并发上传，于是要分 100/10 = 10 轮才能服务完所有人。每轮一个 client 拿 50MB 要 50M×8/1Mbps = 400s，10 轮 = 4000s。\n\n**P2P 算法**：理论极限 = 总数据量 / 系统总上传带宽。总要发送的数据 = 100 个 client 各要一份 = 100×50MB = 5000MB×8 bit。总上传带宽 = 100 peer × 0.5Mbps = 50Mbps（这里忽略 server）。所以下限 ≈ 800s。",
+    "gotcha": "**期末考法**：复习里有完全一样的 BitTorrent 题（midterm Q6 / 1GB 100 用户）。记牢公式 max(F/U_s, F/d_min, NF/(U_s+ΣU_i))。"
+  },
+  "lec14:2": {
+    "title": "AIAD / AIMD / MIAD / MIMD — 四种增/减策略",
+    "summary": "每个 RTT 可以 additive 或 multiplicative 增/减，四种组合各有特性。",
+    "key_points": ["AIAD: 温和增、温和减","AIMD: 温和增、剧烈减 ← TCP 用这个","MIAD: 剧烈增、温和减","MIMD: 剧烈增、剧烈减"],
+    "explanation": "拥塞控制本质是『提速 vs 让带宽』之间权衡。\n\n- **Additive**：cwnd += b（每 RTT 加固定值）\n- **Multiplicative**：cwnd ← a·cwnd（按比例缩放）\n\n关键问题：**能不能同时收敛到效率最优和公平？** 答案：只有 **AIMD** 可以。",
+    "gotcha": "**期末考法**：可能给两个 user 的 (x1, x2) 起点，让你画 4 种策略下的轨迹并判断哪种收敛到 fair line + efficiency line 交点。"
+  },
+  "lec14:3": {
+    "title": "Simple Model of Congestion Control（两用户几何）",
+    "summary": "把两个用户的 rate 画在 (x1, x2) 平面上。Fairness line = x1=x2；Efficiency line = x1+x2=1。",
+    "key_points": ["x1+x2 > 1 → 拥塞","x1+x2 < 1 → 浪费容量","x1=x2 → 公平"],
+    "explanation": "这页是后面 AIAD/MIMD/AIMD 收敛分析的几何基础。考的话基本是『给一个 (x1,x2) 点判断 efficient 不、fair 不』，或者画一个图。"
+  },
+  "lec14:4": {
+    "title": "AIAD — 不收敛到公平",
+    "summary": "Additive 增 + Additive 减：所有点都沿着 45° 平移，原始公平度被保留 → 不收敛。",
+    "key_points": ["+a_I 是右上 45° 平移","-a_D 是左下 45° 平移","x1-x2 的差始终不变 → 公平度不改善"],
+    "explanation": "AIAD 在几何上就是『平移』，平移不改变两个坐标的差值。如果初始 (x1, x2) = (0.7, 0.3)，差值 0.4 一直保持。所以 AIAD 永远收敛不到 x1=x2 的公平线。",
+    "gotcha": "考法：『为什么 TCP 不用 AIAD？』答：不能收敛到公平。"
+  },
+  "lec14:5": {
+    "title": "MIMD — 也不收敛到公平",
+    "summary": "Multiplicative 增 + Multiplicative 减：沿原点方向缩放，比例保持但同样不改善公平。",
+    "key_points": ["×b_I 沿原点放大","×b_D 沿原点缩小","x1/x2 比例不变 → 公平度不改善"],
+    "explanation": "MIMD 几何上是『沿原点缩放』。如果 x1/x2 = 0.7/0.3，无论怎么缩放都不变。"
+  },
+  "lec14:6": {
+    "title": "AIMD — 唯一收敛到公平的组合 ✨",
+    "summary": "AIMD 在 (x1, x2) 平面上 zig-zag，最终收敛到公平线 + 效率线交点。",
+    "key_points": ["Additive 增：沿 45° 走 → 接近效率线","Multiplicative 减：沿原点方向缩 → 比例保持但靠近公平线","两步反复 → 螺旋收敛"],
+    "explanation": "每次碰到效率线就乘法减，使两人按比例缩；下一轮加法增又往效率线靠。**几何效果是螺旋逼近 x1=x2 与 x1+x2=1 的交点 (0.5, 0.5)**。\n\n**这是 TCP 用 AIMD 的根本原因**：唯一同时收敛到效率最优和公平的方案。",
+    "gotcha": "考试如果让你解释为什么 AIMD 公平：必须画图 + 说出『加法走 45° 趋向效率，乘法保比例向公平靠拢』。"
+  },
+  "lec14:7": {
+    "title": "TCP cwnd 工作机制",
+    "summary": "Sender 在 cwnd bytes 范围内可发，发完等 ACK 再推进。Rate ≈ cwnd / RTT。",
+    "key_points": ["约束：LastByteSent - LastByteAcked < cwnd","TCP rate ≈ cwnd bytes / RTT","cwnd 由拥塞控制动态调"],
+    "formula": "$$\\text{TCP throughput} \\approx \\frac{cwnd}{RTT}$$",
+    "explanation": "**考法**：给定 cwnd 和 RTT 让你估 throughput。或者反过来给 throughput 让你算 cwnd。**记牢这个比例关系**，AIMD 题也基于它。"
+  },
+  "lec14:8": {
+    "title": "TCP 两种丢包：3-dup ACK vs Timeout",
+    "summary": "丢一个 + 后续到 → 3 dup ACK；丢一片 → timeout。反应力度不同。",
+    "key_points": ["3-dup ACK：网络还能传 → multiplicative decrease (cwnd/2)，继续 CA","Timeout：可能整窗全丢 → 重启 slow start (cwnd=1)"],
+    "explanation": "TCP 把『没 ACK』分两种严重程度：\n\n1. **轻度 = 3 dup ACK**：丢了 packet n，但 n+1, n+2, n+3 都到了。Receiver 每收一个就 ACK『我还在等 n』，sender 3 个 dup ACK 后 fast retransmit。\n\n2. **重度 = timeout**：连一个 dup ACK 都没收到，可能整窗都丢。这时再发 cwnd bytes 就打得更惨，所以退回 1 MSS。",
+    "gotcha": "**考法**：会问『丢 1 个包用什么机制 → fast retransmit + cwnd/2』『丢一片用什么 → timeout + cwnd=1』。"
+  },
+  "lec14:9": {
+    "title": "Timeout 处理：cwnd 退回 1 MSS",
+    "summary": "Timeout 后 cwnd=1 MSS（避免再次打爆网络），ssthresh = cwnd 当时的一半。",
+    "key_points": ["cwnd ← 1 MSS","ssthresh ← cwnd_before_loss / 2","回到 slow start 状态"]
+  },
+  "lec14:10": {
+    "title": "Slow Start → Congestion Avoidance 切换",
+    "summary": "cwnd 指数增长，到 ssthresh = (丢包前 cwnd) / 2 就切线性增长。",
+    "key_points": ["Slow start：每收到一个 ACK → cwnd += MSS（每 RTT 翻倍）","切换点 ssthresh = 上次丢包前 cwnd 的一半","进入 CA：每 RTT cwnd += MSS（线性）"],
+    "explanation": "**Slow start 名字有点误导**：起步 cwnd=1 小，但增长是 **指数的**（每 RTT 翻倍）。\n\n**考法**：给 timeline 让你画 cwnd 曲线 / 给最终 ssthresh 求 timeout 时 cwnd / 给某时刻状态求几个 RTT 后的 cwnd。"
+  },
+  "lec14:11": {
+    "title": "Timeout 后重新 slow start",
+    "summary": "Timeout 后 cwnd=1 重新指数增长，但靠记忆里的 ssthresh 在到达上次 cwnd 的一半时切线性。",
+    "key_points": ["快速重启：先 slow start","到 ssthresh = old cwnd / 2 → 切 CA","充分利用『上次大约多少时打爆网络』的记忆"]
+  },
+  "lec14:12": {
+    "title": "TCP 拥塞控制 FSM 总图 ⭐",
+    "summary": "三状态：slow start / congestion avoidance / fast recovery，转移由 ACK、duplicate ACK、timeout 触发。",
+    "key_points": ["Timeout 任何状态 → slow start（cwnd=1, ssthresh=cwnd/2）","Slow start：cwnd > ssthresh → CA","CA：3 dupACK → fast recovery (cwnd=ssthresh+3)","Fast recovery：new ACK → CA（cwnd=ssthresh）"],
+    "explanation": "**期末必考 FSM 图**。三个状态、四种转移：\n\n```\n        slow_start ---(cwnd>ssthresh)---> CA\n            ^                              |\n            |timeout                       | 3 dupACK\n            |                              v\n            CA <----new ACK---- fast_recovery\n```\n\n每个状态里 cwnd 的更新：\n- slow start: new ACK → cwnd += MSS\n- CA: new ACK → cwnd += MSS × (MSS/cwnd)（平均每 RTT +1 MSS）\n- fast recovery: dup ACK → cwnd += MSS（人为膨胀维持 pipeline）",
+    "gotcha": "**最容易错**：fast recovery 收 new ACK 是回 CA（cwnd=ssthresh），**不是 slow start**。考过！"
+  },
+  "lec14:13": {
+    "title": "TCP CUBIC 直觉",
+    "summary": "丢包后切半，然后快速逼近 Wmax，再缓慢探测。",
+    "key_points": ["Wmax = 上次丢包时的 cwnd","切半后激进追回","接近 Wmax 时减速以免再打爆"]
+  },
+  "lec14:14": {
+    "title": "TCP CUBIC 公式",
+    "summary": "Window 增长 ∝ (t-K)³。K = 预期到 Wmax 的时间。",
+    "formula": "$$W(t) = C \\cdot (t-K)^3 + W_{max}$$",
+    "key_points": ["远离 Wmax → 立方贡献大 → 增长快","接近 Wmax → 平缓","超过 Wmax → 缓慢探测新容量","Linux 默认拥塞控制算法"],
+    "explanation": "**为什么用三次而不是线性？** 高 BDP 链路上线性增长每 RTT 只 +1 MSS，几秒才追回切半的损失。三次曲线远离 Wmax 时增长快，临近 Wmax 时减速。"
+  },
+  "lec14:15": {
+    "title": "TCP 与拥塞瓶颈链路（基础）",
+    "summary": "TCP 不断加 cwnd 直到某段链路丢包：那段就是 bottleneck。",
+    "key_points": ["丢包发生在 bottleneck 的 router output queue","Queue 几乎永不空（=排队 delay）","Queue 满了就 overflow（=丢包）"]
+  },
+  "lec14:16": {
+    "title": "Bottleneck 链路的洞察",
+    "summary": "增加 cwnd 让 RTT 升、但 throughput 不再升。目标：『管道刚好满，不更满』。",
+    "key_points": ["Throughput 见顶后再加 cwnd 只是堆积 queue","RTT 上升 = queue 堆 = 拥塞信号","BBR 的根本思路在这"]
+  },
+  "lec14:17": {
+    "title": "Delay-based TCP（推导）",
+    "summary": "RTTmin 时的 throughput = cwnd / RTTmin；和实测比较来判拥塞。",
+    "formula": "$$\\text{uncongested throughput} = \\frac{cwnd}{RTT_{min}}$$",
+    "explanation": "测量 throughput 跟『按 RTTmin 算应有的 throughput』比：差不多 → 没拥塞 → 增 cwnd；远低于 → 拥塞 → 减 cwnd。**避免靠丢包探测**。"
+  },
+  "lec14:18": {
+    "title": "Delay-based TCP（性质）",
+    "summary": "稳定、低延迟、少丢包；但与 loss-based 共存会被打死。",
+    "key_points": ["小队列、低延迟","和 loss-based 共存 → starvation","代表：Vegas"]
+  },
+  "lec14:19": {
+    "title": "Model-based TCP (BBR)",
+    "summary": "建立网络路径模型：估计 bottleneck bandwidth + propagation delay，控制 inflight = BDP。",
+    "key_points": ["Google 部署在 B4 backbone","对高 BDP 网络特别好","不靠丢包不靠纯延迟，靠主动测量"],
+    "explanation": "BBR 同时估计：\n- BtlBw：最近一段时间内的最大 delivered rate\n- RTprop：最近一段时间内的最小 RTT\n\n控制目标：**inflight ≈ BtlBw × RTprop**（恰好填满管道）。\n\n**考法**：『loss-based / delay-based / model-based 各自什么时候用？』『BBR 为什么对高 BDP 链路有优势？』"
+  },
+  "lec14:20": {
+    "title": "ECN — Explicit Congestion Notification",
+    "summary": "路由器在 IP header 打标记说『我要拥塞了』，让 sender 不靠丢包就能反应。",
+    "key_points": ["Router 在 IP ToS 字段用 2 bit 打标 (ECN=11)","Receiver 收到 ECN 标记 → 在 ACK 的 ECE bit = 1","Sender 见 ECE=1 → cwnd /= 2，但没真丢包","IP + TCP 配合"],
+    "explanation": "**考法**：『为什么需要 ECN？』『谁参与？怎么协作？』\n\n答：丢包探测拥塞要等队列溢出，浪费 + 慢。ECN 让 router 在 queue 长度超阈值时就告诉 sender，提前反应。\n\n- IP 层 ECN 字段（2 bit ToS）：router 标 ECN=11 = 我拥塞了\n- TCP 层 ECE bit：receiver 把信号传回 sender\n- Sender 见 ECE=1 → 减半 cwnd",
+    "gotcha": "ECN 是 network-assisted 拥塞控制的代表。Final 可能问『相比 loss-based 的优势』『需要 IP+TCP 双层配合』。"
+  },
+
+  "lec23:1": {
+    "title": "The Physics of Radio Propagation — Reflection（反射）",
+    "summary": "电磁波碰到比波长大的表面（地面、墙、建筑）会反射。",
+    "key_points": ["波长 λ 是判定『大表面 vs 小物体』的尺度标准","常见反射面：地面、楼面、墙","反射 = 信号没消失，只是改了方向"],
+    "explanation": "**反射**意味着接收端可能从多条路径收到同一个信号（直达 + 反射），这就引出后面 multipath fading 概念。\n\n**考法**：'反射 / 衍射 / 散射 的区别' 是高频题。判断依据是 **物体尺度与波长的关系**：\n- 反射 (Reflection) → 物体 ≫ λ\n- 衍射 (Diffraction) → 物体边缘锐利",
+    "gotcha": "**Beer can boost WiFi** 是这页课件的『梗』——金属罐反射 + 聚焦能增强信号。"
+  },
+  "lec23:2": {
+    "title": "Signal Propagation — Diffraction（衍射 / 阴影）",
+    "summary": "波传播路径被锐利不规则边缘的物体挡住时，会绕过去（即使无直视路径）。",
+    "key_points": ["即使没 LOS（line of sight）也能收到信号","边缘越锐利衍射越强","WiFi 能穿过墙角靠的就是衍射"],
+    "explanation": "**衍射**是为什么墙后还能收 WiFi 的物理基础。波碰到边缘会重新发射，绕到几何阴影里。\n\n**考法**：判断三种传播现象。给一个场景（『信号绕过书架边缘到达接收端』）让你识别。"
+  },
+  "lec23:3": {
+    "title": "Signal Propagation — Diffraction（图示）",
+    "summary": "上一页的另一种角度图示。",
+    "key_points": ["阴影区也能收到信号","信号强度通常比直达弱","但确实可达"]
+  },
+  "lec23:4": {
+    "title": "Signal Propagation — Scattering（散射）",
+    "summary": "信号碰到比波长小的物体（树叶、灯柱、路标）时被散开成多个方向。",
+    "key_points": ["物体 < λ → 散射","散射方向各方均有","最难建模 — 实际部署常要现场测"],
+    "explanation": "**散射**是三种传播现象里最难建模的，因为方向是随机的。\n\n**汇总表（背）**：\n| 现象 | 物体尺度 | 例 |\n|---|---|---|\n| Reflection | ≫ λ | 地面、墙 |\n| Diffraction | 锐利边 | 墙角 |\n| Scattering | < λ | 树叶、灯柱 |\n\n**考法**：选择 / 判断题。"
+  },
+  "lec23:5": {
+    "title": "The Impact of Mobility — Multipath Fading（多径衰落）",
+    "summary": "信号从多条路径到达接收端，各条路径长度不同 → 时延不同 → 相位不同 → 相加可能相消。",
+    "key_points": ["LOS 路径 + 多条反射路径","路径长度差 → 不同相位","可能相长干涉（信号强）或相消（信号弱）","mobility 让相位关系实时变化 → fading"],
+    "explanation": "**Large-scale fading**：信号强度随距离 d 平均衰减（自由空间损耗、阴影）。\n\n**Small-scale fading**：在小范围内强度剧烈跳动（multipath 干涉）。\n\nMobility（接收端或环境运动）让 multipath 相位关系实时变化 → 信号忽强忽弱（小尺度衰落）。",
+    "gotcha": "**考法**：large vs small scale 区别。Mobility 主要影响哪种？→ small。"
+  },
+  "lec23:6": {
+    "title": "Multipath — Coherence Time",
+    "summary": "Coherence time = 信道脉冲响应保持不变的时间。",
+    "key_points": ["脉冲被多径『打散』成多个延迟到达","ISI（符号间干扰）限制 symbol rate","Coherence time 越大 → 信道越稳定","Symbol period 必须 ≤ coherence time"],
+    "explanation": "**Multipath 怎么限制速率？** 一个符号通过多径在接收端被多次接收（拖尾），如果下一个符号到达时上一个符号的拖尾还没散完 → ISI（符号间串扰）。\n\n**考法**：『为什么 multipath 限制最大传输率？』→ Coherence time 限制 symbol 间隔。"
+  },
+  "lec23:7": {
+    "title": "Noise and Interference — SNR / SINR",
+    "summary": "评估无线链路质量的两个核心指标。",
+    "key_points": ["**SNR** dB = 10·log10(signal / noise)","**SINR** dB = 10·log10(signal / (noise + interference))","SNR ↑ → BER ↓","SINR 引入干扰（多个 sender 的信号）"],
+    "formula": "$$\\text{SNR} = 10 \\log_{10}\\frac{S}{N}, \\quad \\text{SINR} = 10 \\log_{10}\\frac{S}{N+I}$$",
+    "explanation": "**SNR**：纯热噪声背景下的信号强度。\n\n**SINR**：还要扣掉其他无线发射机的干扰。\n\n**考法**：给数值算 SNR/SINR；或者解释 SNR 高 → 可用更高 modulation/code rate（如 QAM-64 vs BPSK）→ 高 bit rate。"
+  },
+  "lec23:8": {
+    "title": "Received Signal Over Time",
+    "summary": "实际接收信号在时间上剧烈起伏 — 演示 wireless 信道难以建模。",
+    "key_points": ["即使静止节点接收信号也在波动（环境物体移动）","图示信号 dB 跳动几十 dB","wireless 信道是统计性的"],
+    "explanation": "**核心结论**：wireless 信道是 **time-varying** + **unpredictable**。建模通常给均值 + 方差。"
+  },
+  "lec23:9": {
+    "title": "Simulating Wireless Environment",
+    "summary": "实际公式：路径损耗 = PL(d₀) + 10α·log(d/d₀) + X。",
+    "formula": "$$PL(d) = PL(d_0) + 10 \\alpha \\log\\left(\\frac{d}{d_0}\\right) + X$$",
+    "key_points": ["α = pathloss exponent，环境依赖","X = 随机阴影项（log-normal）","真实环境 α 是 2-6 而不是自由空间的 2","实测远比理论可靠"],
+    "explanation": "**α 的典型值**：\n| 环境 | α |\n|---|---|\n| 自由空间 | 2 |\n| 城市蜂窝 | 2.7-3.5 |\n| 城市阴影 | 3-5 |\n| 室内阻挡 | 4-6 |\n| 工厂阻挡 | 2-3 |\n\n**考法**：给环境 α 和距离算 PL；或解释为什么 5GHz 比 2.4GHz 在墙内衰得快。"
+  },
+  "lec23:10": {
+    "title": "Wireless vs Wired — 两大根本差异",
+    "summary": "无线信道相对有线的两个本质不同。",
+    "key_points": ["**Time-varying, unpredictable**：mobility + 环境变化让 channel quality 不停变","**Interference**：广播本质，邻居发射会互相干扰"],
+    "explanation": "这两点是后面所有 wireless MAC 设计的根本动机：\n\n- Time-varying → 需要 rate adaptation（按 SNR 自动选 modulation）\n- Interference + broadcast → 需要 MAC 协议（决定谁能说）",
+    "gotcha": "**考法**：『wireless 比 wired 难做 reliable transport 的原因？』→ 两条都要答到。"
+  },
+  "lec23:11": {
+    "title": "Wireless MAC Protocols（小节封面）",
+    "summary": "进入无线 MAC 章节。",
+    "key_points": ["接下来讲 ALOHA、CSMA、CSMA/CA、RTS/CTS","核心问题：广播媒介下怎么分配信道"]
+  },
+  "lec23:12": {
+    "title": "The More, The Messier",
+    "summary": "多个无线节点同时发会互相碰撞，需要 MAC 协调。",
+    "key_points": ["节点越多 → 碰撞越多","MAC 是『谁能在什么时候说话』"]
+  },
+  "lec23:13": {
+    "title": "Role of MAC — 三大职责",
+    "summary": "MAC 要做的三件事：rate 选择、避碰、公平。",
+    "key_points": ["**Rate adaptation**：根据信道质量选 modulation","**Avoid interference**：碰撞避免","**Fairness**：让多个节点共享带宽"],
+    "explanation": "**考法**：『MAC 协议的目标？』要答到这三点。\n\n注意 MAC 在无线下不仅要避碰，还要做 rate 适应（信道好就用高速、差就用低速）。"
+  },
+  "lec23:14": {
+    "title": "MAC Categories — 三类划分 ⭐",
+    "summary": "Centralized BS / Controlled access / Random access。",
+    "key_points": ["**Centralized BS**：基站分配（TDMA/FDMA/CDMA，蜂窝网）","**Controlled access**：token、polling","**Random access**：ALOHA、CSMA/CA、CSMA/CD"],
+    "explanation": "**Channel partition** vs **Taking turns** vs **Random access**。\n\n| 类型 | 优点 | 缺点 | 例 |\n|---|---|---|---|\n| Channel partition | 无碰撞 | 静态分配，浪费 | TDMA/FDMA |\n| Taking turns | 无碰撞，公平 | overhead、单点故障 | polling, token |\n| Random | 简单、分布 | 碰撞 | ALOHA, CSMA |",
+    "gotcha": "**考法**：『把下列协议归类』『轻负载下哪类最优？』→ random（partition 还在等自己时隙）。"
+  },
+  "lec23:15": {
+    "title": "All These Ranges — Carrier sensing / Interference / Transmission",
+    "summary": "三个圆代表三个无线节点的关键范围。",
+    "key_points": ["**Transmission range**：能正确解码","**Interference range**：能产生干扰","**Carrier sensing range**：能检测到能量"],
+    "explanation": "**三个范围的层次**（从小到大一般是）：transmission < interference < carrier sensing。\n\n这是后面隐藏 / 暴露终端分析的几何基础。\n\n**考法**：给一张图标注几个节点的位置和 sensing/interference 圆圈，问『谁是 hidden / exposed』。"
+  },
+  "lec23:16": {
+    "title": "CSMA — 听一下再说",
+    "summary": "传输前先 carrier sense；channel idle 就传，busy 就退让。",
+    "key_points": ["Sender 监听信道","Idle → 发","Busy → 退让","仍可能碰撞（传播延迟 + 隐藏终端）"],
+    "explanation": "**CSMA 解决了什么？** 比起 ALOHA 的『盲发』，至少看见别人在说话就闭嘴。\n\n**为什么还会碰？** propagation delay。A 听到 idle 就发，但信号到 B 处需要 d 秒，期间 B 也以为 idle 就发 → 碰。"
+  },
+  "lec23:17": {
+    "title": "Discussion — CSMA 够了吗？",
+    "summary": "提示：sender-driven，但 interference 是 receiver-driven。"
+  },
+  "lec23:18": {
+    "title": "Discussion — CSMA 不够的根本原因 ⭐",
+    "summary": "CSMA 是 sender-driven，但 interference 发生在 receiver 端。",
+    "key_points": ["Sender 听见的『闲』不代表 receiver 那边也闲","隐藏终端 / 暴露终端都是这个本质的两面"],
+    "explanation": "**这一页是无线 MAC 设计的核心 insight**。\n\nSender 在 A 处看信道闲就发，但 B 处是否能正确收信号要看 B 那边有没有干扰。如果有 C 在 B 附近发，A 又听不到 C，那 A 的判断就错了。\n\n**解药**：让 receiver 也参与协调 → RTS/CTS。",
+    "gotcha": "**考法**：『为什么无线下 CSMA 不够？』必须答到 sender vs receiver 的不对称。"
+  },
+  "lec23:19": {
+    "title": "Hidden Terminal Problem（隐藏终端）⭐⭐",
+    "summary": "C 在 sender A 的范围外，但在 receiver B 干扰范围内 → C 以为信道闲，自己发 → B 处碰撞。",
+    "key_points": ["C 听不到 A","C 能干扰 B","C 觉得信道闲就发 → B 同时收到 A 和 C → 碰"],
+    "explanation": "**判定**（必背）：节点 X 是 A→B 通信的隐藏终端 ⟺\n- X 在 **A 的 sensing range 外**（X 听不到 A）\n- X 在 **B 的 interference range 内**（X 能干扰 B）\n\n**症状**：A 发得很好，但 B 收不到（碰撞在 B 处发生）。\n\n**解药**：CTS。Receiver B 发 CTS 后，B 周围的所有节点（包括 C）听到 CTS 就静默 NAV 时长 → 不会干扰 B。",
+    "gotcha": "**Final Q5 / 期中常考**。判断隐藏终端只看『sender 外 + receiver 内』。别和暴露搞混。"
+  },
+  "lec23:20": {
+    "title": "Exposed Terminal Problem（暴露终端）⭐⭐",
+    "summary": "C 在 A 范围内（听到 A），但 C 的目标 D 在 A 范围外 → C 本可并发但白白抑制。",
+    "key_points": ["C 在 **A 的 sensing range 内**（听到 A）","C 的目标 receiver 在 **A 的 sensing range 外**（不会被 A 干扰）","CSMA 见信道忙就退 → C 浪费并发机会"],
+    "explanation": "**判定**（必背）：节点 X 是暴露终端 ⟺\n- X 在 **sender 范围内**（听到 sender）\n- X 的 **目标 receiver 在 sender 范围外**（不会被 sender 干扰）\n\n**症状**：C 明明能发，却被 CSMA 抑制。\n\n**解药？** CSMA/CA 没完美解。RTS/CTS 也只解 hidden。\n\n**对比记忆**：\n- 隐藏：sender 外 + receiver 内 → 该退却没退 → 碰\n- 暴露：sender 内 + 自己目标在 sender 外 → 该发没发 → 浪费",
+    "gotcha": "**判断方向反了就全错**。考前默写一遍判定条件。"
+  },
+  "lec23:21": {
+    "title": "如何应对隐藏终端 — 两种思路",
+    "summary": "Solution #1：避碰（busy tone / RTS-CTS）。Solution #2：处理碰撞（ZigZag）。"
+  },
+  "lec23:22": {
+    "title": "Solution #1：Avoid — Busy Tone",
+    "summary": "Receiver 在收数据时同时广播 busy tone，听到 busy tone 的所有节点静默。",
+    "key_points": ["要求双信道（数据 + busy tone）","实现复杂","早期 802.11 不采用"],
+    "explanation": "Busy tone 解决了 hidden terminal 但需要专用 tone 信道，硬件复杂。后来被 RTS/CTS 取代。"
+  },
+  "lec23:23": {
+    "title": "Solution #1：Avoid — MACA (RTS/CTS) ⭐",
+    "summary": "Sender 发 RTS，receiver 回 CTS。听到 RTS / CTS 的节点静默。",
+    "key_points": ["RTS: Request-to-Send","CTS: Clear-to-Send","听到 RTS 的节点静默 t_CTS（让 sender 能收 CTS）","听到 CTS 的节点静默 t_data（防 hidden 干扰）"],
+    "explanation": "**RTS/CTS 怎么解决 hidden terminal？**\n\nC 听不到 A 但听得到 B 的 CTS。C 听到 CTS 后静默 → C 不会在 B 收数据时打扰。\n\n**RTS/CTS 不解暴露终端**：暴露终端 C 还是听得到 sender A，会继续被 CSMA 抑制。"
+  },
+  "lec23:24": {
+    "title": "RTS / CTS 实例",
+    "summary": "图示 A→B 用 RTS/CTS，C 和 D 听到 CTS 后静默。",
+    "key_points": ["A 发 RTS","B 回 CTS（带 NAV 时长）","C, D 听到 RTS 或 CTS 后静默 NAV 时长"]
+  },
+  "lec23:25": {
+    "title": "802.11 MAC = CSMA/CA",
+    "summary": "Carrier Sense Multiple Access / Collision Avoidance。无线版 MAC。",
+    "key_points": ["Carrier sense（物理 + 虚拟 NAV）","Collision avoidance（不 CD）","RTS/CTS 可选","Random backoff"],
+    "explanation": "**为什么不 CD？** 无线半双工，sender 发的时候自己耳朵被淹了听不到别人。必须靠 ACK 来确认是否成功 + 避免碰撞而不是检测碰撞。"
+  },
+  "lec23:26": {
+    "title": "CSMA/CA 时序例子",
+    "summary": "A→B 通信，C 和 D 通过听 RTS/CTS 静默。",
+    "key_points": ["1) A 发 RTS","2) B 回 CTS（带 NAV=8）","3) A 发 DATA","4) B 回 ACK","C 听 RTS 静默；D 听 CTS 静默"]
+  },
+  "lec23:27": {
+    "title": "CSMA/CA 三个机制拆解 ⭐",
+    "summary": "Physical carrier sense + Virtual carrier sense + Collision avoidance。",
+    "key_points": ["**Physical CS** = 能量检测","**Virtual CS** = packet sniff，NAV 维护","**Collision avoidance** = random backoff"],
+    "explanation": "**虚拟载波检测 NAV**：节点听到的 RTS/CTS 里写明『接下来要占用 NAV 时长』。节点把这个数记下来，在 NAV 时长内静默 = 虚拟载波检测。\n\n**考法**：『CSMA/CA 三个机制是什么』必背。"
+  },
+  "lec23:28": {
+    "title": "Random Backoff（随机退避）⭐",
+    "summary": "选 [0, CW] 内的随机数倒数；信道闲就减，忙就冻结；到 0 就发 RTS。",
+    "key_points": ["CW: contention window","倒数 backoff slots","Medium idle → 减 1","Medium busy → 冻结","Backoff = 0 → 发 RTS"],
+    "explanation": "**为什么随机退避？** 如果两个节点同时见信道闲就发就一定碰。各自挑随机数 → 不同节点不同时刻发 → 减少碰撞概率。\n\n**Medium 忙就冻结**：保证退避时间真实反映等待，不会因为信道一直忙而无效消耗。",
+    "gotcha": "**考法**：给两个节点的初始 backoff = 25 和 20。第一个到 0 后另一个继续从冻结点（即 20-25 = -5 之类）继续。这种 timeline 题画错就丢分。"
+  },
+  "lec23:29": {
+    "title": "Put All Together — 发送决策流程",
+    "summary": "完整的 802.11 发送流程。",
+    "key_points": ["**信道闲** → 等 DIFS → 仍闲 → 发","**回复（CTS/ACK）** → 等 SIFS（更短，优先）","**信道忙** → 等到闲 → 等 DIFS → 启 backoff → 倒到 0 再发","**没 ACK** → 增大 backoff（CW × 2）"],
+    "explanation": "**DIFS vs SIFS**（必背）：\n- **SIFS** (Short Inter-Frame Space)：~10 μs，给立即回复（CTS/ACK）用，让回复抢先于新一轮竞争\n- **DIFS** (DCF Inter-Frame Space)：~50 μs，给新一轮竞争用\n\nSIFS < DIFS 保证『同一个对话』里的 ACK/CTS 优先于『新对话』开始。",
+    "gotcha": "**考法**：给 timeline 让你判断是 SIFS 还是 DIFS 间隔。先看是不是回复 → SIFS；新一轮 → DIFS。"
+  },
+  "lec23:30": {
+    "title": "如何选 backoff interval (CW)?",
+    "summary": "CW 太大 → 等太久浪费；CW 太小 → 容易碰。",
+    "key_points": ["MAC overhead = backoff 等待时间","Trade-off：CW vs 碰撞概率"],
+    "explanation": "**直觉**：网络拥挤时 CW 应大（多人分散），冷清时小（不浪费）。这就引出后面 DCF 的自适应 CW。"
+  },
+  "lec23:31": {
+    "title": "802.11 DCF — 自适应 CW",
+    "summary": "CW 随竞争节点数变化，靠『碰撞 = 拥挤』来推断。",
+    "key_points": ["发送失败 → CW × 2（认为竞争更激烈）","发送成功 → CW 回到 CWmin","Binary exponential backoff"]
+  },
+  "lec23:32": {
+    "title": "Binary Exponential Backoff ⭐",
+    "summary": "CW 从 CWmin 起，失败 ×2 直到 CWmax；成功 → 重置 CWmin。",
+    "key_points": ["CWmin = 31 (802.11b) / 15 (802.11g)","失败 → CW = min(2·CW, CWmax)","成功 → CW = CWmin","随机数取自 [0, CW]"],
+    "explanation": "**问题**：CW 重置太激进（一成功就回 CWmin），导致『大跌-大涨』振荡 + 不公平（一个节点退避一次 CW 变 1024，对手已经又顺利发完几次还是 31）。\n\n**MACAW 改进**（下一页）：成功 → CW -1（线性减）。",
+    "gotcha": "**考法**：『失败 4 次后 CW 多少？』『为什么 binary 不公平？』『MACAW 怎么改？』"
+  },
+  "lec23:33": {
+    "title": "MACAW Solution — 指数增、线性减",
+    "summary": "成功后 CW -= 1，失败后 CW × 2。比 binary 公平。",
+    "key_points": ["AIMD 思想（类 TCP）","CW 附在 packet 里 → 每节点独立维护 + 同步","CW 当『局部拥塞指示』"]
+  },
+  "lec23:34": {
+    "title": "Solution #2: Deal with it — ZigZag Decoding",
+    "summary": "不躲碰撞，处理碰撞：从两次碰撞包里逐 chunk 解出原始数据。",
+    "key_points": ["Sender 重传 + jitter","Receiver 收到两次碰撞 → 利用 jitter 错位解码"]
+  },
+  "lec23:35": {
+    "title": "ZigZag Decoding 流程",
+    "summary": "Step 1: 用第 1 次碰撞干净的 chunk 1。Step 2: 从第 2 次碰撞减去 chunk 1 解出 chunk 2。Step 3: 反过来解 chunk 3 …",
+    "key_points": ["利用 802.11 重传 + jitter 已有的机制","不需要新硬件","研究亮点（SIGCOMM 2008）"]
+  },
+  "lec23:36": {
+    "title": "IEEE 802.11 标准家族（b/a/g/n/ac）",
+    "summary": "速度演进表。",
+    "key_points": [
+      "802.11b (1999): 2.4 GHz, 11 Mbps",
+      "802.11a (1999): 5 GHz, OFDM, 54 Mbps",
+      "802.11g (2003): 2.4 GHz, OFDM, 54 Mbps",
+      "802.11n (2009): MIMO-OFDM, ~600 Mbps",
+      "802.11ac / WiFi 5 (2013): 5 GHz, MIMO, >1 Gbps"
+    ],
+    "explanation": "**考法**：选择题让你识别频段 / 速率 / 调制方式。**802.11n** 引入 MIMO 是关键拐点。"
+  },
+  "lec23:37": {
+    "title": "IEEE 802.11 标准家族（af/ah/ax）",
+    "summary": "新一代标准。",
+    "key_points": [
+      "802.11af (White-Fi, 2014): TV 白频段，1 km 范围",
+      "802.11ah (Wi-Fi HaLow, 2017): 900 MHz, 低功耗 IoT",
+      "802.11ax (Wi-Fi 6, 2020): 14 Gbps，多用户场景优化",
+      "都用 CSMA/CA"
+    ]
+  },
+  "lec23:38": {
+    "title": "802.11 LAN 架构",
+    "summary": "Infrastructure mode（有 AP）vs Ad-hoc mode（无 AP）。",
+    "key_points": ["AP = access point = 基站","BSS = Basic Service Set","Infrastructure：所有 host 通过 AP 通信","Ad-hoc：host 直接互通"]
+  },
+  "lec23:39": {
+    "title": "802.11 信道",
+    "summary": "2.4 GHz 11 个信道，三个不重叠：1、6、11。",
+    "key_points": ["每信道 22 MHz 宽","只有 1, 6, 11 不重叠","WiFi 部署常用三色（1/6/11）规划"],
+    "explanation": "**考法**：『为什么 WiFi AP 部署常配置 channel 1/6/11？』→ 三个不重叠的 2.4G 信道。",
+    "gotcha": "5 GHz 有更多不重叠信道，所以拥挤场景用 5GHz 更稳。"
+  },
+
+  "lec22:1": {
+    "title": "Quiz — BDP 计算（midterm 网络）",
+    "summary": "BDP = bandwidth × RTT。给两段链路（4 Mbps 3 km、30 Kbps 60 m），算总 BDP。",
+    "key_points": ["瓶颈带宽 = min(30 Kbps, 4 Mbps) = 30 Kbps","传播延迟段 1 = 60 m / 1.5 km/s = 40 ms（声速）","传播延迟段 2 = 3 km / 3×10⁸ m/s = 0.01 ms","RTT = 2 × (40 + 0.01) ≈ 80 ms","BDP = 30 Kbps × 80 ms ≈ 2400 bits"],
+    "formula": "$$BDP = R_{min} \\times RTT$$",
+    "explanation": "**BDP（Bandwidth-Delay Product）**：管道里能塞多少 bit（不丢包不重传的理论最大 inflight）。\n\n**考法**：给链路参数算 BDP。期中第 4 题 (4) 就是相关的 utilization 题。"
+  },
+  "lec22:2": {
+    "title": "Who Am I — DHCP 获取 IP",
+    "summary": "Host 加入网络，广播 'I need an IP' → DHCP server 给你一个。",
+    "key_points": ["DHCP 用 UDP","广播 discover","Server 回 offer","Client 选择 request","Server 确认 ack"]
+  },
+  "lec22:3": {
+    "title": "DHCP 详解 — 还能给你什么",
+    "summary": "DHCP 不只给 IP，还给 DNS server、default gateway、subnet mask。",
+    "key_points": ["Temporary IP address","DNS server IP","Gateway router IP","Subnet mask","Lease time"],
+    "explanation": "**考法**：『DHCP server 还能返回什么？』必背四样：IP + gateway + DNS + mask。"
+  },
+  "lec22:4": {
+    "title": "The Need of Address Resolution",
+    "summary": "网卡只懂 MAC 地址，IP 包要发出必须先知道目的 MAC。",
+    "key_points": ["IP 是逻辑地址，MAC 是物理地址","Adapter 只看 MAC","必须做 IP → MAC 翻译"]
+  },
+  "lec22:5": {
+    "title": "Who Are You — ARP 协议",
+    "summary": "广播 'Who has IP 1.2.3.6?' → 目标 unicast 回应 'My MAC is XX-XX-XX'。",
+    "key_points": ["ARP request 广播","ARP reply 单播","查找仅在同一 LAN 内"]
+  },
+  "lec22:6": {
+    "title": "ARP 表 + 流程",
+    "summary": "每节点缓存 <IP, MAC, TTL>。发包先查表；未命中就广播请求。",
+    "key_points": ["缓存键 = IP","值 = MAC + TTL","TTL 到了清除","Soft state"]
+  },
+  "lec22:7": {
+    "title": "跨子网 ARP — 找的是 first-hop router ⭐",
+    "summary": "目的 IP 不在同子网时，ARP 解析的是 **first-hop router 的 MAC**，不是最终目的 IP。",
+    "key_points": ["先用 netmask 判断目的是否本子网","本子网 → ARP 目的 IP","跨子网 → ARP 网关（first-hop router）","Router IP 来自 DHCP"],
+    "explanation": "**考法（必考）**：『主机 1.2.3.48 要发包给 5.6.7.x，它 ARP 谁？』答：自己的 default gateway（比如 1.2.3.19），**不是 5.6.7.x**。\n\n**为什么？** ARP 只能在同一 LAN 广播。跨网必须依赖 router 转发，所以 host 只需把包交给 router，让 router 做下一跳。",
+    "gotcha": "**典型陷阱**：以为 ARP 直接找终点 MAC。永远记得 ARP 是 L2 协议，跨 L2 走不出去。"
+  },
+  "lec22:8": {
+    "title": "ARP 和 DHCP 的关键设计思想",
+    "summary": "三个核心思想：广播、缓存、软状态。",
+    "key_points": ["**Broadcasting**：用广播做首次发现（前提：广播域有限）","**Caching**：把学到的存起来减少开销","**Soft state**：带 TTL，到期就忘 → 容错"]
+  },
+  "lec22:9": {
+    "title": "802.3 Ethernet 标准",
+    "summary": "速度从 2 Mbps 到 80 Gbps；共同 MAC 协议 + frame 格式。",
+    "key_points": ["共同 MAC + frame 格式","不同速度 + 不同物理层（fiber / copper）","100BASE-TX = 双绞铜线 100 Mbps","100BASE-FX = 光纤"]
+  },
+  "lec22:10": {
+    "title": "Switches — 链路层设备",
+    "summary": "Store-and-forward Ethernet frames，按 MAC 转发到指定 port。",
+    "key_points": ["Store-and-forward","看 incoming frame 的 MAC 决定出口","Plug-and-play 自学习","不需配置"]
+  },
+  "lec22:11": {
+    "title": "Switch 支持多路并发",
+    "summary": "Host 到 switch 是点对点链路 → 无碰撞 → 全双工，每条链路独立 collision domain。",
+    "key_points": ["每条接入链路独立 collision domain","全双工","Switch buffer 包","A→A' 和 C→A' 不能同时发（同一个 receiver）"]
+  },
+  "lec22:12": {
+    "title": "Switch 转发表",
+    "summary": "(MAC, interface, timestamp) 三元组。",
+    "key_points": ["像路由表但是 L2","Timestamp 用于老化","表里没有目的 MAC 时 flood"]
+  },
+  "lec22:13": {
+    "title": "Switch 自学习 ⭐",
+    "summary": "Switch 看进入 frame 的 src MAC + in-port，建/更新 entry。",
+    "key_points": ["收到 frame → 记 (src MAC, in-port, TTL)","目的 MAC 在表 → 单口发","不在表 → flood","老化 entry 自动清"],
+    "explanation": "**第一次 frame 来时**：A 发给 A'。Switch 看 src=A, in=1，记 (A, 1)。但 A' 不在表里 → flood 到 2,3,4,5,6。\n\n**A' 回应时**：Switch 看到 src=A', in=5，记 (A', 5)。之后 A→A' 直接出 port 5。\n\n**考法**：给 timeline 帧序列，问每一步 switch table 长什么样。"
+  },
+  "lec22:14": {
+    "title": "VLAN — Virtual LAN",
+    "summary": "一个物理 switch 当多个逻辑 LAN 用。",
+    "key_points": ["大型 LAN 广播流量太大","用户换办公室也要换接入点","VLAN 解决这两个痛点"]
+  },
+  "lec22:15": {
+    "title": "VLAN — 行政场景",
+    "summary": "CS 用户搬到 EE 部门，物理接 EE switch 但想留在 CS LAN。",
+    "key_points": ["端口或 MAC 划分 VLAN","物理位置和逻辑归属可分离"]
+  },
+  "lec22:16": {
+    "title": "Port-based VLAN — 配置",
+    "summary": "Switch ports 划分到多个 VLAN，每个 VLAN 像一个独立 switch。",
+    "key_points": ["端口分组（VLAN 1 = port 1-8, VLAN 2 = port 9-15）","Frame 不跨 VLAN（除非走 router）"]
+  },
+  "lec22:17": {
+    "title": "Port-based VLAN — 特性",
+    "summary": "Traffic 隔离 + 动态成员变更。",
+    "key_points": ["Traffic isolation：VLAN 1 的 frame 进不了 VLAN 2","Dynamic membership：端口随时可重分配","跨 VLAN 通信 → router"],
+    "explanation": "**考法**：『为什么 VLAN？』→ 隔离广播 + 安全 + 灵活。『跨 VLAN 怎么通？』→ 必须 router。"
+  },
+  "lec22:18": {
+    "title": "Router vs Switch ⭐",
+    "summary": "都 store-and-forward；router 看 IP，switch 看 MAC。",
+    "key_points": ["Router：L3，IP，跑 routing 算法 (OSPF/BGP)","Switch：L2，MAC，自学习","Router 跨网，switch 单 LAN","Router 减 TTL，switch 不动"],
+    "explanation": "**对比表**：\n\n|  | Router | Switch |\n|---|---|---|\n| 层 | L3 | L2 |\n| 地址 | IP | MAC |\n| 表来源 | 路由算法 | 自学习 |\n| 范围 | 跨网 | 单 LAN |\n| TTL | −1 | 不动 |",
+    "gotcha": "**考法（高频）**：给场景判断该用 router 还是 switch。看到『跨子网』『跨网络』就是 router。"
+  },
+  "lec22:19": {
+    "title": "Wireless Physical Layer & MAC（章节封面）",
+    "summary": "进入无线章节。"
+  },
+  "lec22:20": {
+    "title": "My Goals — 这一章学什么",
+    "summary": "无线物理基础 + 无线 MAC。"
+  },
+  "lec22:21": {
+    "title": "Wireless Networks — 三层范围",
+    "summary": "WPAN（个人区域）、WLAN（局域）、WWAN（广域）。",
+    "key_points": ["**WPAN**：Bluetooth, Zigbee, RFID","**WLAN**：WiFi (802.11), mesh","**WWAN**：Cellular, WiMAX"]
+  },
+  "lec22:22": {
+    "title": "Radio Propagation 101 — 章节小标题",
+    "summary": "开始物理层基础。"
+  },
+  "lec22:23": {
+    "title": "If We Could See WiFi Signals (1)",
+    "summary": "可视化 WiFi 信号，激励无线物理学。"
+  },
+  "lec22:24": {
+    "title": "If We Could See WiFi Signals (2)",
+    "summary": "继续可视化展示。"
+  },
+  "lec22:25": {
+    "title": "If We Could See WiFi Signals (3)",
+    "summary": "继续可视化展示。"
+  },
+  "lec22:26": {
+    "title": "If We Could See WiFi Signals (4)",
+    "summary": "继续可视化展示。"
+  },
+  "lec22:27": {
+    "title": "What Happens After We Cut the Wire?",
+    "summary": "无线 vs 有线最大区别 — 介质不能控制。"
+  },
+  "lec22:28": {
+    "title": "Free-Space Pathloss — 公式 ⭐",
+    "summary": "信号功率随距离平方衰减，频率越高衰减越大。",
+    "formula": "$$\\text{Signal power loss} = \\left(\\frac{4\\pi d}{\\lambda}\\right)^2 = \\left(\\frac{4\\pi d f}{c}\\right)^2$$",
+    "key_points": ["d = 距离 (m)","λ = 波长","f = 频率 (Hz)","c = 光速 3×10⁸ m/s","f↑（λ↓） → loss↑"],
+    "explanation": "**为什么 5 GHz 衰得比 2.4 GHz 快？** 公式里 f 在分子，f 大则 loss 大。\n\n**考法**：给 d、f 算 path loss；或解释 5GHz vs 2.4GHz 哪个穿墙好。",
+    "gotcha": "5 GHz 高带宽但短距，2.4 GHz 低带宽但远距 + 穿墙好。"
+  },
+  "lec22:29": {
+    "title": "Free-Space Pathloss — 频段表",
+    "summary": "不同频段的范围和波长。",
+    "key_points": ["900 MHz: λ=0.33 m, 26 MHz BW","2.4 GHz: λ=0.125 m, 83.5 MHz BW","5 GHz: λ=0.06 m, 200 MHz BW"]
+  },
+  "lec22:30": {
+    "title": "Free-Space Pathloss — 加入 path loss exponent α",
+    "summary": "实际环境 α > 2。",
+    "formula": "$$\\text{loss} \\propto \\left(\\frac{4\\pi d f}{c}\\right)^\\alpha$$",
+    "key_points": [
+      "Free space α = 2",
+      "Urban α = 2.7-3.5",
+      "Shadow urban α = 3-5",
+      "Indoor 阻挡 α = 4-6",
+      "Factory α = 2-3"
+    ]
+  },
+  "lec22:31": {
+    "title": "The Physics of Radio Propagation — Reflection 进入",
+    "summary": "下一章 lec23 开头，介绍三种传播现象（反射、衍射、散射）。"
+  },
+
+  "lec21:1": {
+    "title": "Quiz — DV 收敛轮数（3 节点）",
+    "summary": "3 节点 (A-B-C-D) 的 DV 收敛分析。",
+    "key_points": ["每节点初始 DV 只含直连","逐轮交换、更新","收敛轮数 ≈ 最短路径树最大跳数 − 1"],
+    "explanation": "**做题套路**：\n1. 写每节点的初始 DV（只填直连）\n2. 模拟一轮交换 + BF 更新\n3. 重复直到所有 DV 不再变\n4. 数轮数\n\n**期末样题 Q4**：4 节点 DV 题，初始表 + 收敛表。一定要会写。\n\n**收敛快算**：找最短路径树里跳数最多的那对节点，最大跳数 − 1 就是同步轮数（前提：静态 + 无 CTI）。"
+  },
+  "lec21:2": {
+    "title": "DV Quiz 解答（4 节点 round 1）",
+    "summary": "示范第一轮 DV 表更新。",
+    "key_points": ["每个 cell 是『经某邻居到目的的代价』","邻居发来 DV → 用 BF 更新","DV 变了 → 通知邻居"]
+  },
+  "lec21:3": {
+    "title": "DV Quiz 解答（round 2）",
+    "summary": "继续推演 DV。"
+  },
+  "lec21:4": {
+    "title": "DV Quiz — 快速估收敛轮数 ⭐",
+    "summary": "找最大跳数路径，减 1 即收敛轮数（理想条件下）。",
+    "key_points": ["前提：同步轮、静态拓扑、无 CTI","非理想情况只能模拟"]
+  },
+  "lec21:5": {
+    "title": "Data Link Layer Services — 四件事",
+    "summary": "Framing + 错检/纠 + MAC + 可靠交付。",
+    "key_points": ["**Framing**：加 header/trailer 把 packet 封成 frame","**Error detection/correction**：处理信号衰减、噪声","**MAC**：谁能在什么时候发","**Reliable delivery**：丢帧本地重传（低 BER 链路常不用）"],
+    "explanation": "**考法**：『Link layer 提供哪些服务？』必背 4 个。"
+  },
+  "lec21:6": {
+    "title": "两类链路媒介",
+    "summary": "Point-to-point vs Broadcast。",
+    "key_points": ["**Point-to-point**：长距光纤、Ethernet switch 到 host","**Broadcast**：传统 Ethernet、802.11 WiFi","Broadcast 才需要 MAC 协议"]
+  },
+  "lec21:7": {
+    "title": "Share a Medium — MAC 是干嘛的",
+    "summary": "避免多节点同时说话；MAC 协议是分布式协调算法。",
+    "key_points": ["分布式算法 → 决定谁能发","目标：避碰、公平、高利用率"]
+  },
+  "lec21:8": {
+    "title": "#1: Channel Partitioning",
+    "summary": "TDMA 时分 / FDMA 频分。",
+    "key_points": ["**TDMA**：每节点固定时隙","**FDMA**：每节点固定频段","CDMA 是码分（用扩频码区分）","优点：无碰；缺点：静态分配，浪费"],
+    "explanation": "**蜂窝网用**。轻负载时不优（自己时隙没流量也只能干等）。"
+  },
+  "lec21:9": {
+    "title": "#2: Taking Turns",
+    "summary": "Polling vs Token Passing。",
+    "key_points": ["**Polling**：master 轮询 worker；overhead 高、有单点故障","**Token**：循环传 token；同样 overhead + 单点故障"]
+  },
+  "lec21:10": {
+    "title": "How Do You Like These So Far?",
+    "summary": "Controlled access 浪费信道（轻负载）。引出 random access。",
+    "key_points": ["流量 bursty 时 partition / polling 太浪费","可以不避碰，只恢复"]
+  },
+  "lec21:11": {
+    "title": "#3: Random Access Protocol",
+    "summary": "Have data → 全速发。碰撞了再处理。",
+    "key_points": ["无固定调度、无 master","碰了就处理","核心：怎么检测 + 怎么恢复"]
+  },
+  "lec21:12": {
+    "title": "Start with the Simplest — ALOHA",
+    "summary": "1970 Norm Abramson 发明，夏威夷岛 AlohaNet。"
+  },
+  "lec21:13": {
+    "title": "Slotted ALOHA — 假设和操作",
+    "summary": "时间切等长 slot，一 frame / slot。",
+    "key_points": ["所有节点对齐 slot 边界","有 data 就发","碰了 → 下个 slot 以概率 p 重试","Can 'detect collision right away'"]
+  },
+  "lec21:14": {
+    "title": "Slotted ALOHA Example",
+    "summary": "Timeline 演示碰撞 + 重试。"
+  },
+  "lec21:15": {
+    "title": "Slotted ALOHA 效率 ⭐ — 1/e",
+    "summary": "假定 N 节点各以 p 发；最优 p=1/N 时效率 1/e ≈ 0.37。",
+    "key_points": ["P(单 i 成功) = p(1-p)^(N-1)","总 S = N p (1-p)^(N-1)","对 p 求导 → p* = 1/N","S → 1/e ≈ 0.368 当 N→∞"],
+    "formula": "$$S_{\\max} = N \\cdot \\frac{1}{N} \\left(1-\\frac{1}{N}\\right)^{N-1} \\xrightarrow{N\\to\\infty} \\frac{1}{e}$$",
+    "explanation": "**关键推导**：(1-1/N)^N → 1/e。所以 (1-1/N)^(N-1) ≈ 1/e 当 N 大。\n\n**考法**：『推导 slotted ALOHA 最大效率』『最优 p=？』『S = ?』全部必会。\n\n**Pure ALOHA**（不对齐 slot）：碰撞窗口翻倍 → 效率减半 → 1/(2e) ≈ 0.18。",
+    "gotcha": "Slotted vs Pure 差 2 倍。Pure 是因为碰撞可能发生在『发完前』或『发完后』，窗口长一倍。"
+  },
+  "lec21:16": {
+    "title": "Slotted ALOHA 优缺点",
+    "summary": "Pros: 简单、单活跃节点全速。Cons: 碰撞 + 空 slot + 同步要求。"
+  },
+  "lec21:17": {
+    "title": "Slotted ALOHA 的问题 — 不听信道",
+    "summary": "盲发是浪费。引出 CSMA。"
+  },
+  "lec21:18": {
+    "title": "Listen Before Transmit — CSMA",
+    "summary": "Carrier sense：先听再发。",
+    "key_points": ["Channel idle → 发","Channel busy → 等","仍会碰（propagation delay）"],
+    "explanation": "**为什么还会碰？** A 听到 idle 就发，但 B 那边几 μs 后才收到 A 的信号，期间 B 也以为 idle 就发 → 在中间某处碰。\n\nCSMA 减少碰撞但不能完全消除。"
+  },
+  "lec21:19": {
+    "title": "CSMA/CD — Collision Detection ⭐",
+    "summary": "边发边听，发现碰撞就 abort + jam + 退避。",
+    "key_points": ["CS（先听）+ CD（边发边听）","碰了立即停 + 退避 → 减少浪费","有线易做 CD（比较 TX/RX 信号）","无线不易做（半双工耳朵被淹）"],
+    "explanation": "**为什么有线 CD 行而无线不行？** \n- 有线：可以同时发 + 听，比较自己发出 vs 听到的，不一样就是碰\n- 无线：发的时候自己的信号太强，听不到别人 → 看不见碰撞"
+  },
+  "lec21:20": {
+    "title": "CSMA/CD 碰撞检测举例",
+    "summary": "B 和 D 都能检测到碰撞。但有距离限制。"
+  },
+  "lec21:21": {
+    "title": "CSMA/CD 网络长度限制 — 推导 2d ⭐",
+    "summary": "最长检测碰撞延迟 = 2 × 传播延迟。",
+    "key_points": ["A 发包 → B 在 t+d 才收到 A 的信号","B 在 t+d 之前以为 idle 也开始发","两边信号在中间相撞","信号传回 A 还要 d","→ A 检测到碰撞最多需 2d"]
+  },
+  "lec21:22": {
+    "title": "CSMA/CD 限制 — min frame size ⭐",
+    "summary": "Frame 必须 ≥ 2d × R 才能在发完之前察觉碰撞。",
+    "key_points": ["10Mbps Ethernet: max 2d = 51.2 μs","Min frame = 512 bit (10Mbps × 51.2μs)","Max copper cable 100 m（信号衰减+ 2d 限制）"],
+    "explanation": "**为什么 min frame？** 假设 frame 太短，发完才察觉碰撞 → 来不及重传 + 接收端搞不清楚是噪声还是数据。\n\n**考法（高频）**：『为什么 Ethernet 限制 min frame 512 bit？』『max cable 100 m 是为什么？』",
+    "gotcha": "公式：min_frame × link_rate ≥ 2 × max_prop_delay。"
+  },
+  "lec21:23": {
+    "title": "Random Access 三件套",
+    "summary": "Carrier sense + Collision detection + Randomness。",
+    "key_points": ["**Carrier sense**：先听后说","**Collision detection**：发现碰撞","**Randomness**：等随机时间避免再次撞"]
+  },
+  "lec21:24": {
+    "title": "Ethernet — 起源",
+    "summary": "最早是 shared wired medium + CSMA/CD。"
+  },
+  "lec21:25": {
+    "title": "Ethernet 演进 — Switched ⭐",
+    "summary": "现代 Ethernet 都是 switched：点对点全双工，不再用 CSMA/CD。",
+    "key_points": ["最初：broadcast，CSMA/CD + binary backoff","现代：switched，点对点，全双工","Switch 间 / host-switch 都是 dedicated link","无碰撞、无 CSMA/CD"]
+  },
+  "lec21:26": {
+    "title": "Ethernet Frame 格式 ⭐",
+    "summary": "Preamble + Dst MAC + Src MAC + Type + Payload + CRC。",
+    "key_points": ["**Preamble** 7B + SFD 1B：同步时钟","**Dst MAC** 6B：不匹配就丢","**Src MAC** 6B","**Type** 2B：0x0800=IP, 0x0806=ARP","**Payload** 46-1500 B","**CRC** 4B：错检"],
+    "explanation": "**考法**：『Ethernet frame 由哪些字段组成？』填空题。\n\n**Type** 是关键：决定 payload 解给哪个 L3 协议。"
+  },
+  "lec21:27": {
+    "title": "MAC Address — 6 byte",
+    "summary": "网卡硬编码，前 3B 是厂商 OUI。",
+    "key_points": ["6 byte (e.g. 00-15-C5-49-04-A9)","前 24 bit OUI（厂商）","后 24 bit 厂商自分配","Broadcast = FF-FF-FF-FF-FF-FF"],
+    "explanation": "**考法**：『MAC vs IP 区别？』MAC 烧硬件、扁平、L2、单 LAN；IP 软件配、层级、L3、全网。"
+  },
+  "lec21:28": {
+    "title": "两种 MAC：Burned-in vs Effective",
+    "summary": "硬件烧的 vs OS 可改的。",
+    "key_points": ["Burned-in：厂商写入，全局唯一","Effective：OS 可覆盖（MAC spoofing）","网络不靠 MAC 做安全（容易被改）"]
+  },
+  "lec21:29": {
+    "title": "Bootstrap Communication — DHCP & ARP",
+    "summary": "Host 上网两件大事：DHCP 拿 IP，ARP 找 MAC。"
+  },
+  "lec21:30": {
+    "title": "Quiz — BDP 题（接 lec22）",
+    "summary": "同 lec22:1 的题：bandwidth-latency product 计算。"
+  },
+
+  "lec20:1": {
+    "title": "Quiz: TCP Throughput — 3W/4RTT ⭐",
+    "summary": "AIMD 下 W 振荡在 W/2 ↔ W，平均 cwnd = 3W/4。",
+    "formula": "$$\\bar{\\text{throughput}} = \\frac{3W}{4 \\cdot RTT}$$",
+    "key_points": ["AIMD：cwnd 从 W/2 线性增长到 W 后切半","平均 cwnd = (W/2 + W) / 2 = 3W/4","每 RTT 平均发 3W/4 bytes","Throughput = 3W/(4·RTT)"],
+    "explanation": "**推导**：忽略 slow start，CA 阶段 cwnd 在 W/2 和 W 之间锯齿振荡。平均值 = 3W/4。\n\n**考法**：给 W 和 RTT 算 throughput；或反过来给 throughput 估 W。"
+  },
+  "lec20:2": {
+    "title": "Network Layer: SDN（章节封面）",
+    "summary": "进入 SDN 部分。"
+  },
+  "lec20:3": {
+    "title": "Generalized Forwarding: Match + Action ⭐",
+    "summary": "Router 不只看 dst IP，可以匹配任意 header 字段并执行多种动作。",
+    "key_points": ["Match: link/network/transport 字段","Action: forward / drop / modify / to-controller","表项 = match + action + priority + counters"],
+    "explanation": "**Generalized = 不仅 destination-based**：可以按 src、port、TCP flags 等做决策。\n\n这统一了 router / firewall / switch / NAT 的行为模型。"
+  },
+  "lec20:4": {
+    "title": "Flow Table 抽象",
+    "summary": "Match 字段定义 flow；action 决定怎么处理；priority 解决 overlap。",
+    "key_points": ["**Flow** = 一组 header 字段值","**Match**：pattern (支持 *)","**Action**: drop/forward/modify/to-controller","**Priority**: 多条匹配时取最高","**Counters**: 字节 + 包统计"]
+  },
+  "lec20:5": {
+    "title": "Flow Table — 具体例",
+    "summary": "src=*.*.*.*, dst=3.4.*.* → forward(2)；src=10.1.2.3 → to-controller。"
+  },
+  "lec20:6": {
+    "title": "OpenFlow Flow Table Entry",
+    "summary": "Match 字段表 + Action + Stats。",
+    "key_points": ["Match 11 个字段（L2/3/4）","Action: forward port(s) / drop / modify / encapsulate to controller","Stats: packet + byte counters"]
+  },
+  "lec20:7": {
+    "title": "OpenFlow 例 — Destination-based + Firewall",
+    "summary": "Router 行为 / Firewall block 22 / 屏蔽某 src IP，都能用 flow table 写。",
+    "key_points": ["Router: match dst=51.6.0.8 → port 6","Firewall: match dst port 22 → drop","Block sender: match src=128.119.1.1 → drop"]
+  },
+  "lec20:8": {
+    "title": "OpenFlow 例 — L2 destination-based",
+    "summary": "Match dst MAC = 22:A7:23:11:E1:02 → forward port 3。",
+    "key_points": ["Switch 行为也能用 flow table 写","L2/L3 统一抽象"]
+  },
+  "lec20:9": {
+    "title": "OpenFlow 抽象 — 统一各种 box ⭐",
+    "summary": "Router / Firewall / Switch / NAT 都是 match+action。",
+    "key_points": [
+      "**Router**: match longest dst IP → forward",
+      "**Firewall**: match IP+port → permit/deny",
+      "**Switch**: match dst MAC → forward",
+      "**NAT**: match (IP, port) → rewrite"
+    ],
+    "explanation": "**这一页是 SDN 的灵魂**：所有网络盒子都能用 match+action 抽象统一。**考法**：『举例 OpenFlow 能实现哪些网络功能？』"
+  },
+  "lec20:10": {
+    "title": "OpenFlow 例 — 跨多 switch orchestration",
+    "summary": "Controller 在多 switch 上下发 flow rule 实现网络级行为。"
+  },
+  "lec20:11": {
+    "title": "OpenFlow 跨多 switch 实例",
+    "summary": "h5/h6 → h3/h4 通过 s1 + s2 转发。各 switch 上的 flow table 实现这条路径。"
+  },
+  "lec20:12": {
+    "title": "Generalized Forwarding 小结",
+    "summary": "Match + action 是网络可编程的基础。",
+    "key_points": ["匹配多层字段","本地多种动作","『编程』整个网络行为","历史根：active networking → 现代 P4"]
+  },
+  "lec20:13": {
+    "title": "Network Layer: SDN（子节封面）",
+    "summary": "进入 SDN control plane 部分。"
+  },
+  "lec20:14": {
+    "title": "Software Defined Networking — 动机",
+    "summary": "传统 router 集成所有功能 + 厂商私有。2005 起重新思考。",
+    "key_points": ["传统 router：硬件 + IOS + 路由协议都封闭","各种 middlebox（firewall / LB / NAT）独立","硬件 + 控制紧耦合 → 难创新"]
+  },
+  "lec20:15": {
+    "title": "Per-router Control Plane",
+    "summary": "传统模式：每 router 独立跑路由算法 + 填 FT。"
+  },
+  "lec20:16": {
+    "title": "SDN Control Plane",
+    "summary": "Remote controller 算 FT 下发到 routers。",
+    "key_points": ["Controller 全局视图","Routers 退化为执行 FT 的『dumb pipe』","南向 API（controller→switch）","北向 API（应用→controller）"]
+  },
+  "lec20:17": {
+    "title": "SDN — 为什么集中？",
+    "summary": "管理更易、可编程、避免分布算法的复杂。",
+    "key_points": ["集中算 FT → 简单 + 全局最优","分布式协议复杂、慢、易错","开放接口 → 不锁厂商"]
+  },
+  "lec20:18": {
+    "title": "SDN 类比 — Mainframe → PC",
+    "summary": "原来 router 像 mainframe（封闭一体），SDN 像 PC（硬件 + 通用 OS + 应用分离）。",
+    "explanation": "**类比**：\n- Specialized router = Mainframe（垂直集成、慢创新）\n- Switch hardware + SDN controller + apps = PC + Linux + Apps（水平分层、快创新）\n\n**考法**：『SDN 对网络的革命类比 PC 对计算？』"
+  },
+  "lec20:19": {
+    "title": "SDN 三大设计原则 ⭐",
+    "summary": "1) Generalized flow-based forwarding 2) Control/data plane separation 3) Control 在 data plane 外",
+    "key_points": [
+      "**1. Generalized flow-based forwarding**：OpenFlow",
+      "**2. Control / data plane 分离**",
+      "**3. Control plane 是外部、可编程**",
+      "**4. Programmable**：应用层可写"
+    ],
+    "explanation": "**考法**：『SDN 的关键架构特征是什么？』必背 4 点。"
+  },
+  "lec20:20": {
+    "title": "SDN — Data Plane Switches",
+    "summary": "Commodity hardware，FT 由 controller 算 + 下发。",
+    "key_points": ["快、简单、便宜","Flow table 由 controller 计算","通过 OpenFlow API 受控","表能控制什么 / 不能控制什么由 API 定义"]
+  },
+  "lec20:21": {
+    "title": "SDN Controller（Network OS）",
+    "summary": "维护网络状态 + 北向 API（给应用）+ 南向 API（控 switch）+ 分布式实现以容错。",
+    "key_points": ["北向 API：应用调用","南向 API：控 switch（OpenFlow）","分布式实现 → 容错 + 扩展"]
+  },
+  "lec20:22": {
+    "title": "SDN — Network Control Apps",
+    "summary": "应用层 = 控制大脑：routing / firewall / load balance / etc.",
+    "key_points": ["用 controller 提供的低层服务","可由第三方写","不绑厂商"]
+  },
+  "lec20:23": {
+    "title": "SDN Controller 内部组成",
+    "summary": "接口层 + 状态管理 + 通信层。",
+    "key_points": ["接口层（北向）：abstractions for apps","状态管理：分布式 DB 维护拓扑、host info","通信层（南向）：OpenFlow / SNMP 通信"]
+  },
+  "lec20:24": {
+    "title": "OpenFlow Protocol",
+    "summary": "Controller↔switch 协议，TCP 上跑。",
+    "key_points": ["3 类消息：controller→switch、switch→controller、symmetric","可选加密","区别于 OpenFlow API（定义 forwarding actions）"]
+  },
+  "lec20:25": {
+    "title": "OpenFlow — Controller → Switch 消息",
+    "summary": "Features / Configure / Modify-state / Packet-out。",
+    "key_points": ["**Features**: 查询 switch 能力","**Configure**: 设置参数","**Modify-state**: 增/删/改 flow entry","**Packet-out**: controller 让 switch 从某 port 发包"]
+  },
+  "lec20:26": {
+    "title": "OpenFlow — Switch → Controller 消息",
+    "summary": "Packet-in / Flow-removed / Port status。",
+    "key_points": ["**Packet-in**: switch 把包转给 controller 处理","**Flow-removed**: 表项被删（超时等）","**Port status**: 端口状态变更"]
+  },
+  "lec20:27": {
+    "title": "SDN 控制 / 数据面 交互例（1）",
+    "summary": "Link 失败 → switch 用 port status 告诉 controller → controller 跑 Dijkstra → 算新路。",
+    "key_points": ["1) Switch s1 检测 link failure","2) Port status → controller","3) Controller link state 库更新","4) Dijkstra app 重算最短路径"]
+  },
+  "lec20:28": {
+    "title": "SDN 交互例（2）",
+    "summary": "Dijkstra app 算完 → 改 flow table → controller 用 OpenFlow 下发新表到相关 switches。"
+  },
+  "lec20:29": {
+    "title": "Google ORION SDN — 真实案例",
+    "summary": "Google 数据中心 (Jupiter) + WAN (B4) 用 ORION 控制。",
+    "key_points": ["Routing + traffic engineering","Edge-edge flow controls，CoFlow scheduling","Microservices 架构"]
+  },
+  "lec20:30": {
+    "title": "OpenDaylight (ODL) Controller",
+    "summary": "开源 SDN controller。"
+  },
+  "lec20:31": {
+    "title": "ONOS Controller",
+    "summary": "另一开源 SDN controller，重视分布式可靠性。"
+  },
+  "lec20:32": {
+    "title": "SDN 当前挑战",
+    "summary": "Control plane 硬化、可靠、安全；扩展到跨 AS；5G 应用。"
+  },
+  "lec20:33": {
+    "title": "Data Link Layer（章节封面）",
+    "summary": "进入链路层。"
+  },
+  "lec20:34": {
+    "title": "Link Layer — 概览图",
+    "summary": "L7 应用 ↔ L4 传输 ↔ L3 IP ↔ L2 链路层 ↔ L1 物理。",
+    "key_points": ["L2 链路层例：Ethernet / 802.11 / PPP","L1 物理层例：optical / copper / radio"]
+  },
+  "lec20:35": {
+    "title": "From Network to a Single Link",
+    "summary": "每一跳可能用不同链路技术，链路层隐藏细节。"
+  },
+  "lec20:36": {
+    "title": "Data Link Layer — 跑在 NIC 中",
+    "summary": "Ethernet 卡、802.11 卡内。Encapsulate datagram → frame。",
+    "key_points": ["发：包装 datagram + 加 错检/流控 → frame","收：检错、流控、解出 datagram 给上层"]
+  },
+  "lec20:37": {
+    "title": "Data Link Layer Services（复习）",
+    "summary": "Framing + 错检/纠 + MAC + 可靠交付。"
+  },
+  "lec20:38": {
+    "title": "Error Detection — 概念",
+    "summary": "用冗余信息检测 bit 错误。",
+    "key_points": ["错由信号衰减、噪声引入","加冗余 vs 准确率 trade-off","三种：parity, checksum, CRC"]
+  },
+  "lec20:39": {
+    "title": "Parity Check — 1 bit",
+    "summary": "加 1 bit 让总 1 数为奇/偶。",
+    "key_points": ["Odd parity: 总 1 数奇","Even parity: 总 1 数偶","只能检奇数错","简单但弱"]
+  },
+  "lec20:40": {
+    "title": "Parity Check — 2D",
+    "summary": "二维矩阵 parity：检测 + 纠正单 bit 错。",
+    "key_points": ["数据排成 i×j 矩阵","行 parity + 列 parity","行错 + 列错 → 定位错误位 → 翻转"]
+  },
+  "lec20:41": {
+    "title": "Error Detection — Checksum",
+    "summary": "把数据当 16-bit 字累加（无进位），传 sum。",
+    "key_points": ["16-bit 字相加","无进位","TCP/UDP/IP 都用 checksum"]
+  },
+  "lec20:42": {
+    "title": "Error Detection — CRC 概念",
+    "summary": "用 modulo-2 除法，余数当 check value。",
+    "key_points": ["D·2^r mod G = R","G 是 r+1 bit 的生成多项式","CRC = R（r bit）","Sender 发 (D, R)；receiver 检 (D·2^r XOR R) mod G == 0"]
+  },
+  "lec20:43": {
+    "title": "CRC — 计算举例 ⭐",
+    "summary": "G=1001, D=101011, r=3。",
+    "formula": "$$R = (D \\cdot 2^r) \\bmod G$$",
+    "key_points": ["先把 D 后面接 r 个 0：101011 → 101011000","用 G 做 modulo-2 长除法（XOR 代减）","余数 R = 010（3 bit）","发 (101011, 010)"],
+    "explanation": "**手算长除法步骤**：\n1. 从最高位开始，看到 1 就 XOR G\n2. 看到 0 就跳过\n3. 一位一位往右推到末尾\n4. 剩下 r bit 就是 R\n\n**考法（必考）**：给 D 和 G 让你算 CRC。"
+  },
+  "lec20:44": {
+    "title": "Quiz — DV 三节点收敛（接 lec21）",
+    "summary": "3 节点 DV，多少轮收敛。"
+  },
+
+  "lec19:1": {
+    "title": "Control Plane Roadmap",
+    "summary": "本课目标：intra-AS (OSPF) + inter-AS (BGP) + SDN + ICMP + 管理。"
+  },
+  "lec19:2": {
+    "title": "Making Routing Scalable — 真实世界的问题",
+    "summary": "全网平铺路由不可行，需要分区。",
+    "key_points": ["十亿目的地 → 路由表存不下","路由表交换会塞满链路","管理自治：每个网络想自己说了算"]
+  },
+  "lec19:3": {
+    "title": "Internet Approach — AS (Autonomous Systems) ⭐",
+    "summary": "把路由器分到 AS（域）。Intra-AS 用一种协议，inter-AS 用 BGP。",
+    "key_points": ["AS / domain = 一个管理实体（如 Comcast, Columbia）","Intra-AS：AS 内部路由（统一协议）","Inter-AS：AS 之间（统一是 BGP）","Gateway router：AS 边界"]
+  },
+  "lec19:4": {
+    "title": "Interconnected ASes — 转发表来源",
+    "summary": "Intra-AS 路由 + inter-AS 路由共同决定 forwarding table。",
+    "key_points": ["Intra-AS：本 AS 内目的","Inter-AS：外部目的","Gateway 同时跑 intra + inter"]
+  },
+  "lec19:5": {
+    "title": "Inter-AS 在 intra-domain forwarding 中的作用",
+    "summary": "Inter-AS 学到的可达性 → 传播到 AS 内所有 router。",
+    "key_points": ["AS 内部 router 学到 'AS3 经 gateway 1c'","通过 iBGP 传播 inter-AS 信息","加上 intra-AS routing (OSPF) 知道怎么到 1c","→ 完整 forwarding table"]
+  },
+  "lec19:6": {
+    "title": "Intra-AS Routing — 协议家族",
+    "summary": "RIP / EIGRP / OSPF / IS-IS。",
+    "key_points": ["**RIP**: classic DV，30s 一次（已淘汰）","**EIGRP**: DV 基础，原 Cisco 私有","**OSPF**: link-state，最常用","**IS-IS**: 跟 OSPF 类似，常用于 Tier-1 ISP"]
+  },
+  "lec19:7": {
+    "title": "OSPF — Open Shortest Path First ⭐",
+    "summary": "Link-state，每 router flood LSA，跑 Dijkstra。",
+    "key_points": ["Open：公开标准","Link-state routing","LSA 直接走 IP（不用 TCP/UDP）","支持多 metric (BW, delay)","消息认证（防恶意）"],
+    "explanation": "**考法**：『OSPF 是 LS 还是 DV？』LS。『跑什么算法？』Dijkstra。『跨 AS 用什么？』BGP（OSPF 是 intra）。"
+  },
+  "lec19:8": {
+    "title": "Hierarchical OSPF — 分层",
+    "summary": "两级：local area + backbone。LSA 只在 area 内 flood，节省广播。",
+    "key_points": ["**Area border router (ABR)**: 汇总 area 距离到 backbone","**Backbone router**: 跑 OSPF 限 backbone","**Boundary router**: 连其他 AS","**Internal router**: 只在 area 内"]
+  },
+  "lec19:9": {
+    "title": "Control Plane Roadmap（重复）"
+  },
+  "lec19:10": {
+    "title": "Interconnected ASes（复习）"
+  },
+  "lec19:11": {
+    "title": "Internet inter-AS routing: BGP ⭐⭐",
+    "summary": "BGP = de facto 域间路由协议，'glue that holds the Internet together'。",
+    "key_points": ["Subnet 通过 BGP 向外宣告『我在这，我能到 X』","学到邻居 AS 的可达性 (eBGP)","通过 iBGP 在 AS 内部传","按 policy 决定路由 + 向外宣告"]
+  },
+  "lec19:12": {
+    "title": "eBGP / iBGP — 连接 ⭐",
+    "summary": "AS 内 router 间用 iBGP，AS 间 gateway 用 eBGP。",
+    "key_points": ["**eBGP**: AS 间，gateway 之间","**iBGP**: AS 内，传播 eBGP 学到的信息","Gateway router 同时跑两者"]
+  },
+  "lec19:13": {
+    "title": "BGP Basics — Session",
+    "summary": "BGP peers 通过半永久 TCP 连接交换路径。",
+    "key_points": ["BGP session = TCP 长连接","Advertise: prefix + AS-PATH","Path-vector 协议（不是 DV / LS）","承诺：advertise = 会 forward"]
+  },
+  "lec19:14": {
+    "title": "BGP 协议消息",
+    "summary": "OPEN / UPDATE / KEEPALIVE / NOTIFICATION。",
+    "key_points": ["**OPEN**: 建立 TCP，认证","**UPDATE**: 宣告新路径 / 撤回旧路径","**KEEPALIVE**: 维持连接","**NOTIFICATION**: 错误 / 关闭"]
+  },
+  "lec19:15": {
+    "title": "BGP Path Attributes ⭐",
+    "summary": "Advertise route = prefix + AS-PATH + NEXT-HOP。",
+    "key_points": ["**AS-PATH**: 沿途 AS 列表（防环：自己 AS 在路径里就 reject）","**NEXT-HOP**: 下一跳 AS 内部具体 router","**Policy-based**：import 决定接不接，export 决定 advertise 给谁"],
+    "explanation": "**考法（高频）**：『BGP advertisement 包含什么？』必背 AS-PATH 和 NEXT-HOP。"
+  },
+  "lec19:16": {
+    "title": "BGP Path Advertisement — 单条路径",
+    "summary": "AS3 → AS2 → AS1 的路径宣告链。",
+    "key_points": ["AS3 advertise (X, AS3-X) 给 AS2","AS2 accept → iBGP 传播给所有 AS2 router","AS2 advertise (X, AS2-AS3-X) 给 AS1（policy 决定）"]
+  },
+  "lec19:17": {
+    "title": "BGP Path Advertisement — 多路径选择",
+    "summary": "AS1 可能从多条路径学到去 X 的方法。",
+    "key_points": ["AS1 学到 (X, AS2-AS3-X) 经 2a","AS1 学到 (X, AS3-X) 经 3a 直连","按 policy 选一条（一般选 shorter AS-PATH）"]
+  },
+  "lec19:18": {
+    "title": "BGP 填充 Forwarding Table（1）",
+    "summary": "iBGP 让 AS 内所有 router 学到 'X 经 1c' → 用 OSPF 找到 1c 的下一跳。"
+  },
+  "lec19:19": {
+    "title": "BGP 填充 Forwarding Table（2）",
+    "summary": "1a 通过 OSPF 知道到 1c 用 interface 2 → 到 X 也用 interface 2。"
+  },
+  "lec19:20": {
+    "title": "Hot Potato Routing ⭐",
+    "summary": "对多条出口选 intra-AS 最便宜的，丢出去给别的 AS。",
+    "key_points": ["AS 内 router 收到外网包","若有多个 gateway 都通向同目的 → 选 intra-AS 代价最小","『扔给别的 AS 早点走，省自己网络』"],
+    "explanation": "**字面意思**：『烫手山芋赶紧扔』。例：2d 学到经 2a 和 2c 都能到 X。即使经 2a 后 AS-PATH 更长，但 intra-AS 到 2a 比到 2c 近 → 选 2a。\n\n**考法**：『hot potato routing 是什么？』『为什么这么做？』→ 省自己 AS 内带宽 = 省钱。"
+  },
+  "lec19:21": {
+    "title": "BGP 用 Advertisement 实现 Policy（1）⭐",
+    "summary": "ISP 只想给自己 customer 服务，不愿替别的 ISP 当过境。",
+    "key_points": ["B 不 advertise CBAw 给 C","C 不知道 CBAw 存在 → 不会经 B 到 w","Policy 决定 advertise 谁"]
+  },
+  "lec19:22": {
+    "title": "BGP Policy 实现（2）— Customer side",
+    "summary": "X dual-homed（连 B 和 C），但 X 不想 B 到 C 经过自己。",
+    "key_points": ["X 不向 B advertise『去 C』的路径","B 看不到 → B 不会借道 X","Customer policy 通过不 advertise 实现"]
+  },
+  "lec19:23": {
+    "title": "BGP 路由选择优先级 ⭐",
+    "summary": "1) Local preference 2) AS-PATH 长度 3) Hot potato (closest NEXT-HOP) 4) 其他",
+    "key_points": ["1. Local pref（admin 配置的偏好）","2. Shortest AS-PATH","3. Closest NEXT-HOP（hot potato）","4. 其他 tie-breakers"],
+    "explanation": "**考法**：『BGP 多条路径选哪个？』按优先级答这四步。"
+  },
+  "lec19:24": {
+    "title": "为什么 Intra 和 Inter AS 路由不同？⭐",
+    "summary": "Policy / Scale / Performance 三个原因。",
+    "key_points": ["**Policy**: inter-AS 必须支持复杂策略；intra-AS 自己说了算","**Scale**: 分层减少表大小 + 更新流量","**Performance**: intra 注重性能；inter 注重 policy"],
+    "explanation": "**考法（高频简答）**：『为什么不能用同一个协议？』必背这三点。"
+  },
+  "lec19:25": {
+    "title": "Quiz: TCP Throughput（接 lec20）",
+    "summary": "AIMD 下 throughput = 3W/(4·RTT)。"
+  },
+
+  "lec18:1": {
+    "title": "IPv6 动机 ⭐",
+    "summary": "32-bit IPv4 地址快用完；同时简化 header 加速路由。",
+    "key_points": ["IPv4 32 位地址 → 不够用","顺便：加速 forwarding（40B 固定头）","顺便：支持 flow label"]
+  },
+  "lec18:2": {
+    "title": "IPv6 Datagram 格式 ⭐",
+    "summary": "128-bit 地址；固定 40B header；去掉 checksum + fragmentation + options（用 next-header 链替代）。",
+    "key_points": ["Ver/Priority/Flow label/Payload len/Next hdr/Hop limit/Src/Dst","128-bit 源 + 目的地址","**没有 checksum**（信任 L2 + TCP/UDP）","**没有 fragmentation**（端到端原则）","**没有 options**（用 next-header 链）"]
+  },
+  "lec18:3": {
+    "title": "IPv6 设计哲学 — end-to-end argument",
+    "summary": "把问题交给端：去 frag、去 checksum；统一 options 机制；保留 flow label 给 QoS。",
+    "key_points": ["把分片留给端","Checksum 由 TCP/UDP 做就够","Next-header 链：通用 options 机制","Flow label：可灵活语义"]
+  },
+  "lec18:4": {
+    "title": "IPv4 → IPv6 过渡",
+    "summary": "不能一夜换 → 用 tunneling：IPv6 packet 封进 IPv4 packet 穿过 IPv4 网。",
+    "key_points": ["No flag days","Tunneling = packet in packet","4G/5G 也大量用 tunneling"]
+  },
+  "lec18:5": {
+    "title": "Tunneling 详图（1）",
+    "summary": "Ethernet 上 IPv6 router 直接互通时正常发 IPv6 frame。"
+  },
+  "lec18:6": {
+    "title": "Tunneling 详图（2）",
+    "summary": "IPv4 网络作为 tunnel：IPv6 packet 作为 payload 塞进 IPv4 packet。"
+  },
+  "lec18:7": {
+    "title": "Tunneling 详细 — 逻辑视图 vs 物理视图 ⭐",
+    "summary": "逻辑上 B-E 直连 IPv6；物理上 IPv6 包穿过 C、D 的 IPv4 网络。",
+    "key_points": ["逻辑：A(v6) - B(v6/v4) -- E(v6/v4) - F(v6)","物理：A-B-C-D-E-F；C/D 只看 IPv4 header","B→E 段：『IPv6 in IPv4』"],
+    "explanation": "**考法**：tunneling 示意图，让你识别哪一段是 v6 in v4，header 长什么样。"
+  },
+  "lec18:8": {
+    "title": "IPv6 采用率",
+    "summary": "Google: 46-49% client 用 IPv6 (2026)。"
+  },
+  "lec18:9": {
+    "title": "IPv6 采用率（续）",
+    "summary": "25 年还没全部上 IPv6 — 为什么这么慢？",
+    "key_points": ["底层基础设施换得慢","NAT 缓解了 IPv4 不够用的压力","没强烈商业驱动力"]
+  },
+  "lec18:10": {
+    "title": "Network Layer — Control Plane（章节封面）",
+    "summary": "下半场：路由协议、SDN。"
+  },
+  "lec18:11": {
+    "title": "Control Plane Roadmap",
+    "summary": "Link state / Distance vector / OSPF / BGP / SDN / ICMP / SNMP-NETCONF。"
+  },
+  "lec18:12": {
+    "title": "Network Layer — 两功能",
+    "summary": "Forwarding（data plane）vs Routing（control plane）。"
+  },
+  "lec18:13": {
+    "title": "Per-router Control Plane",
+    "summary": "传统：每 router 独立跑路由算法。"
+  },
+  "lec18:14": {
+    "title": "SDN Control Plane",
+    "summary": "现代：远程 controller 算 FT 下发。"
+  },
+  "lec18:15": {
+    "title": "Control Plane Roadmap（重）"
+  },
+  "lec18:16": {
+    "title": "What is Routing? — Jon Postel 引言",
+    "summary": "'A route indicates how we get there.' Name = what; Address = where; Route = how。"
+  },
+  "lec18:17": {
+    "title": "Routing Protocols 目标",
+    "summary": "从源到目的找『好路径』。好 = 低 cost / 快 / 不堵。"
+  },
+  "lec18:18": {
+    "title": "Graph Abstraction — 节点、边、cost ⭐",
+    "summary": "G = (N, E)。c_a,b = 直连 a-b 的代价；不连为 ∞。",
+    "key_points": ["N = 路由器集","E = 链路集","c_a,b 由 admin 定义（距离、带宽、cost、congestion）"]
+  },
+  "lec18:19": {
+    "title": "两种路由方法论 — Big mouth vs Whisper ⭐",
+    "summary": "**LS = 大嘴**（广播全网）。**DV = 悄悄话**（只跟邻居）。",
+    "key_points": ["LS：每个 node 知道全图，跑 Dijkstra","DV：每个 node 只问邻居，跑 BF","LS 收敛快；DV 简单 + 分布"]
+  },
+  "lec18:20": {
+    "title": "路由算法分类",
+    "summary": "Global (LS) vs Decentralized (DV)。Static vs Dynamic。"
+  },
+  "lec18:21": {
+    "title": "Control Plane Roadmap — 进入 LS"
+  },
+  "lec18:22": {
+    "title": "Link State Routing — #1 本地链路状态",
+    "summary": "每个 node 维护自己直连的链路列表。"
+  },
+  "lec18:23": {
+    "title": "Link State Routing — #2 Flooding",
+    "summary": "每节点 flood 自己的 link state；邻居收到再 forward。"
+  },
+  "lec18:24": {
+    "title": "Link State Routing — #3, #4",
+    "summary": "全网拓扑学到 → 跑 Dijkstra 算最短路。"
+  },
+  "lec18:25": {
+    "title": "Dijkstra 算法 — 定义",
+    "summary": "集中式但每个 node 跑（输入是 link state）。",
+    "key_points": ["c_x,y: 直连代价","D(v): 当前估计的到 v 的最小代价","p(v): 前驱","N': 已知最优代价的节点集"]
+  },
+  "lec18:26": {
+    "title": "Dijkstra — 伪代码 ⭐",
+    "summary": "初始化 N'={u}, D(v)=c(u,v)。循环：取 D 最小的 w 加入 N'，relax w 的邻居。",
+    "key_points": ["Init: N'={u}; D(v)=c(u,v) 或 ∞","Loop: find w not in N' with min D(w); add w","Relax: D(v) = min(D(v), D(w) + c(w,v))","Until all in N'"],
+    "explanation": "**考法（必考）**：给 6 节点图让你逐步演示。建议表格做：每步 N'、各 D(v), p(v)。"
+  },
+  "lec18:27": {
+    "title": "Dijkstra 例 — Step 0",
+    "summary": "Init: N'={u}, D(v)=2, D(w)=5, D(x)=1, D(y)=∞, D(z)=∞。"
+  },
+  "lec18:28": {
+    "title": "Dijkstra 例 — Step 1 选 x",
+    "summary": "D 最小是 x (1)，加入 N'={u,x}。"
+  },
+  "lec18:29": {
+    "title": "Dijkstra 例 — Step 1 relax",
+    "summary": "Relax x 的邻居：D(v)=min(2, 1+2)=2; D(w)=min(5, 1+3)=4; D(y)=min(∞, 1+1)=2。"
+  },
+  "lec18:30": {
+    "title": "Dijkstra 例 — Step 2 选 y",
+    "summary": "D 最小是 y (2)，加入 N'={u,x,y}。"
+  },
+  "lec18:31": {
+    "title": "Dijkstra 例 — Step 2 relax",
+    "summary": "Relax y 的邻居：D(w)=min(4, 2+1)=3; D(z)=min(∞, 2+2)=4。"
+  },
+  "lec18:32": {
+    "title": "Dijkstra 例 — Step 3 选 v",
+    "summary": "D 最小是 v (2)，加入 N'={u,x,y,v}。"
+  },
+  "lec18:33": {
+    "title": "Dijkstra 例 — Step 3 relax",
+    "summary": "Relax v 的邻居：D(w)=min(3, 2+3)=3 不变。"
+  },
+  "lec18:34": {
+    "title": "Dijkstra 例 — Step 4 选 w",
+    "summary": "D 最小是 w (3)。"
+  },
+  "lec18:35": {
+    "title": "Dijkstra 例 — Step 4 relax",
+    "summary": "Relax w 的邻居：D(z)=min(4, 3+5)=4 不变。"
+  },
+  "lec18:36": {
+    "title": "Dijkstra 例 — Step 5 选 z 收尾",
+    "summary": "N'={u,x,y,v,w,z}。完成。"
+  },
+  "lec18:37": {
+    "title": "Dijkstra 例 — 最终表",
+    "summary": "完整 5 步表格 + 各 D, p。"
+  },
+  "lec18:38": {
+    "title": "Dijkstra 例 — 最短路径树 + 转发表 ⭐",
+    "summary": "结果：u 的最短路径树 + 对应 forwarding table。",
+    "key_points": ["树：u-x-y, u-x-w, u-v","Forwarding table：所有目的都 via x（u 到 v 是直连）"]
+  },
+  "lec18:39": {
+    "title": "Dijkstra 复杂度",
+    "summary": "O(n²) basic, O(n log n) optimized。消息复杂度 O(n²)。",
+    "key_points": ["每轮检查所有节点：n(n+1)/2 = O(n²)","更优 heap 实现 O(n log n)","每 router broadcast 一次 link state","Broadcast 算法 O(n) 链路传","Total message: O(n²)"]
+  },
+  "lec18:40": {
+    "title": "Dijkstra 震荡问题",
+    "summary": "Link cost 依赖流量时可能震荡。例子：4 节点环形交替路由。"
+  },
+  "lec18:41": {
+    "title": "两种方法论（回顾）— Whisper → DV"
+  },
+  "lec18:42": {
+    "title": "Time for a Game",
+    "summary": "课堂游戏：只跟邻居说话能找到 max cash 的人 — DV 思想演练。"
+  },
+  "lec18:43": {
+    "title": "Distance Vector — Bellman-Ford 方程 ⭐",
+    "summary": "D_x(y) = min over neighbors v of [c(x,v) + D_v(y)]。",
+    "formula": "$$D_x(y) = \\min_{v \\in N(x)} \\{ c(x,v) + D_v(y) \\}$$",
+    "key_points": ["min 取自所有邻居 v","c(x,v) = 直连 x 到 v 代价","D_v(y) = v 估算到 y 的代价"]
+  },
+  "lec18:44": {
+    "title": "Distance Vector Table — 数据结构",
+    "summary": "每节点维护一张 distance table：行=目的，列=经哪个邻居。",
+    "key_points": ["dist_C(A, D) = A 经 C 到 D 的距离","按行取 min 得到 DV"]
+  },
+  "lec18:45": {
+    "title": "DV — 初始化",
+    "summary": "只填直连邻居的列；其他经邻居的代价都是 ∞。"
+  },
+  "lec18:46": {
+    "title": "DV — Init 例 (4 节点)",
+    "summary": "A 直连 B(5), C(6), D(8)。A 的初始 DV: B=5, C=6, D=8。"
+  },
+  "lec18:47": {
+    "title": "DV — 发送 DV 给邻居",
+    "summary": "Each node sends its DV to its neighbors。"
+  },
+  "lec18:48": {
+    "title": "DV — 邻居用 BF 更新自己 ⭐",
+    "summary": "B 收到 A 的 DV (B=5, C=6, D=8)：B 经 A 到 D = c(B,A) + D_A(D) = 5+8 = 13。",
+    "key_points": ["new_A(B, x) = c(B, A) + min_dist(A, x)","B 把新值跟原值取 min","DV 变了 → 通知邻居"]
+  },
+  "lec18:49": {
+    "title": "Distance Vector Algorithm — 核心思想",
+    "summary": "每节点周期性发自己的 DV；收到新 DV 用 BF 更新；DV 变就通知邻居。"
+  },
+  "lec18:50": {
+    "title": "DV — 异步、自停",
+    "summary": "Iterative + 异步：本地链路 cost 变或邻居 DV 来就触发。Self-stopping：DV 不变就不通知。"
+  },
+  "lec18:51": {
+    "title": "DV: Link Cost 变 — 好消息",
+    "summary": "链路变便宜：好消息传得快。X-Y 从 4 变 1 → 几轮内全网知道。"
+  },
+  "lec18:52": {
+    "title": "DV: Link Cost 变 — Count-to-Infinity ⭐",
+    "summary": "链路变贵：坏消息传得慢，可能无限互推。",
+    "key_points": ["X-Y 从 4 变 60","Y 经 Z 估到 X = 6（用旧的）→ 实际 Z 经 Y","Y、Z 互推 +1 +1 ... 收敛到 50+ 才停（Z 的 50 限制）"],
+    "explanation": "**坏消息为什么慢？** 链路涨价时，B 不知道 A 已涨，可能用 stale DV 反推回去 → 形成局部环，每轮加 +1。"
+  },
+  "lec18:53": {
+    "title": "DV: Poison Reverse ⭐",
+    "summary": "Z 经 Y 到 X → Z 告诉 Y 自己到 X 是 ∞（避免 Y 拿 Z 当 fallback）。",
+    "key_points": ["『如果我经你到目的，我就告诉你我到目的是 ∞』","破 2-node 环","不能破 3+ node 环"],
+    "explanation": "**考法**：『poison reverse 解决什么问题？』『能完全解决 count-to-infinity 吗？』→ 只能解 2-node 环。"
+  },
+  "lec17:1": {
+    "title": "Midterm Grades — 这次考成绩",
+    "summary": "Median 50, Mean 49.55, Max 90, Min 7。你的 52 略高于均值。"
+  },
+  "lec17:2": {
+    "title": "Network Layer Roadmap（data plane）",
+    "summary": "数据面议程：router 内部 → IP → 通用 forwarding → middleboxes。"
+  },
+  "lec17:3": {
+    "title": "Network Layer: Internet — 三大组件",
+    "summary": "IP protocol + ICMP + routing 算法。",
+    "key_points": ["**IP**: datagram 格式、寻址、收发","**ICMP**: 错误报告、路由器信号","**Routing**: OSPF, BGP, SDN"]
+  },
+  "lec17:4": {
+    "title": "IP Datagram 格式 ⭐",
+    "summary": "32-bit 行宽，20 byte 基础 header。",
+    "key_points": [
+      "**ver(4)** | **hlen(4)** | **ToS(8)** | **total length(16)**",
+      "**identifier(16)** | **flags(3)** | **frag offset(13)** — for fragmentation",
+      "**TTL(8)** | **upper layer protocol(8)** | **header checksum(16)**",
+      "**32-bit src IP** + **32-bit dst IP**",
+      "**Options**(可变) + **payload**(TCP/UDP segment)"
+    ],
+    "explanation": "**重点字段**：\n- **TTL**：每经一跳 −1，到 0 丢包（防环）\n- **Protocol**：6=TCP, 17=UDP\n- **Header checksum**：只算 header（不算 payload）\n- **Total length**：最大 64 KB（实际 MTU ≈ 1500 byte）\n\n**考法**：填空 / 解释每个字段作用。"
+  },
+  "lec17:5": {
+    "title": "IP Addressing 介绍",
+    "summary": "32-bit ID 关联到 host 或 router 接口。",
+    "key_points": ["IP 关联到 interface（不是 host！）","Router 有多个接口","Host 一般 1-2 个接口","点分十进制：223.1.1.1 = 11011111 00000001 00000001 00000001"]
+  },
+  "lec17:6": {
+    "title": "IP Addressing — 接口物理连接",
+    "summary": "Ethernet switch 连有线接口；WiFi base station 连无线接口。"
+  },
+  "lec17:7": {
+    "title": "IP Addressing — 同子网定义",
+    "summary": "同子网 = 不经 router 互通。"
+  },
+  "lec17:8": {
+    "title": "Subnet 定义 ⭐",
+    "summary": "Subnet = 一组能直接互通的接口。IP = subnet 部分（高位）+ host 部分（低位）。",
+    "key_points": ["同子网 = 不经 router","Subnet 部分 = 共同高位","Host 部分 = 不同低位"]
+  },
+  "lec17:9": {
+    "title": "Subnets — 分子网食谱",
+    "summary": "每个 router 接口断开 → 形成的孤岛 = 一个 subnet。Subnet mask /24 表示高 24 位是 subnet 部分。"
+  },
+  "lec17:10": {
+    "title": "Subnets — 找子网练习",
+    "summary": "给一个网络拓扑，识别其中的子网。"
+  },
+  "lec17:11": {
+    "title": "CIDR — Classless InterDomain Routing ⭐",
+    "summary": "a.b.c.d/x，x = 子网部分位数。",
+    "key_points": ["格式：a.b.c.d/x","subnet 部分长度可任意","mask = x 个 1 + (32-x) 个 0","prefix = IP AND mask"]
+  },
+  "lec17:12": {
+    "title": "IP 地址获取 — 两个问题",
+    "summary": "(1) host 在网络内怎么拿 IP？(2) 网络怎么拿到自己的 subnet 部分？",
+    "key_points": ["host 拿 IP：硬编码 / DHCP","Subnet 拿 IP：ISP 分配"]
+  },
+  "lec17:13": {
+    "title": "DHCP 介绍",
+    "summary": "Host 加入网络时动态拿 IP。",
+    "key_points": ["可续租","支持地址复用","Plug-and-play"]
+  },
+  "lec17:14": {
+    "title": "DHCP 场景 1",
+    "summary": "Host 加入子网，需要拿 IP。DHCP server 通常在 router 上，服务多子网。"
+  },
+  "lec17:15": {
+    "title": "DHCP 场景 2 — DORA 全流程 ⭐",
+    "summary": "Discover → Offer → Request → Ack。",
+    "key_points": [
+      "**Discover**: src 0.0.0.0:68, dst 255.255.255.255:67",
+      "**Offer**: server 给候选 IP (yiaddr) + lease",
+      "**Request**: client 接受候选 IP",
+      "**Ack**: server 确认绑定"
+    ],
+    "explanation": "**全部广播**（client 还没 IP，不能 unicast）。\n\n**前两步可省**：如果 client 想复用之前用过的 IP（RFC 2131）。\n\n**考法**：『DHCP 4 步是什么？』『为什么用广播？』"
+  },
+  "lec17:16": {
+    "title": "DHCP 还能给什么 ⭐",
+    "summary": "除 IP 外还给：first-hop router、DNS server、subnet mask。",
+    "key_points": ["IP 地址","First-hop router (default gateway)","DNS server IP","Subnet mask","Lease 时长"]
+  },
+  "lec17:17": {
+    "title": "DHCP 例（1）— 协议栈",
+    "summary": "DHCP / UDP / IP / Ethernet 封装，Ethernet 广播。"
+  },
+  "lec17:18": {
+    "title": "DHCP 例（2）— 应答路径",
+    "summary": "DHCP server 通过 router 形成 ACK 包，反向 demux 到客户端。"
+  },
+  "lec17:19": {
+    "title": "IP 地址获取 — 网络的子网部分",
+    "summary": "Subnet 怎么拿地址？ISP 给一段。"
+  },
+  "lec17:20": {
+    "title": "Hierarchical Addressing — 路由聚合 ⭐",
+    "summary": "ISP 拿一大块（如 200.23.16.0/20）切分给组织。",
+    "key_points": ["ISP 给 8 个组织各 /23","对外只 advertise /20","减少路由表大小 → scalable"],
+    "explanation": "**考法**：『为什么要 hierarchical addressing？』→ 路由聚合 + 减少广播 + 减少路由表条目。"
+  },
+  "lec17:21": {
+    "title": "IP 寻址 — Last Words",
+    "summary": "ICANN 分配；2011 IPv4 已分完；IPv6 128-bit。",
+    "key_points": ["ICANN 管 DNS 根 + IP 分配","5 个 RR（区域注册）","IPv4 已分完","IPv6 128-bit"]
+  },
+  "lec17:22": {
+    "title": "Data Plane Roadmap — NAT 章节"
+  },
+  "lec17:23": {
+    "title": "NAT — Network Address Translation ⭐",
+    "summary": "局域网共用一个公网 IP，对外只看到这一个。",
+    "key_points": ["LAN 内私有 IP (10/8 etc.)","NAT 改写 (src IP, port)","外面看 LAN = 一台机器"]
+  },
+  "lec17:24": {
+    "title": "NAT — 优点",
+    "summary": "省 IP / 内部改 IP 透明 / 换 ISP 不变 / 安全（外人看不到内网）。"
+  },
+  "lec17:25": {
+    "title": "NAT — 实现机制",
+    "summary": "出包改 src，入包改 dst。NAT 表维护映射。",
+    "key_points": ["出：替换 (src IP, port) → (NAT IP, new port)","记 NAT 表","入：dst 字段反查表 → 改回原始 (IP, port)"]
+  },
+  "lec17:26": {
+    "title": "NAT 实例图 ⭐",
+    "summary": "10.0.0.1:3345 → 138.76.29.7:5001 → 128.119.40.186:80。回程反向。",
+    "key_points": ["LAN: 10.0.0.1, port 3345 发到 128.119.40.186:80","NAT 改 src 为 138.76.29.7:5001","外部 server 回到 138.76.29.7:5001","NAT 查表，改回 10.0.0.1:3345"]
+  },
+  "lec17:27": {
+    "title": "NAT — 争议",
+    "summary": "违反端到端 + 阻碍 P2P；但已成事实。",
+    "key_points": ["违反 'router 只看 L3'","NAT traversal 复杂（STUN/TURN）","IPv6 才是治本但部署慢","NAT 在家用/4G 普遍"]
+  },
+  "lec17:28": {
+    "title": "Quiz — 最长前缀匹配 ⭐",
+    "summary": "三条规则带 *，包 dst=1010.1000.0100.1000 → 哪个 port？",
+    "key_points": ["规则 1: 1010.xxxx... (/4) → port 2","规则 2: 10xx.xxxx... (/2) → port 1","规则 3: 1010.11xx... (/6) → port 3","包 1010.1000 匹配规则 1 (/4) 和规则 2 (/2)；规则 3 (/6) 需 1010.11 不匹配（这里是 1010.10）","最长匹配 = 规则 1 → port 2"],
+    "explanation": "**做题方法**：把所有规则的前缀位数列出来，逐位比对目标 IP，选匹配且位数最多的。\n\n**期末必考类型**。",
+    "gotcha": "**别把 1010.1000 看成匹配 1010.11**。1000 ≠ 11xx。"
+  },
+
+  "lec16:1": {
+    "title": "ECN — Explicit Congestion Notification",
+    "summary": "复习 lec14 末尾的 ECN（路由器在 IP 头打标，receiver 通过 ACK 回传）。"
+  },
+  "lec16:2": {
+    "title": "TCP Fairness — 目标",
+    "summary": "K 个 TCP session 共享带宽 R，理想每个 R/K。"
+  },
+  "lec16:3": {
+    "title": "TCP Fair 吗？⭐",
+    "summary": "AIMD + 相同 RTT + 长期 CA → 理想下公平。",
+    "key_points": ["AI 让两人沿 45° 线靠近效率线","MD 让两人沿原点缩，比例保持","长期 → 收敛到 x1=x2","前提：相同 RTT、长 CA、session 数固定"]
+  },
+  "lec16:4": {
+    "title": "公平性 — UDP / 并行 TCP ⭐",
+    "summary": "UDP 不做 CC，吞带宽；浏览器开多并行 TCP 吃多份。",
+    "key_points": ["UDP 多媒体 app 不希望被 CC 减速","浏览器开多 TCP → 自己拿 K/(K+others) 份","没『Internet 警察』强制公平"],
+    "explanation": "**考法**：『TCP 的 fairness 是否在实际中成立？』→ 不一定，UDP 和并行 TCP 都破坏。"
+  },
+  "lec16:5": {
+    "title": "TCP 是热门研究方向 — 论文列表"
+  },
+  "lec16:6": {
+    "title": "TCP 研究论文列表（续）"
+  },
+  "lec16:7": {
+    "title": "Network Layer 章节封面",
+    "summary": "进入 Network Data Plane。"
+  },
+  "lec16:8": {
+    "title": "Move on to Network Layer — 协议栈位置",
+    "summary": "L3 IP 在 L4 TCP/UDP 下、L2 Ethernet/802.11/PPP 上。"
+  },
+  "lec16:9": {
+    "title": "Network Layer Data Plane Roadmap",
+    "summary": "Router 内部 + IP + Generalized forwarding + Middleboxes。"
+  },
+  "lec16:10": {
+    "title": "Network Layer 服务",
+    "summary": "把 transport segment 从 sender 送到 receiver。",
+    "key_points": ["Sender 封装：segment → datagram","Receiver 解封：datagram → segment","每个 Internet 设备都跑（包括 host 和 router）"]
+  },
+  "lec16:11": {
+    "title": "两个核心功能 — Forwarding vs Routing ⭐",
+    "summary": "Forwarding：本地、单 router 内、ns 级。Routing：全网、控制面、ms 级。",
+    "key_points": [
+      "**Forwarding**：input port → output port",
+      "**Routing**：决定整条路径",
+      "类比：forwarding = 过路口；routing = 规划路线"
+    ]
+  },
+  "lec16:12": {
+    "title": "Data Plane vs Control Plane ⭐",
+    "summary": "Data plane：单 router 内执行 forwarding。Control plane：跨网决定 routing。",
+    "key_points": ["Data plane：硬件、ns 级","Control plane：软件、ms 级","传统 vs SDN 两种结构"]
+  },
+  "lec16:13": {
+    "title": "Per-router Control Plane",
+    "summary": "传统：每 router 跑路由算法。"
+  },
+  "lec16:14": {
+    "title": "SDN Control Plane",
+    "summary": "现代：远程 controller 算 + 下发。"
+  },
+  "lec16:15": {
+    "title": "Network Service Model — 表",
+    "summary": "Internet best-effort vs ATM CBR/ABR vs IntServ/DiffServ。",
+    "key_points": ["**Internet best-effort**：无任何保证","**ATM CBR**：固定速率","**ATM ABR**：保证最小","**IntServ**：QoS 保证","**DiffServ**：可能保证"]
+  },
+  "lec16:16": {
+    "title": "Network Service Model — 补全",
+    "summary": "同上一页，把 ATM ABR/IntServ/DiffServ 全列。"
+  },
+  "lec16:17": {
+    "title": "Best-Effort 反思 ⭐",
+    "summary": "简单 = 普及 = 成功。",
+    "key_points": ["简单机制广泛部署","Packet switching：不浪费带宽 bursty traffic + 链路多路复用","Best-effort：简单 + 容错","『hard to argue with success』"]
+  },
+  "lec16:18": {
+    "title": "Data Plane Roadmap — 进入 Router 内部"
+  },
+  "lec16:19": {
+    "title": "Router 架构概览",
+    "summary": "Routing processor + switching fabric + input ports + output ports。",
+    "key_points": ["Routing processor：control plane (软件、ms 级)","Switching fabric + ports：data plane (硬件、ns 级)"]
+  },
+  "lec16:20": {
+    "title": "Router 类比 — 火车站",
+    "summary": "Station manager = control，entry/exit roads = data plane。"
+  },
+  "lec16:21": {
+    "title": "Input Port 功能（1）⭐",
+    "summary": "Physical → Link → Lookup → Forward → Queue → Fabric。",
+    "key_points": ["Physical：bit-level 接收","Link layer：Ethernet 等","Lookup：match plus action","Queue：fabric 跟不上时缓冲"]
+  },
+  "lec16:22": {
+    "title": "Input Port 功能（2）— Generalized Forwarding",
+    "summary": "Destination-based（传统）vs Generalized（按任意 header 字段）。"
+  },
+  "lec16:23": {
+    "title": "Destination-based Forwarding",
+    "summary": "按目的 IP 段分配 output port。如果段不能整齐分？→ LPM。"
+  },
+  "lec16:24": {
+    "title": "Longest Prefix Matching — 定义",
+    "summary": "查转发表时选『匹配前缀最长』的条目。"
+  },
+  "lec16:25": {
+    "title": "LPM 例 1",
+    "summary": "11001000 00010111 00010110 10100001 → 匹配 00010***。"
+  },
+  "lec16:26": {
+    "title": "LPM 例 1 — 匹配标注",
+    "summary": "前 24 位 + 第 25-27 位 = 010 → 匹配规则 0 (/27 实际是 24 + 3)。"
+  },
+  "lec16:27": {
+    "title": "LPM 例 2",
+    "summary": "11001000 00010111 00011000 10101010 → 匹配 00011000 (/24)。"
+  },
+  "lec16:28": {
+    "title": "LPM 例 2 — 匹配标注",
+    "summary": "完全匹配第二条规则。"
+  },
+  "lec16:29": {
+    "title": "LPM 为什么用 + TCAM ⭐",
+    "summary": "TCAM 一拍出结果，支持通配。Cisco 千万级条目。",
+    "key_points": ["LPM 在层级寻址下天然需要","TCAM = Ternary Content Addressable Memory","一拍查询，与表大小无关","Cisco Catalyst ~1M 条目"]
+  },
+  "lec16:30": {
+    "title": "Switching Fabrics — 概念",
+    "summary": "Fabric 把 input 转给 output。Rate = NR ideally。",
+    "key_points": ["Switching rate ≥ N × line rate 才不堵","三种：memory、bus、interconnection"]
+  },
+  "lec16:31": {
+    "title": "Switching Fabrics — 三类",
+    "summary": "Memory / Bus / Interconnection。"
+  },
+  "lec16:32": {
+    "title": "Switching via Memory",
+    "summary": "1st gen routers：CPU 控制，包过 memory 两次（受限带宽）。"
+  },
+  "lec16:33": {
+    "title": "Switching via Bus",
+    "summary": "共享 bus，bus 带宽限制（32 Gbps Cisco 5600）。"
+  },
+  "lec16:34": {
+    "title": "Switching via Interconnection (Crossbar) ⭐",
+    "summary": "多级开关网络，支持高并行；Cisco CRS 100s Tbps。",
+    "key_points": ["Crossbar / Clos","Multistage switch","Fragment datagram 成 cell，重组在出口","并行多 fabric planes"]
+  },
+  "lec16:35": {
+    "title": "Switching via Interconnection — 多平面",
+    "summary": "Cisco CRS：8 switching planes 并行 → 100s Tbps。"
+  },
+  "lec16:36": {
+    "title": "Input Port Queuing — HOL Blocking ⭐",
+    "summary": "Fabric 慢于 input → 排队；HOL 阻塞：队头被堵后面都动不了。",
+    "key_points": ["Fabric < N input rate → input 排队","HOL: head-of-line blocking","队头出口冲突 → 后面全等"],
+    "explanation": "**考法**：『HOL blocking 是什么？』『怎么解决？』→ virtual output queue (VOQ)。"
+  },
+  "lec16:37": {
+    "title": "Output Port Queuing",
+    "summary": "Fabric 快于 line rate → output 排队。Drop policy + scheduling。"
+  },
+  "lec16:38": {
+    "title": "Output Port Queuing — 续图",
+    "summary": "Buffer 溢出 → 丢包 = 拥塞核心来源。"
+  },
+  "lec16:39": {
+    "title": "Buffer Management ⭐",
+    "summary": "Drop policy + Marking。",
+    "key_points": ["**Drop**: tail drop / priority","**Marking**: ECN / RED 提前打标"]
+  },
+  "lec16:40": {
+    "title": "Packet Scheduling: FCFS",
+    "summary": "First Come First Served = FIFO。最简单。"
+  },
+  "lec16:41": {
+    "title": "Scheduling: Priority",
+    "summary": "按 header 分类，高优先级队列先发。FCFS 在每个优先级内。"
+  },
+  "lec16:42": {
+    "title": "Scheduling: Round Robin",
+    "summary": "循环服务每个 class 队列，各一包。"
+  },
+  "lec16:43": {
+    "title": "Scheduling: Weighted Fair Queueing ⭐",
+    "summary": "RR 的加权版本：class i 得 w_i / Σw_j 比例的服务。",
+    "formula": "$$\\text{class } i \\text{ share} = \\frac{w_i}{\\sum_j w_j}$$",
+    "key_points": ["每个 class 有 weight w_i","每轮服务量正比 w_i","保证 per-class minimum bandwidth"]
+  },
+  "lec16:44": {
+    "title": "Sidebar: Network Neutrality（1）",
+    "summary": "技术：ISP 怎么分配资源（scheduling, buffer mgmt）。社会：平等访问 / 创新。法律：执行。"
+  },
+  "lec16:45": {
+    "title": "ISP: 电信服务 or 信息服务？",
+    "summary": "2015 FCC 三大原则 + 监管定性。",
+    "key_points": ["**No blocking**: 不能阻止合法内容","**No throttling**: 不能限速合法流量","**No paid prioritization**: 不能付费插队","Title II（电信）受『公共承运人』约束；Title I（信息）不受"],
+    "explanation": "**Network Neutrality** 的法律基础。2015 FCC 把 ISP 归类 Title II → 严格监管。后被反复修改。"
+  },
+
+  "final-preview:1": {
+    "title": "Final Preview 封面",
+    "summary": "Xia Zhou 老师的 final 复习课。Kurose-Ross 教材风格。",
+    "key_points": ["这是 final-preview，**重点看 p10-14 的 5 道样题**","其他几页是各章 recap"]
+  },
+  "final-preview:2": {
+    "title": "Recap — Basics（性能指标）⭐",
+    "summary": "Protocol、circuit vs packet switching、性能指标、分层。",
+    "key_points": ["**Protocol**: 通信规则约定","**Circuit-switching** vs **packet-switching**","**Transmission rate**, **packet delay**, **end-to-end throughput**, **packet loss rate**, **BDP**, **propagation delay**","**Layers**: 模块化、headers"],
+    "explanation": "**期末 likely 考法**：给链路参数算 transmission/propagation/total delay + BDP。期中已经考过类似（Q2、Q4）。"
+  },
+  "final-preview:3": {
+    "title": "Recap — Application Layer ⭐",
+    "summary": "Client-server, P2P, sockets, HTTP, DNS, video streaming, BitTorrent。",
+    "key_points": ["**HTTP**: persistent / non-persistent, web cache","**DNS**: 层级查询","**Video streaming**: DASH","**P2P**: BitTorrent, **文件分发时间**, DHT"],
+    "explanation": "**期末高频**：文件分发时间公式（client-server vs P2P），HTTP RTT 计数，DNS 层级。期中 Q1 (HTTP RTT)、Q6 (BitTorrent) 都来自这里。"
+  },
+  "final-preview:4": {
+    "title": "Recap — Transport Layer (UDP/TCP RDT) ⭐",
+    "summary": "UDP minimal，TCP RDT。GBN vs SR。",
+    "key_points": ["**UDP**: 无连接、minimal","**TCP**: 可靠数据传输","RDT 机制：bit error、delay、loss、out-of-order、duplicate","**GBN vs SR**: 选哪个看 data/ACK 哪边丢得多"]
+  },
+  "final-preview:5": {
+    "title": "Recap — Transport Layer (拥塞控制) ⭐",
+    "summary": "End-host vs network-assisted；slow start + AIMD；loss-based vs delay-based；CUBIC/BBR。",
+    "key_points": ["端基 (TCP) vs 网络辅助 (ECN)","核心机制：slow start, AIMD","Loss-based vs delay-based","Mainstream: CUBIC, BBR"],
+    "explanation": "**考法**：FSM 题（slow start → CA → fast recovery）；throughput 公式 3W/(4RTT)；ECN 怎么工作。"
+  },
+  "final-preview:6": {
+    "title": "Recap — Network Data Plane ⭐",
+    "summary": "LPM, IP 地址、prefix/subnet, NAT, IPv4 vs IPv6。",
+    "key_points": ["**LPM**: 最长前缀匹配","**IP 地址**: prefix/subnet/host, DHCP","**NAT**: 私网 ↔ 公网","**IPv4 vs IPv6**: 32 vs 128 bit"]
+  },
+  "final-preview:7": {
+    "title": "Recap — Network Control Plane ⭐",
+    "summary": "LS vs DV；BGP；SDN。",
+    "key_points": ["**LS vs DV**：Dijkstra vs Bellman-Ford；对比表","**BGP**：path-vector，跟 DV 区别","**SDN** 概念"],
+    "explanation": "**考法**：DV 表填写（期末 Q4）、BGP policy 题（期末 Q3）、Dijkstra 演示。"
+  },
+  "final-preview:8": {
+    "title": "Recap — Data Link (Wired) ⭐",
+    "summary": "错检/纠 + MAC 协议。",
+    "key_points": ["**Error detection**: parity / checksum / CRC","**MAC** 目标 + 三类（partition / turns / random）","**ALOHA**: 效率 1/e 推导","**CSMA/CD**: min frame size"]
+  },
+  "final-preview:9": {
+    "title": "Recap — Wireless ⭐",
+    "summary": "物理层 + MAC。",
+    "key_points": ["**Free-space pathloss** 公式","**Wireless channel** 特征 (time-varying, broadcast)","**Hidden / Exposed terminals**","**CSMA/CA**"]
+  },
+  "final-preview:10": {
+    "title": "Example Q1 — 丢包是不是拥塞？⭐",
+    "summary": "TCP 把没 ACK 当拥塞，但有时丢包跟拥塞无关。",
+    "key_points": ["问：什么场景下丢包不代表拥塞？","答：bit error → checksum 失败 → silently drop","常见在无线链路"],
+    "explanation": "**答题模板**：『若 segment 有 bit error，receiver checksum 通不过会直接丢弃且不发 ACK。这种情况发生在物理层/数据链路层（无线噪声），与路由器队列拥塞无关。』",
+    "gotcha": "**关键词**：bit error + checksum + 无线。三个都要提到。"
+  },
+  "final-preview:11": {
+    "title": "Example Q2 — 子网计算 ⭐",
+    "summary": "DHCP 给 128.16.51.2 / 255.255.240.0。算网络前缀、主机地址、能容纳多少主机。",
+    "key_points": ["**前缀**: 128.16.48.0/20（mask 高 20 位）","**主机**: 0.0.3.2","**容量**: 2^12 = 4096"],
+    "explanation": "**做题步骤**：\n1. mask 255.255.240.0 → /20\n2. 第 3 段 51 (00110011) AND 240 (11110000) = 48 (00110000)\n3. 前缀 = 128.16.48.0\n4. 主机 = IP − 前缀 = 0.0.3.2（第 3 段 51−48=3，第 4 段 2）\n5. 容量 = 2^(32−20) = 2^12 = 4096",
+    "gotcha": "第三段心算容易错，用二进制 AND 最稳。"
+  },
+  "final-preview:12": {
+    "title": "Example Q3 — BGP 策略 ⭐",
+    "summary": "Columbia-CERN 直连，Columbia-NYU peering。NYU 能借道吗？",
+    "key_points": ["不能","BGP path export policy","Columbia 不向 NYU advertise 到 CERN 的路径"],
+    "explanation": "**答题模板**：『不能。Columbia 通过 BGP 配置 export policy，**不向 NYU advertise** 自己到 CERN 的路径。NYU 学不到这条路径，自然不会路由过来。这是典型的 ISP 不愿替别人 carry transit traffic 的策略。』",
+    "gotcha": "看到『policy / control who can traverse my network』关键词就是 BGP export policy。"
+  },
+  "final-preview:13": {
+    "title": "Example Q4 — DV 表填写 ⭐",
+    "summary": "4 节点，给图算初始和收敛 DV 表。",
+    "key_points": ["初始：只填直连邻居","收敛：BF 公式迭代","期末样题 Q4"],
+    "explanation": "见 ⭐ Final Preview 那个 tab 的详细 walkthrough。\n\n**做题步骤**：\n1. 写出初始表（每节点：到每个邻居的代价；非邻居 ∞）\n2. 第一轮交换，邻居把 DV 给你，用 BF 算 new DV\n3. DV 变了就再交换，直到稳定"
+  },
+  "final-preview:14": {
+    "title": "Example Q5 — 隐藏/暴露终端识别 ⭐",
+    "summary": "A 发给 B，4 个节点位置 + 圆。识别 hidden / exposed。",
+    "key_points": ["**Hidden**: 在 sender 范围 **外**，但在 receiver 干扰范围 **内**","**Exposed**: 在 sender 范围 **内**，但自己目标在 sender 范围 **外**","此题：C、E 是 hidden；没有 exposed"],
+    "explanation": "**判定记忆**：\n- 隐藏 = sender 看不见 + 干扰 receiver → 该停没停 → 碰\n- 暴露 = sender 听得见 + 自己目标看不见 → 该发没发 → 浪费",
+    "gotcha": "判断方向反就全错。考前默写定义一遍。"
+  },
+
+  "lec18:54": {
+    "title": "LS vs DV 对比 ⭐⭐",
+    "summary": "Message complexity / 收敛速度 / 鲁棒性。",
+    "key_points": [
+      "**Message**: LS O(n²) flood; DV 只跟邻居",
+      "**收敛**: LS O(n²) algorithm; DV 不定（可能 CTI）",
+      "**鲁棒**: LS 错只影响本地; DV 错会传播全网（black-holing）"
+    ],
+    "explanation": "**最高频对比表**：\n\n|  | LS | DV |\n|---|---|---|\n| 视角 | 全局 | 局部 |\n| 算法 | Dijkstra | BF |\n| 复杂度 | O(n²) | 因情况 |\n| 收敛速度 | 快 | 慢 |\n| 震荡 | 可能 | 较少 |\n| CTI | 无 | 有 |\n| 错误鲁棒 | 本地化 | 全网传染 |\n| 例 | OSPF | RIP |\n\n**考法**：『LS 和 DV 各自优缺点？』必背。"
+  }
+}

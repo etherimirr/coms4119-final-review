@@ -1,0 +1,483 @@
+<!--
+  Cheat sheet 怎么塞图（之后再说，先留好接口）：
+
+  1) 把图片放进 app/cheatsheet-assets/  目录，例如 fsm.png
+  2) 在某个 <section> 里这样写：
+       <figure>
+         <img src="cheatsheet-assets/fsm.png" alt="">
+         <figcaption>TCP CC FSM</figcaption>
+       </figure>
+  3) 想并排两张：
+       <div class="img-row">
+         <img src="cheatsheet-assets/a.png">
+         <img src="cheatsheet-assets/b.png">
+       </div>
+  CSS 已自动适应列宽 + 打印缩放。
+-->
+<div class="cheat-pages">
+
+<!-- ============ PAGE 1 (FRONT) ============ -->
+<div class="sheet">
+<h1>COMS 4119 FINAL CHEAT SHEET — FRONT</h1>
+<div class="cols">
+
+<section>
+<h2>性能指标</h2>
+<ul>
+<li><b>传输时间</b> = L/R（包大小/带宽）</li>
+<li><b>传播延迟</b> = d/v（距离/光速 3·10⁸m/s；声速 1.5km/s）</li>
+<li><b>队列/处理延迟</b>：可忽略除非题目给</li>
+<li><b>端到端 1 包</b>：Σ(每段 L/R + d/v) + queuing</li>
+<li><b>串联多段 + N 包 pipelined</b>：第一个跑完所有段 + (N−1) × <span class="red">瓶颈段 L/R</span></li>
+<li><b>BDP</b> = bandwidth × RTT = "管道里能塞多少 bit"</li>
+<li><b>Throughput</b> = min(各段带宽)（瓶颈）</li>
+</ul>
+</section>
+
+<section>
+<h2>HTTP RTT 计数 <span class="tag">考</span></h2>
+<ul>
+<li><b>非持久</b>：每对象 1 RTT 建连 + 1 RTT GET = <span class="red">2 RTT/obj</span></li>
+<li><b>持久 + pipelined</b>：base 2 RTT；同层 inline 共 1 RTT；嵌套依赖 +1 RTT/层</li>
+<li><b>持久 无 pipelined</b>：每对象顺序 1 RTT</li>
+<li>web cache（proxy）减小 RTT/带宽，引入一致性问题</li>
+</ul>
+</section>
+
+<section>
+<h2>DNS</h2>
+<ul>
+<li>层级：root → TLD(.com,.edu) → authoritative</li>
+<li>递归 vs 迭代解析；local resolver 通常迭代</li>
+<li>RR 类型：A（IPv4）、AAAA（IPv6）、NS、MX、CNAME</li>
+<li>UDP 53，简短查询；大响应回退 TCP</li>
+</ul>
+</section>
+
+<section>
+<h2>P2P 文件分发 <span class="tag">期中Q7</span></h2>
+<div class="formula">CS: T = max(NF/U_s, F/d_min)</div>
+<div class="formula">P2P: T = max(F/U_s, F/d_min, NF/(U_s+ΣU_i))</div>
+<ul>
+<li>F=文件大小，N=客户数，U_s=server 上传，d_min=最慢下行，U_i=peer 上传</li>
+<li>BitTorrent：tit-for-tat（rarest first 选块；optimistic unchoke）</li>
+<li>DHT：分布式哈希表查找资源 owner</li>
+</ul>
+</section>
+
+<section>
+<h2>UDP vs TCP</h2>
+<table>
+<tr><th>UDP</th><th>TCP</th></tr>
+<tr><td>无连接</td><td>3-way 握手</td></tr>
+<tr><td>不可靠</td><td>seq+ACK+重传</td></tr>
+<tr><td>无流控/拥控</td><td>滑动窗 + AIMD</td></tr>
+<tr><td>8B 头</td><td>20B 头</td></tr>
+<tr><td>DNS/视频/DHCP</td><td>HTTP/SSH/...</td></tr>
+</table>
+</section>
+
+<section>
+<h2>RDT：GBN vs SR <span class="tag">期中Q3</span></h2>
+<table>
+<tr><th></th><th>GBN</th><th>SR</th></tr>
+<tr><td>ACK</td><td>累积</td><td>独立</td></tr>
+<tr><td>丢包</td><td>重传整窗</td><td>只补丢的</td></tr>
+<tr><td>Data 丢多</td><td>差</td><td><span class="green">好</span></td></tr>
+<tr><td>ACK 丢多</td><td><span class="green">好</span></td><td>差（timeout）</td></tr>
+</table>
+<p class="mini">SR 窗口最大 = N/2（防序号歧义，N=序号空间）</p>
+</section>
+
+<section>
+<h2>Stop-and-Wait Utilization</h2>
+<div class="formula">U = T_trans / (T_trans + 2·T_prop)</div>
+<ul>
+<li>T_trans = L/R</li>
+<li>当 L 小或距离远 → U 很低 → 必须用滑窗</li>
+</ul>
+</section>
+
+<section>
+<h2>TCP 段格式</h2>
+<ul>
+<li>源/目的 port（16b）、seq、ACK#（32b）</li>
+<li>flags：SYN、FIN、ACK、PSH、URG、RST、<b>CWR/ECE</b>（ECN）</li>
+<li><b>rwnd</b>（receiver buffer 余量）→ 流控</li>
+<li>checksum 校验头+数据</li>
+</ul>
+</section>
+
+<section>
+<h2>TCP 拥塞控制 FSM <span class="tag">考点</span></h2>
+<ul>
+<li><b>slow start</b>：cwnd=1，每 ACK cwnd+=1 MSS（每 RTT 翻倍）</li>
+<li>到 cwnd &gt; ssthresh → <b>congestion avoid</b>（每 RTT +1）</li>
+<li><b>3 dup ACK</b> → ssthresh=cwnd/2，cwnd=ssthresh+3 → <b>fast recovery</b>；new ACK → 回 CA（cwnd=ssthresh）</li>
+<li><b>Timeout</b>（任何状态）→ ssthresh=cwnd/2，cwnd=1，回 slow start</li>
+</ul>
+</section>
+
+<section>
+<h2>AIMD 公平性 <span class="tag">几何</span></h2>
+<ul>
+<li>+a 走 45°（同时加），×b 沿原点缩（保比例）→ 螺旋收敛到 x1=x2</li>
+<li>四种组合：<b>只 AIMD 同时收敛公平+效率</b></li>
+<li>前提：相同 RTT、长 CA、session 数不变</li>
+</ul>
+<div class="formula">throughput ≈ cwnd/RTT；avg cwnd = 3W/4 → R = 3W/(4·RTT)</div>
+</section>
+
+<section>
+<h2>拥塞控制变种</h2>
+<ul>
+<li><b>CUBIC</b>（Linux 默认）：W(t)=C(t−K)³+Wmax，远离 Wmax 增长快</li>
+<li><b>Delay-based</b>：用 RTT 升判拥塞；和 loss-based 共存会 starve</li>
+<li><b>BBR</b>（Google）：估 bottleneck BW + RTprop，inflight=BDP</li>
+<li><b>ECN</b>：路由器在 IP ToS 打 2 bit；receiver 经 ACK ECE=1 回传；sender 不丢包就减半</li>
+</ul>
+</section>
+
+<section>
+<h2>UDP 不公平 / 并行 TCP</h2>
+<ul>
+<li>UDP 无 CC → 任意抢带宽</li>
+<li>开 K 条并行 TCP → 自己得 K/(K+他) 份额</li>
+<li>没有 "Internet 警察"</li>
+</ul>
+</section>
+
+<section>
+<h2>Network 数据面 vs 控制面</h2>
+<ul>
+<li><b>Data plane</b>：单 router 内、ns 级、forwarding</li>
+<li><b>Control plane</b>：全网、ms 级、routing</li>
+<li>传统：每 router 跑 routing 算法 → 自己填 FT</li>
+<li>SDN：远程 controller 算好 FT 下发</li>
+</ul>
+</section>
+
+<section>
+<h2>路由器架构</h2>
+<ul>
+<li>Input port：查 FT（match+action）+ 队列</li>
+<li>Switch fabric：memory / bus / interconnection（crossbar/Clos）</li>
+<li>Output port：调度 + 队列</li>
+<li><b>HOL blocking</b>：队头被堵 → 后面动不了</li>
+<li>速度：fabric N×R 才能跑满 N 输入</li>
+</ul>
+</section>
+
+<section>
+<h2>最长前缀匹配（LPM）<span class="tag">必考</span></h2>
+<ul>
+<li>多条 entries 都匹配时选 <span class="red">前缀位数最多</span> 的</li>
+<li>TCAM 一拍出结果，支持 * 通配</li>
+<li><b>解题</b>：列出每条 rule 的有效位数，逐位对比目的 IP</li>
+</ul>
+</section>
+
+<section>
+<h2>IP Datagram</h2>
+<ul>
+<li>ver(4) hlen(4) ToS(8) | <b>TTL</b>(8) | proto(8 → 6=TCP/17=UDP) | header checksum</li>
+<li>src IP / dst IP（32b 各）</li>
+<li>fragmentation：identifier + flags + offset</li>
+<li>头 20B（无 options）；max 64KB</li>
+</ul>
+</section>
+
+<section>
+<h2>CIDR / Subnet <span class="tag">FinalQ2</span></h2>
+<div class="formula">prefix = IP AND mask</div>
+<div class="formula">host bits = 32 − x；可寻址 = 2^(32−x)，可用 −2</div>
+<ul>
+<li><b>例</b>：128.16.51.2 / 255.255.240.0</li>
+<li>mask /20 → 第3段 240=11110000</li>
+<li>51=00110011 AND 11110000 = 00110000 = 48</li>
+<li>→ <b>前缀 128.16.48.0/20，主机 0.0.3.2，2¹²=4096</b></li>
+<li>私有：10/8、172.16/12、192.168/16</li>
+</ul>
+</section>
+
+<section>
+<h2>DHCP DORA</h2>
+<ol>
+<li><b>Discover</b>（src 0.0.0.0:68, dst 255.255.255.255:67, broadcast）</li>
+<li><b>Offer</b>（server → yiaddr 候选 IP, lease）</li>
+<li><b>Request</b></li>
+<li><b>Ack</b></li>
+</ol>
+<p class="mini">返回还有：default gateway、DNS server、netmask、租期</p>
+</section>
+
+<section>
+<h2>NAT</h2>
+<ul>
+<li>局域网共用 1 个公网 IP（私网 → 公网 port 映射）</li>
+<li>出包：改 (src IP, port)；存表</li>
+<li>入包：查表改回 (dst IP, port)</li>
+<li>缺点：违反端到端、阻碍 P2P/server</li>
+</ul>
+</section>
+
+<section>
+<h2>IPv4 vs IPv6</h2>
+<table>
+<tr><th></th><th>v4</th><th>v6</th></tr>
+<tr><td>地址</td><td>32b</td><td>128b</td></tr>
+<tr><td>头</td><td>20+B</td><td>40B 固定</td></tr>
+<tr><td>checksum</td><td>有</td><td>无</td></tr>
+<tr><td>fragment</td><td>路由器可分</td><td>仅端</td></tr>
+<tr><td>flow label</td><td>无</td><td>有</td></tr>
+</table>
+<p class="mini"><b>tunneling</b>：IPv6 包封进 IPv4，穿过 IPv4 网</p>
+</section>
+
+</div></div>
+
+
+<!-- ============ PAGE 2 (BACK) ============ -->
+<div class="sheet">
+<h1>COMS 4119 FINAL CHEAT SHEET — BACK</h1>
+<div class="cols">
+
+<section>
+<h2>路由 — LS vs DV</h2>
+<table>
+<tr><th></th><th>LS</th><th>DV</th></tr>
+<tr><td>视角</td><td>全局</td><td>局部</td></tr>
+<tr><td>通信</td><td>flood 全网</td><td>只跟邻居</td></tr>
+<tr><td>算法</td><td>Dijkstra</td><td>Bellman-Ford</td></tr>
+<tr><td>消息</td><td>O(n²)</td><td>邻居间</td></tr>
+<tr><td>收敛</td><td>快 但震荡</td><td>慢、count-to-∞</td></tr>
+<tr><td>错传</td><td>本地影响</td><td><span class="red">全网传染</span></td></tr>
+<tr><td>例</td><td>OSPF/IS-IS</td><td>RIP</td></tr>
+</table>
+</section>
+
+<section>
+<h2>Dijkstra 模板</h2>
+<ol>
+<li>N'={u}；D(v)=c(u,v) 或 ∞</li>
+<li>循环：取不在 N' 中、D 最小的 w 加入 N'</li>
+<li>对 w 的每个邻居 v 不在 N'：D(v)=min(D(v), D(w)+c(w,v))</li>
+<li>直到 N' 包含全部节点</li>
+</ol>
+<p class="mini">复杂度 O(n²)；可优化 O(n log n)。给 6 节点表必练手算。</p>
+</section>
+
+<section>
+<h2>Bellman-Ford / DV</h2>
+<div class="formula">D_x(y) = min_v∈N(x) { c(x,v) + D_v(y) }</div>
+<ul>
+<li>每节点维护 distance table（行=目的，列=经哪个邻居）</li>
+<li>DV = 表按行取 min</li>
+<li>邻居发 DV → 自己 BF 更新 → DV 变了告诉邻居</li>
+<li><b>收敛轮数</b> ≈ 最短路径树最大跳数 − 1（同步、无 CTI、静态）</li>
+</ul>
+</section>
+
+<section>
+<h2>Count-to-Infinity 与对策</h2>
+<ul>
+<li>链路涨价 → 坏消息慢传 → 两节点互推累加</li>
+<li><b>Poison reverse</b>：z 经 y 到 X → z 告诉 y 自己到 X 是 ∞</li>
+<li>只解 2 节点环，&gt;2 仍可成环</li>
+<li>RIP：DV 每 30s 一次；hop limit 16=∞</li>
+</ul>
+</section>
+
+<section>
+<h2>OSPF（intra-AS）</h2>
+<ul>
+<li>Open；Link State；flood LSA（直接走 IP，不用 TCP/UDP）</li>
+<li>跑 Dijkstra，权重可多指标（BW/delay）</li>
+<li>消息认证</li>
+<li><b>分层</b>：local area + backbone；ABR 汇总；boundary router 连其他 AS</li>
+</ul>
+</section>
+
+<section>
+<h2>BGP（inter-AS）<span class="tag">FinalQ3</span></h2>
+<ul>
+<li><b>eBGP</b>：跨 AS 邻居；<b>iBGP</b>：AS 内传 eBGP 信息</li>
+<li>TCP 上跑；OPEN/UPDATE/KEEPALIVE/NOTIFICATION</li>
+<li>advertise：(<b>prefix</b>, <b>AS-PATH</b>, NEXT-HOP)</li>
+<li>路径选择：local pref → shortest AS-PATH → closest NEXT-HOP (hot potato) → others</li>
+<li><b>Policy</b>：export/import 决定 advertise/accept；ISP 不愿替别人 carry 过境流量</li>
+<li><b>Hot potato</b>：选 intra-AS 最便宜的 gateway 扔出</li>
+</ul>
+</section>
+
+<section>
+<h2>SDN + OpenFlow</h2>
+<ul>
+<li>Controller 算 FT 下发到 switches</li>
+<li><b>Match + Action</b> 抽象：match (link/net/trans 各字段)；action drop / forward / modify / to-controller</li>
+<li>Priority 解决重叠；counter 统计</li>
+<li>controller→switch：features/configure/modify-state/packet-out</li>
+<li>switch→controller：packet-in/flow-removed/port status</li>
+<li>抽象统一：router/firewall/switch/NAT 都能 match+action 表达</li>
+</ul>
+</section>
+
+<section>
+<h2>Data Link 概览</h2>
+<ul>
+<li>跑在网卡（adapter）里</li>
+<li>服务：framing, 错检/纠, MAC, 可靠交付</li>
+<li>点对点（光纤）vs 广播（Ethernet/WiFi）</li>
+</ul>
+</section>
+
+<section>
+<h2>差错检测</h2>
+<ul>
+<li><b>Parity</b>：1 bit，只检奇数错；2D parity 检+纠 1 bit</li>
+<li><b>Checksum</b>：16-bit 字累加（TCP/UDP/IP 用）</li>
+<li><b>CRC</b>：D·2^r mod G = R；发 (D,R)；接收 (D·2^r XOR R) mod G==0？</li>
+</ul>
+<p class="mini">CRC 模 2 = XOR；能检测所有 ≤r 位突发错</p>
+</section>
+
+<section>
+<h2>MAC 分类</h2>
+<table>
+<tr><th>分类</th><th>例</th></tr>
+<tr><td>Channel partition</td><td>TDMA/FDMA/CDMA</td></tr>
+<tr><td>Taking turns</td><td>polling / token</td></tr>
+<tr><td>Random access</td><td>ALOHA / CSMA / CSMA-CD / CSMA-CA</td></tr>
+</table>
+</section>
+
+<section>
+<h2>Slotted ALOHA</h2>
+<ul>
+<li>每 slot 各以 p 发；碰了下 slot 再 p 重试</li>
+<li>P(单 i 成功)= p(1−p)^(N−1)；总 S=Np(1−p)^(N−1)</li>
+<li>p*=1/N → S → <b>1/e ≈ 0.37</b></li>
+<li>Pure ALOHA（不对齐）→ 1/(2e) ≈ 0.18</li>
+</ul>
+</section>
+
+<section>
+<h2>CSMA / CD</h2>
+<ul>
+<li>CS：先听，闲再发</li>
+<li>仍会碰（传播延迟）→ 边发边听 → 碰了 abort + jam + 退避</li>
+<li><b>min frame ≥ 2 × max prop delay</b>（不然发完才察觉碰撞）</li>
+<li>10Mbps Ethernet：min 512b，max cable 100m</li>
+<li>Binary exponential backoff：碰 n 次，从 [0, 2^n−1] 选</li>
+</ul>
+</section>
+
+<section>
+<h2>Ethernet 帧</h2>
+<ul>
+<li>Preamble 7B + SFD 1B</li>
+<li>Dst MAC 6B + Src MAC 6B</li>
+<li>Type 2B（0x0800=IP, 0x0806=ARP）</li>
+<li>Payload 46–1500B</li>
+<li>CRC 4B</li>
+<li>现代 Ethernet = switched，全双工、无 CSMA/CD</li>
+</ul>
+</section>
+
+<section>
+<h2>MAC Address & ARP</h2>
+<ul>
+<li>MAC 6B；前 3B = OUI（厂商）；广播 FF×6</li>
+<li>OS 可改（MAC spoofing）</li>
+<li><b>ARP</b>：知 IP 找 MAC；广播 query、unicast reply；缓存带 TTL（soft state）</li>
+<li><b>跨子网</b>：ARP 找 first-hop router 的 MAC，不是终点</li>
+</ul>
+</section>
+
+<section>
+<h2>Switch（L2）</h2>
+<ul>
+<li><b>自学习</b>：见 frame → 记 (src MAC, in-port, TTL)</li>
+<li>Dst 在表 → 单口发；不在 → flood</li>
+<li>Plug-and-play；不动 TTL；不解 IP</li>
+<li><b>VLAN</b>：物理 switch 分逻辑 LAN；跨 VLAN 需 router</li>
+</ul>
+</section>
+
+<section>
+<h2>Router vs Switch</h2>
+<table>
+<tr><th></th><th>Router</th><th>Switch</th></tr>
+<tr><td>层</td><td>L3</td><td>L2</td></tr>
+<tr><td>地址</td><td>IP</td><td>MAC</td></tr>
+<tr><td>表来源</td><td>routing alg</td><td>自学习</td></tr>
+<tr><td>TTL</td><td>−1</td><td>不动</td></tr>
+<tr><td>范围</td><td>跨网</td><td>单 LAN</td></tr>
+</table>
+</section>
+
+<section>
+<h2>无线物理</h2>
+<div class="formula">Loss = (4πd/λ)² = (4πdf/c)²</div>
+<ul>
+<li>f 大（λ 小）→ loss 大（5GHz 衰更快）</li>
+<li>real：PL=PL₀ + 10α·log(d/d₀) + X；α 室内 4–6</li>
+<li><b>SNR</b> dB = 10·log(signal/noise)；<b>SINR</b> 加干扰</li>
+<li>SNR↑ → BER↓ → 可用高 modulation/code rate</li>
+<li>传播：反射（&gt;λ 表面）、衍射（锐边）、散射（&lt;λ 物体）</li>
+<li>Multipath fading：ISI，限 symbol rate</li>
+</ul>
+</section>
+
+<section>
+<h2>隐藏/暴露终端 <span class="tag">FinalQ5</span></h2>
+<ul>
+<li><b>Hidden</b>：在 sender 范围<b>外</b>，但在 receiver 干扰范围<b>内</b> → 不知道，发了 → receiver 碰撞</li>
+<li><b>Exposed</b>：在 sender 范围<b>内</b>（听到），但自己的目标在 sender 范围<b>外</b> → 白白抑制</li>
+<li><b>RTS/CTS</b>：sender 发 RTS，receiver 回 CTS（带 NAV）；听 CTS 者静默 → 治隐藏；不能治暴露</li>
+</ul>
+</section>
+
+<section>
+<h2>CSMA/CA (802.11) 完整流程</h2>
+<ol>
+<li>载波感知（物理：能量；虚拟：NAV）</li>
+<li>信道闲 → 等 <b>DIFS</b> → 仍闲 → 发 RTS / 数据</li>
+<li>回复（CTS/ACK）等 <b>SIFS</b>（短、优先）</li>
+<li>信道忙 → DIFS 后启 random backoff，倒数 [0,CW]</li>
+<li>信道再忙就冻结，闲再减；到 0 发 RTS</li>
+<li>RTS 没 CTS → <b>CW × 2</b>（binary exp backoff，到 CWmax）</li>
+<li>成功 → 复位 CW=CWmin</li>
+</ol>
+<p class="mini">无线不能 CD：发时自己耳朵被淹</p>
+</section>
+
+<section>
+<h2>802.11 标准速查</h2>
+<table>
+<tr><th>标准</th><th>频段</th><th>速率</th></tr>
+<tr><td>b</td><td>2.4G</td><td>11 Mbps</td></tr>
+<tr><td>a/g</td><td>5/2.4G</td><td>54 Mbps</td></tr>
+<tr><td>n</td><td>2.4/5</td><td>~600 Mbps</td></tr>
+<tr><td>ac (WiFi5)</td><td>5G</td><td>&gt;1 Gbps</td></tr>
+<tr><td>ax (WiFi6)</td><td>2.4/5</td><td>~14 Gbps</td></tr>
+</table>
+<p class="mini">三个不重叠 2.4G channel：1, 6, 11（各 22MHz 宽）</p>
+</section>
+
+<section>
+<h2>易错点汇总</h2>
+<ul>
+<li>丢包 ≠ 拥塞（无线 bit error / checksum 失败 → silently drop）</li>
+<li>Stop-and-wait U 公式分母是 <b>2·T_prop</b>，单程要乘 2</li>
+<li>子网计算用二进制 AND 心算别用十进制减</li>
+<li>BGP 政策：控制别人能不能借道你 → <b>export policy 不 advertise</b></li>
+<li>Fast recovery 收 new ACK 是回 CA（cwnd=ssthresh），<b>不是 slow start</b></li>
+<li>min Ethernet frame 不是任意值，由 2×prop 决定</li>
+<li>隐藏/暴露：隐藏 = sender 外 receiver 内；暴露 = sender 内自己目标外</li>
+</ul>
+</section>
+
+</div></div>
+
+</div>

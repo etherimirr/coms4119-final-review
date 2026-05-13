@@ -1,0 +1,181 @@
+CSEE4119: Computer Networks
+                  Final Preview
+                            Xia Zhou
+                 Department of Computer Science
+                       Columbia University
+                           Slides credited to J.F Kurose and K.W. Ross and their textbook “Computer Networking: A Top-Down Approach”
+Recap
+§ Basics
+ • Protocol
+
+ • Circuit switching vs packet switching
+
+ • Performance metrics: transmission rate/time, packet delay, end-
+   to-end throughput, packet loss rate, bandwidth latency product,
+   propagation delays, etc
+
+ • Layers: modular functionality, headers
+                                                                Application Layer: 2-2
+Recap
+§ Application layer
+  • Client-server, peer-to-peer
+  • Sockets
+  • Web: persistent, non-persistent HTTP connection; web cache
+  • DNS
+  • Video streaming
+  • P2P: BitTorrent, file distribution time analysis, DHT
+
+
+                                                                 Application Layer: 2-3
+Recap
+§ Transport layer
+  • UDP: connection-less, minimalist
+
+  • TCP: Reliable data transfer
+     • Mechanisms to deal with bit errors, packet delay, packet losses, out-of-
+       order arrivals, duplicated packets
+     • GBN vs selective repeat
+
+
+
+
+                                                                             Application Layer: 2-4
+Recap
+§ Transport layer
+  • TCP: Congestion control
+    • End-host based vs network-assisted congestion control
+
+    • TCP main mechanisms: slow start, AIMD
+
+    • Packet-loss based vs packet-delay based
+
+    • Mainstream: CUBIC, BBR
+
+
+
+                                                              Application Layer: 2-5
+Recap
+§ Network layer: data plane
+  • Longest-prefix matching
+
+  • IP address: prefix/subnet, host address, DHCP
+
+  • Network address translation (NAT)
+
+  • IPv4 vs IPv6
+
+
+
+                                                    Application Layer: 2-6
+Recap
+§ Network layer: control plane
+  • Two types of routing algorithms: link state routing, distance vector
+    routing
+
+  • Their comparison
+
+  • BGP, difference from distance vector routing
+
+  • SDN concept
+
+
+                                                                    Application Layer: 2-7
+Recap
+§ Data link layer for wired links
+   • Error detection and correction code
+
+  • Medium access control
+     • Goal, types
+
+     • ALOHA, efficiency analysis
+
+     • CSMA/CD
+
+
+
+                                           Application Layer: 2-8
+Recap
+§ Wireless
+  • Basics of wireless physical layer: free-space pathloss model,
+    characteristics of wireless channel
+
+  • Wireless MAC protocols
+     • Hidden terminals, exposed terminals
+
+     • CSMA/CA
+
+
+
+                                                                    Application Layer: 2-9
+Example Question
+#1: To TCP, a lost segment is interpreted as a sign of congestion: if an
+ACK is not received by the sender, the sender will reduce its rate of
+transmission.
+
+In which scenario does a lost segment not imply congestion?
+
+A: An ACK would not be sent if the segment has bit errors and does
+not pass the checksum. In this case, it does not imply congestion.
+
+
+                                                                     Application Layer: 2-10
+Example Question
+#2: The dynamic host configuration protocol (DHCP) is the network
+management protocol used by devices to request IP addresses from
+the local DHCP server. Suppose your computer receives a reply from
+the DHCP server with an IP address 128.16.51.2 and a subnet mask
+255.255.240.0.
+What is the network prefix of your newly assigned IP address? What is
+the host address? How many hosts can be in the subnet?
+
+A: The network prefix is 128.16.48.0 or 128.16.48.0/20, and the host address is
+0.0.3.2. Twelve bits are used to represent the host address, so 2^12 hosts can be
+in the subnet.
+                                                                             Application Layer: 2-11
+Example Question
+#3: Columbia has a direct network connection to CERN in Geneva, for
+collaboration with the Large Hadron Collider team. Columbia also has
+a peering relationship with NYU. Can NYU students go to CERN via
+Columbia? If not, what aspect of BGP can be used to make sure that
+everyone on the Columbia network can get to CERN but nobody else
+can get to CERN via Columbia?
+
+A: No, NYU students cannot get to CERN via Columbia. BGP path
+export policy will allow Columbia not to share its direction path to
+CERN to NYU.
+
+                                                                       Application Layer: 2-12
+Example Question
+#4: Four nodes form a network topology as below. When                                    B
+                                                                                  2              3
+they run the distance vector routing algorithm, what is the                   A                      C
+initial distance vector table at A and B? What is the                           5
+                                                                                          6
+                                                                                                   3
+converged distance vector at A and B respectively, after                                 D
+exchanging distance vectors with neighbors?
+
+                                B’s initial DV table   A’s final DV
+A:   A’s initial DV table                                             B’s final DV
+            B      C        D            A     C       Dst   min       Dst   min
+      B     2     ∞     ∞         A      2     ∞        B      2        A     2
+      C    ∞       6    ∞         C     ∞      3        C      5        C     3
+
+      D    ∞      ∞         5                           D      5        D     6
+
+                                                                                      Application Layer: 2-13
+Example Question
+#5: Four nodes are located as shown in the
+right figure. The circles illustrate nodes’
+carrier sensing ranges. When node A is
+transmitting data to B, who are the
+potential hidden terminals and exposed        A   B     C
+terminals?
+
+                                                  E
+A: Hidden terminal: C, E, no exposed
+terminal.
+
+
+                                                      Application Layer: 2-14
+

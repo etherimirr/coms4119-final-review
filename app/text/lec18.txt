@@ -1,0 +1,1051 @@
+IPv6: motivation
+§ initial motivation: 32-bit IPv4 address space would be
+  completely allocated
+§ additional motivation:
+  • speed processing/forwarding: 40-byte fixed length header
+  • enable different network-layer treatment of “flows”
+
+
+
+
+                                                               Network Layer: 4-70
+IPv6 datagram format
+                                                                        flow label: identify
+ priority: identify
+                                           32 bits                      datagrams in same
+   priority among       ver     pri              flow label             "flow.” (concept of
+                              payload len      next hdr     hop limit   “flow” not well defined).
+datagrams in flow                      source address
+            128-bit                       (128 bits)
+   IPv6 addresses                    destination address
+                                          (128 bits)
+
+
+                                        payload (data)
+
+
+   What’s missing (compared with IPv4):
+   § no checksum (to speed processing at routers)
+   § no fragmentation/reassembly
+   § no options (available as upper-layer, next-header protocol at router)
+                                                                                       Network Layer: 4-71
+Design Philosophy of IPv6
+§ Don’t deal with problems: leave to ends
+   • Eliminated fragmentation
+   • Eliminated checksum
+   • Take a look at a classic paper1 on end-to-end argument
+§ Simplify handling
+   • New options mechanism (uses next header approach)
+   • Eliminated header length
+§ Provide general flow label for packet
+   • Not tied to semantics
+   • Provides great flexibility
+ 1End-to-end argument in systems design, 1984.
+
+ http://web.mit.edu/Saltzer/www/publications/endtoend/endtoend.pdf
+                                                                     Network Layer: 4-72
+Transition from IPv4 to IPv6
+§ not all routers can be upgraded simultaneously
+   • no “flag days”
+   • how will network operate with mixed IPv4 and IPv6 routers?
+§ tunneling: IPv6 datagram carried as payload in IPv4 datagram among
+  IPv4 routers (“packet within a packet”)
+   • tunneling used extensively in other contexts (4G/5G)
+
+          IPv4 header fields          IPv6 header fields
+                                                                 IPv4 payload
+             IPv4 source, dest addr      IPv6 source dest addr
+                                            UDP/TCP payload
+
+
+
+
+                                               IPv6 datagram
+                                       IPv4 datagram
+                                                                                Network Layer: 4-73
+Tunneling and encapsulation
+                                A            B       Ethernet connects two     E           F
+Ethernet connecting                                       IPv6 routers
+two IPv6 routers:              IPv6        IPv6                               IPv6     IPv6
+
+
+                                                                  IPv6 datagram
+                  Link-layer frame    The usual: datagram as payload in link-layer frame
+
+
+
+IPv4 network                     A           B                                 E           F
+connecting two
+IPv6 routers                   IPv6       IPv6/v4                            IPv6/v4   IPv6
+
+                                                         IPv4 network
+
+
+
+                                                                                               Network Layer: 4-74
+Tunneling and encapsulation
+                                   A            B       Ethernet connects two      E          F
+Ethernet connecting                                          IPv6 routers
+two IPv6 routers:                 IPv6        IPv6                                IPv6     IPv6
+
+
+                                                                      IPv6 datagram
+                     Link-layer frame    The usual: datagram as payload in link-layer frame
+
+
+
+IPv4 tunnel                         A           B           IPv4 tunnel            E          F
+                                                       connecting IPv6 routers
+connecting two
+IPv6 routers                      IPv6       IPv6/v4                             IPv6/v4   IPv6
+
+
+                                                                       IPv6 datagram
+                 IPv4 datagram            tunneling: IPv6 datagram as payload in a IPv4 datagram
+                                                                                                   Network Layer: 4-75
+Tunneling
+                      A             B               IPv4 tunnel                       E              F
+                                               connecting IPv6 routers
+     logical view:
+                     IPv6        IPv6/v4                                           IPv6/v4          IPv6
+
+                      A             B              C                   D              E             F
+   physical view:
+                     IPv6        IPv6/v4          IPv4              IPv4           IPv6/v4       IPv6
+
+                          flow: X       src:B             src:B            src:B          flow: X
+                          src: A        dest: E           dest: E                         src: A
+                          dest: F
+                                                                           dest: E
+                                                                                          dest: F
+                                        Flow: X           Flow: X           Flow: X
+                                        Src: A            Src: A            Src: A
+ Note source and          data          Dest: F           Dest: F           Dest: F       data
+     destination
+      addresses!                        data              data              data
+
+
+                          A-to-B:                          B-to-C:                        E-to-F:
+                           IPv6           B-to-C:                            B-to-C:       IPv6
+                                        IPv6 inside      IPv6 inside       IPv6 inside
+                                           IPv4             IPv4              IPv4
+                                                                                                           Network Layer: 4-76
+IPv6: adoption
+ § Google 1 : 46~ 49% of clients access services via IPv6 (early 2026)
+ § NIST: 43% US government domains are IPv6 capable (early 2026)
+
+
+
+
+1 https://www.google.com/intl/en/ipv6/statistics.html                    Network Layer: 4-77
+IPv6: adoption
+§ Google 1 : 46~ 49% of clients access services via IPv6 (early 2026)
+§ NIST: 43% US government domains are IPv6 capable (early 2026)
+§ Long (long!) time for deployment, use
+     • 25 years and counting!
+     • think of application-level changes in last 25 years: WWW, social
+       media, streaming media, gaming, telepresence, …
+     • Why?
+
+
+
+
+1 https://www.google.com/intl/en/ipv6/statistics.html
+                                                                     Network Layer: 4-78
+CSEE4119: Computer Networks
+        Network Layer – Control Plane
+                            Xia Zhou
+                 Department of Computer Science
+                       Columbia University
+                           Slides credited to J.F Kurose and K.W. Ross and their textbook “Computer Networking: A Top-Down Approach”
+ Network layer: “control plane” roadmap
+§ introduction
+§ routing protocols
+  § link state, distance vector
+§ intra-ISP routing: OSPF
+§ routing among ISPs: BGP
+§ SDN control plane
+§ Internet Control Message Protocol
+§ network management, configuration
+  • SNMP, NETCONF/YANG
+
+                                          Network Layer: 5-2
+Network-layer functions
+§ forwarding: move packets from router’s
+  input to appropriate router output
+                                                data plane
+§ routing: determine route taken by
+  packets from source to destination           control plane
+
+ Two approaches to structuring network control plane:
+ § per-router control (traditional)
+ § logically centralized control (software defined networking)
+
+
+                                                                 Network Layer: 5-3
+Per-router control plane
+Individual routing algorithm components in each and every
+router interact in the control plane
+                                                                  4.1       •       OVERVIEW OF NETWORK LAYER   309
+
+
+                                            Routing
+                                           Algorithm
+                                       Routing algorithm                                                              control
+                 Control plane                                                                                         plane
+                 Data plane
+
+                                           Local forwarding
+                                                 table
+                                                                                                                      data
+                                           header    output
+                                                                                                                      plane
+                                            0100       3
+                                            0110       2
+                                            0111       2
+                                            1001       1
+
+
+
+                      Values in arriving
+     values in arriving
+                 packet’s header
+                                                           1
+     packet header                   1101
+
+
+                                                              2
+                                                       3
+                                  0111                                  1
+                                                                                2
+                                                                   3
+
+          Figure 4.2 ♦ Routing algorithms determine values in forward tables
+                                                                                                                                Network Layer: 5-4
+          tables. In this example, a routing algorithm runs in each and every router and both
+          forwarding and routing functions are contained within a router. As we’ll see in Sec-
+          tions 5.3 and 5.4, the routing algorithm function in one router communicates with
+          the routing algorithm function in other routers to compute the values for its forward-
+          ing table. How is this communication performed? By exchanging routing messages
+          containing routing information according to a routing protocol! We’ll cover routing
+          algorithms and protocols in Sections 5.2 through 5.4.
+               The distinct and different purposes of the forwarding and routing functions can
+          be further illustrated by considering the hypothetical (and unrealistic, but technically
+          feasible) case of a network in which all forwarding tables are configured directly by
+          human network operators physically present at the routers. In this case, no routing
+Software-Defined Networking (SDN) control plane
+Remote controller computes, installs forwarding tables in routers
+
+                                                      Remote Controller
+
+
+                                                                                    control
+                                                                                     plane
+
+                                                                                    data
+                                                                                    plane
+
+                                     CA
+
+                                                      CA      CA          CA   CA
+         values in arriving
+         packet header
+
+
+                              0111            1
+                                                  2
+                                          3
+
+                                                                                              Network Layer: 5-5
+Network layer: “control plane” roadmap
+§ introduction
+§ routing protocols
+   § link state, distance vector
+§ intra-ISP routing: OSPF
+§ routing among ISPs: BGP
+§ SDN control plane
+§ Internet Control Message Protocol
+§ network management, configuration
+ • SNMP, NETCONF/YANG
+
+                                         Network Layer: 5-6
+What is routing?
+§ A quotation from RFC 791 says it the best
+
+                 A name indicates what we seek.
+                 An address indicates where it is.
+               A route indicates how we get there.
+                                        -- Jon Postel
+
+
+
+
+                                                        Network Layer: 4-7
+Routing protocols
+                                                              mobile network
+                                                                                     national or global ISP
+Routing protocol goal: determine
+“good” paths (equivalently, routes),        application
+from sending hosts to receiving host,        transport
+                                              network
+
+through network of routers                      link
+                                              physical
+                                                                          network            network
+                                                                            link
+
+§ path: sequence of routers packets
+                                                                                               link
+                                                                          physical           physical
+
+
+
+
+  traverse from given initial source host                      network
+                                                                 link                  network
+
+
+  to destination host                                          physical                  link
+                                                                                       physical         network
+                                                                                                          link         datacenter
+                                                                                                        physical       network
+
+§ “good”: least “cost”, “fastest”, “least
+  congested”                                                                                                application
+                                                                                                             transport
+                                                                                                              network
+                                                          enterprise
+§ routing: a “top-10” networking
+                                                                                                                link
+                                                               network                                        physical
+
+
+  challenge!
+                                                                                                                   Network Layer: 5-8
+Graph abstraction: link costs
+              5
+                                      ca,b: cost of direct link connecting a and b
+              v   3
+                          w                    e.g., cw,z = 5, cu,z = ∞
+          2                   5
+  u           2           1       z
+                      3                     cost defined by network operator:
+      1
+              x           y   2             depend on distance, bandwidth, cost,
+                  1
+                                            congestion, and more
+
+  graph: G = (N,E)
+      N: set of routers = { u, v, w, x, y, z }
+      E: set of links ={ (u,v), (u,x), (v,x), (v,w), (x,w), (x,y), (w,y), (w,z), (y,z) }
+
+
+                                                                                     Network Layer: 5-9
+Two Methodologies
+§ Big mouth               Link State Routing
+  • Broadcast what you know to all other nodes
+  • Each node has a global view of the network
+  • Calculate paths based on the global network
+
+§ Whisper               Distance Vector Routing
+  • Only talk to your neighbors about what you know
+  • Each node has a local view of the network
+  • Update the path based on what you learnt
+    from neighbors
+
+
+                                                      Network Layer: 5-10
+      Routing algorithm classification
+                                   global: all routers have complete
+                                   topology, link cost info
+                                   • “link state” algorithms
+How fast
+                                                                             dynamic: routes change
+do routes   static: routes change                                            more quickly
+change?     slowly over time                                                 • periodic updates or in
+                                                                               response to link cost
+                                                                               changes
+                               decentralized: iterative process of
+                               computation, exchange of info with neighbors
+                               • routers initially only know link costs to
+                                 attached neighbors
+                               • “distance vector” algorithms
+                                      global or decentralized information?                 Network Layer: 5-11
+ Network layer: “control plane” roadmap
+§ introduction
+§ routing protocols
+   § link state
+   § distance vector
+§ intra-ISP routing: OSPF
+§ routing among ISPs: BGP
+§ SDN control plane
+§ Internet Control Message Protocol
+§ network management, configuration
+  • SNMP, NETCONF/YANG
+                                          Network Layer: 5-12
+Link state routing
+#1: Each node initially maintains a local link state (list of links to
+neighbors)
+                   (N1,N2)
+                   (N1,N4)
+                                  Host C
+                   (N1,N5)
+          Host A                                             Host D
+
+
+
+                    N1            N2
+
+                                                        N3
+
+                                  N5
+
+
+          Host B
+                   N4                                           Host E
+
+                                  N6               N7
+
+
+                                                                         Network Layer: 5-13
+Link state routing
+#2: Each node floods its local link state (other routers forward new info
+to all their neighbors)
+                                                         Host C
+
+          Host A                                                                                         Host D
+                                          (N1,N2)
+                                          (N1, N4)
+                                          (N1, N5)
+                                                                         (N1,N2)
+                                                                         (N1, N4)
+                                                                         (N1, N5)
+
+                              N1                         N2
+                                              (N1,N2)
+                                              (N1, N4)
+                                              (N1, N5)
+                                                                                         N3
+                   (N1,N2)
+                   (N1, N4)
+                   (N1, N5)
+                                     (N1,N2)
+                                     (N1, N4)
+                                                         N5              (N1,N2)
+                                                                         (N1, N4)
+                                     (N1, N5)                                                 (N1,N2)
+                                                                         (N1, N5)             (N1, N4)
+                                              (N1,N2)                                         (N1, N5)
+                                              (N1, N4)
+
+          Host B                              (N1, N5)
+
+                        N4                                                                                  Host E
+                                                                  (N1,N2)
+                                                                  (N1, N4)
+                                   (N1,N2)
+                                   (N1, N4)
+                                                         N6       (N1, N5)          N7
+                                   (N1, N5)
+
+
+
+
+                                                                                                                     Network Layer: 5-14
+Link state routing
+#3: Each node learns the entire network topology
+#4: Compute the shortest path using Dijkstra’s algorithm
+                                 A
+                                         C           Host C                        C
+                                                 D
+                                                                          A                  D
+
+           Host A                                                                           Host D
+                                 B
+                                                 E                        B
+                                                                                             E
+
+
+                        N1                           N2
+              C
+       A            D                                             C
+                                                              A       D            N3
+                                                                                                  C
+       B
+                    E                C               N5       B
+                                                                                        A                 D
+                             A               D                        E
+
+
+
+           Host B                                                                       B
+                                                                                                          E
+                        N4   B
+                                             E
+                                                                                                 Host E
+
+                                                     N6                       N7
+
+
+                                                                                                              Network Layer: 5-15
+Dijkstra’s link-state routing algorithm
+§ centralized: network topology, link        notation
+  costs known to all nodes
+                                           § cx,y: direct link cost from
+  • accomplished via “link state             node x to y; = ∞ if not direct
+    broadcast”                               neighbors
+  • all nodes have same info
+                                           § D(v): current estimate of cost
+§ computes least cost paths from one         of least-cost-path from source
+  node (“source”) to all other nodes         to destination v
+  • gives forwarding table for that node   § p(v): predecessor node along
+                                             path from source to v
+§ iterative: after k iterations, know      § N': set of nodes whose least-
+  least cost path to k destinations          cost-path definitively known
+
+
+                                                                      Network Layer: 5-16
+Dijkstra’s link-state routing algorithm
+      1 Initialization:
+      2 N' = {u}                      /* compute least cost path from u to all other nodes */
+      3 for all nodes v
+      4 if v adjacent to u            /* u initially knows direct-path-cost only to direct neighbors */
+      5     then D(v) = cu,v         /* but may not be minimum cost!                                 */
+      6 else D(v) = ∞
+      7
+      8 Loop
+      9 find w not in N' such that D(w) is a minimum
+      10 add w to N'
+      11 update D(v) for all v adjacent to w and not in N' :
+      12     D(v) = min ( D(v), D(w) + cw,v )
+      13 /* new least-path-cost to v is either old least-cost-path to v or known
+      14 least-cost-path to w plus direct-cost from w to v */
+      15 until all nodes in N'
+                                                                                             Network Layer: 5-17
+Dijkstra’s algorithm: an example
+                                               v         w           x           y           z
+            Step               N'           D(v),p(v) D(w),p(w)   D(x),p(x)   D(y),p(y)   D(z),p(z)
+               0               u              2,u        5,u        1,u          ∞           ∞
+               1
+               2
+               3
+               4
+               5
+
+             5                                 Initialization (step 0):
+                                                   For all a: if a adjacent to u then D(a) = cu,a
+                   3
+             v             w        5
+        2
+u             2            1            z
+                       3
+    1                               2
+             x     1
+                           y
+Dijkstra’s algorithm: an example
+                                               v         w           x           y           z
+            Step               N'           D(v),p(v) D(w),p(w)   D(x),p(x)   D(y),p(y)   D(z),p(z)
+               0                u             2,u        5,u        1,u          ∞           ∞
+               1               ux
+               2
+               3
+               4
+               5
+                                                        8 Loop
+             5                                          9   find a not in N' such that D(a) is a minimum
+             v     3
+                           w
+                                                        10 add a to N'
+        2                           5
+u             2            1            z
+                       3
+    1                               2
+             x     1
+                           y
+Dijkstra’s algorithm: an example
+                                               v         w            x            y             z
+            Step               N'           D(v),p(v) D(w),p(w)   D(x),p(x)     D(y),p(y)    D(z),p(z)
+               0                u             2,u        5,u        1,u             ∞            ∞
+               1               ux             2,u        4,x                       2,x           ∞
+               2
+               3
+               4
+               5
+                                                        8 Loop
+             5                                          9   find a not in N' such that D(a) is a minimum
+             v     3
+                           w
+                                                        10 add a to N'
+                                    5
+        2                                               11 update D(b) for all b adjacent to a and not in N' :
+u             2            1            z                         D(b) = min ( D(b), D(a) + ca,b )
+                       3
+    1                               2                             D(v) = min ( D(v), D(x) + cx,v ) = min(2, 1+2) = 2
+             x     1
+                           y
+                                                                  D(w) = min ( D(w), D(x) + cx,w ) = min (5, 1+3) = 4
+                                                                  D(y) = min ( D(y), D(x) + cx,y ) = min(inf,1+1) = 2
+Dijkstra’s algorithm: an example
+                                            v         w           x           y           z
+            Step            N'           D(v),p(v) D(w),p(w)   D(x),p(x)   D(y),p(y)   D(z),p(z)
+               0             u             2,u        5,u        1,u          ∞           ∞
+               1            ux             2,u        4,x                     2,x         ∞
+               2           uxy
+               3
+               4
+               5
+                                                     8 Loop
+             5                                       9   find a not in N' such that D(a) is a minimum
+             v     3
+                           w
+                                                     10 add a to N'
+        2                        5
+u             2            1         z
+                       3
+    1                            2
+             x     1
+                           y
+Dijkstra’s algorithm: an example
+                                            v         w            x             y            z
+            Step            N'           D(v),p(v) D(w),p(w)   D(x),p(x)     D(y),p(y)    D(z),p(z)
+               0             u             2,u        5,u        1,u             ∞            ∞
+               1            ux             2,u        4,x                       2,x           ∞
+               2           uxy             2,u        3,y                                     4,y
+               3
+               4
+               5
+                                                     8 Loop
+             5                                       9   find a not in N' such that D(a) is a minimum
+             v     3
+                           w
+                                                     10 add a to N'
+                                 5
+        2                                            11 update D(b) for all b adjacent to a and not in N' :
+u             2            1         z                         D(b) = min ( D(b), D(a) + ca,b )
+                       3
+    1
+             x             y     2                             D(w) = min ( D(w), D(y) + cy,w ) = min (4, 2+1) = 3
+                   1                                           D(z) = min ( D(z), D(y) + cy,z ) = min(inf,2+2) = 4
+Dijkstra’s algorithm: an example
+                                             v         w           x           y           z
+            Step             N'           D(v),p(v) D(w),p(w)   D(x),p(x)   D(y),p(y)   D(z),p(z)
+               0              u             2,u        5,u        1,u          ∞           ∞
+               1             ux             2,u        4,x                     2,x         ∞
+               2            uxy             2,u        3,y                                4,y
+               3           uxyv
+               4
+               5
+                                                      8 Loop
+             5                                        9   find a not in N' such that D(a) is a minimum
+             v     3
+                           w
+                                                      10 add a to N'
+        2                         5
+u             2            1          z
+                       3
+    1                             2
+             x     1
+                           y
+Dijkstra’s algorithm: an example
+                                             v         w            x             y            z
+            Step             N'           D(v),p(v) D(w),p(w)   D(x),p(x)     D(y),p(y)    D(z),p(z)
+               0              u             2,u        5,u        1,u             ∞            ∞
+               1             ux             2,u        4,x                       2,x           ∞
+               2            uxy             2,u        3,y                                     4,y
+               3           uxyv                        3,y                                     4,y
+               4
+               5
+                                                      8 Loop
+             5                                        9   find a not in N' such that D(a) is a minimum
+             v     3
+                           w
+                                                      10 add a to N'
+                                  5
+        2                                             11 update D(b) for all b adjacent to a and not in N' :
+u             2            1          z                         D(b) = min ( D(b), D(a) + ca,b )
+                       3
+    1
+             x             y      2                             D(w) = min ( D(w), D(v) + cv,w ) = min (3, 2+3) = 3
+                   1
+Dijkstra’s algorithm: an example
+                                               v         w           x           y           z
+            Step               N'           D(v),p(v) D(w),p(w)   D(x),p(x)   D(y),p(y)   D(z),p(z)
+               0               u              2,u        5,u        1,u          ∞           ∞
+               1              ux              2,u        4,x                     2,x         ∞
+               2             uxy              2,u        3,y                                4,y
+               3            uxyv                         3,y                                4,y
+               4           uxyvw
+               5
+                                                        8 Loop
+             5                                          9   find a not in N' such that D(a) is a minimum
+             v     3
+                            w
+                                                        10 add a to N'
+        2                           5
+u             2              1          z
+                       3
+    1                               2
+             x     1
+                            y
+Dijkstra’s algorithm: an example
+                                               v         w            x             y             z
+            Step               N'           D(v),p(v) D(w),p(w)   D(x),p(x)     D(y),p(y)     D(z),p(z)
+               0               u              2,u        5,u        1,u             ∞             ∞
+               1              ux              2,u        4,x                        2,x           ∞
+               2             uxy              2,u        3,y                                     4,y
+               3            uxyv                         3,y                                     4,y
+               4           uxyvw                                                                 4,y
+               5
+                                                        8 Loop
+             5                                          9   find a not in N' such that D(a) is a minimum
+             v     3
+                            w
+                                                        10 add a to N'
+                                    5
+        2                                               11 update D(b) for all b adjacent to a and not in N' :
+u             2              1          z                         D(b) = min ( D(b), D(a) + ca,b )
+                       3
+    1
+             x              y       2                             D(z) = min ( D(z), D(w) + cw,z ) = min (4, 3+5) = 4
+                   1
+Dijkstra’s algorithm: an example
+                                            v         w           x           y           z
+            Step            N'           D(v),p(v) D(w),p(w)   D(x),p(x)   D(y),p(y)   D(z),p(z)
+               0            u              2,u        5,u        1,u          ∞           ∞
+               1           ux              2,u        4,x                     2,x         ∞
+               2          uxy              2,u        3,y                                4,y
+               3         uxyv                         3,y                                4,y
+               4        uxyvw                                                            4,y
+               5       uxyvwz
+                                                     8 Loop
+             5                                       9   find a not in N' such that D(a) is a minimum
+             v     3
+                           w
+                                                     10 add a to N'
+        2                        5
+u             2            1         z
+                       3
+    1                            2
+             x     1
+                           y
+Dijkstra’s algorithm: an example
+                                            v         w            x            y           z
+            Step            N'           D(v),p(v) D(w),p(w)   D(x),p(x)    D(y),p(y)    D(z),p(z)
+               0            u              2,u        5,u        1,u            ∞           ∞
+               1           ux              2,u        4,x                      2,x          ∞
+               2          uxy              2,u        3,y                                   4,y
+               3         uxyv                         3,y                                   4,y
+               4        uxyvw                                                               4,y
+               5       uxyvwz
+                                                     8 Loop
+             5                                       9   find a not in N' such that D(a) is a minimum
+             v     3
+                           w
+                                                     10 add a to N'
+                                 5
+        2                                            11 update D(b) for all b adjacent to a and not in N' :
+u             2            1         z                         D(b) = min ( D(b), D(a) + ca,b )
+                       3
+    1                            2
+             x     1
+                           y
+   Dijkstra’s algorithm: an example
+                                              5
+                                                  3
+                                              v           w    5
+                                          2
+                                  u           2           1         z
+                                                      3
+                                      1                         2
+                                              x   1
+                                                          y
+
+
+resulting least-cost-path tree from u:            resulting forwarding table in u:
+                                                          destination outgoing link
+             v        w
+                                                              v          (u,v)        route from u to v directly
+      u                       z                               x          (u,x)
+                                                              y          (u,x)        route from u to all
+             x        y                                       w          (u,x)        other destinations
+                                                              x          (u,x)        via x
+                                                                                                     Network Layer: 5-30
+Dijkstra’s algorithm: discussion
+algorithm complexity: n nodes
+§ each of n iteration: need to check all nodes, w, not in N
+§ n(n+1)/2 comparisons: O(n2) complexity
+§ more efficient implementations possible: O(nlogn)
+message complexity:
+§ each router must broadcast its link state information to other n routers
+§ efficient (and interesting!) broadcast algorithms: O(n) link crossings to disseminate a
+  broadcast message from one source
+§ each router’s message crosses O(n) links: overall message complexity: O(n2)
+
+
+
+                                                                                 Network Layer: 5-32
+        Dijkstra’s algorithm: oscillations possible
+        § when link costs depend on traffic volume, route oscillations possible
+        § sample scenario:
+             • routing to destination a, traffic entering at d, c, b with rates 1, e (<1), 1
+             • link costs are directional, and volume-dependent
+
+
+                a                         2+e
+                                                   a                              a        2+e                     a
+        1               1+e                                   0           0                               2+e                  0
+    d                       b             d       1+e 1           b       d       0   0
+                                                                                                b         d       1+e 1            b
+            0       0
+                        e             1       0                   1
+1       0
+                c                                  c      0           1       1
+                                                                                  c       1+e   1     1       0            0       1
+                                1                                                                                  c
+                                                   e                              e                               e
+             e
+
+                                      given these costs,                given these costs,            given these costs,
+            initially                find new routing….                find new routing….            find new routing….
+                                    resulting in new costs            resulting in new costs        resulting in new costs
+
+                                                                                                                       Network Layer: 5-33
+Two Methodologies
+§ Big mouth               Link State Routing
+  • Broadcast what you know to all other nodes
+  • Each node has a global view of the network
+  • Calculate paths based on the global network
+
+§ Whisper               Distance Vector Routing
+  • Only talk to your neighbors about what you know
+  • Each node has a local view of the network
+  • Update the path based on what you learnt
+    from neighbors
+
+
+                                                      Network Layer: 5-34
+Time for a game!
+§ The question: Who carries the most cash today?
+
+§ Rule
+  • ONLY talk to your neighbors sitting left or right to you
+  • No talking to others
+  • No shouting
+  • No gesture or other innovative ways of notifying non-neighbors
+
+§ After 3mins, I will randomly pick one of you to answer the question
+
+§ Ready? Go!
+
+                                                                     Network Layer: 5-35
+Distance vector algorithm
+Based on Bellman-Ford (BF) equation (dynamic programming):
+            Bellman-Ford equation
+
+                 Let Dx(y): cost of least-cost path from x to y.
+                 Then:
+                   Dx(y) = minv { cx,v + Dv(y) }
+
+                                           v’s estimated least-cost-path cost to y
+min taken over all neighbors v of x   direct cost of link from x to v
+                                                                             Network Layer: 5-36
+Distance vector table
+§ Each router maintains its shortest distance to each other node by
+  going through each neighbor
+
+                                                 Neighbor
+                          From node A            (next-hop)
+                   A             via   via
+                                  B     C
+                          to B
+                          to C
+           Destinations   to D                  distC(A, D): shortest
+                                             distance from A to D via C
+
+
+
+
+                                                                          Network Layer: 5-37
+Distance vector
+§ Each router computes the shortest distance to each other node
+
+
+                            MIN { distB(A,B), distC(A, B) }
+                                                  A’s distance
+                     From node A                  vector (DV)
+                              via    via                      min
+             A                                                dist
+                               B      C
+                     to B                           to B
+                     to C                           to C
+                     to D                           to D
+
+
+
+                                                                     Network Layer: 5-38
+Distance vector
+§ Initialize the distance table and DV based on its neighbors’ link costs
+
+                              B
+                                              From node A            A’s DV
+                                                     via via               min
+                                                                           mindist
+                                                    via B   via C
+                 B)
+               A,                                     B   C                dist
+          A
+              c(
+                                           to B    c(A,B)           to B   c(A,B)
+                              Link costs       to B ?     ? ∞       to B    ?
+                                           to Cto C ∞               to C   c(A,C)
+               c(A                                    ?   ?c(A,C)   to C    ?
+                     ,C
+                          )                to Dto D   ∞             to D     ∞
+                               C                      ?   ? ∞       to D    ?
+
+
+
+
+                                                                                     Network Layer: 5-39
+Distance vector
+§ Send its DV to neighbors
+                        B
+
+
+                             From node A               A’s DV
+                 B)
+                                                             Min
+                                                             mindist
+                                                                 dist
+         A
+               A5,
+              c(                    via B    via C
+                             to B   c(A,B)     ∞      to B   c(A,B)
+                                                               5
+              c(A6           to C     ∞      c(A,C)   to C   c(A,C)
+                                                               6
+                 ,C
+                    )
+                        C    to D     ∞        8      to D      ∞
+                                                                8
+
+
+
+
+                                                                        Network Layer: 5-40
+Distance vector
+§ Neighbor router processes received DVs
+
+                        A’s DV         From node B           B’s DV
+                   B           min                                 Min dist
+                                              via   via C
+                        to B     5             A            to A      5
+                        to C     6     to A   5      ∞      to C      1
+          A
+              5         to D     8     to C   11
+                                              15     1      to D     ∞
+                                                                     13
+                                       to D   ∞
+                                              13     ∞
+               6
+                    C
+                               newA(B, x) = c(B,A) + min_dist(A, x)
+
+
+                                                                              Network Layer: 5-41
+Distance vector algorithm
+key idea:
+§ from time-to-time, each node sends its own distance vector estimate
+  to neighbors
+§ when x receives new DV estimate from any neighbor, it updates its
+  own DV using B-F equation:
+            Dx(y) ← minv{cx,v + Dv(y)} for each node y ∊ N
+
+§ under minor, natural conditions, the estimate Dx(y) converge to the
+  actual least cost dx(y)
+
+
+                                                                   Network Layer: 5-43
+Distance vector algorithm:
+each node:                        iterative, asynchronous: each local
+                                   iteration caused by:
+ wait for (change in local link    § local link cost change
+ cost or msg from neighbor)        § DV update message from neighbor
+
+
+ recompute DV estimates using     distributed, self-stopping: each
+                                   node notifies neighbors only when
+   DV received from neighbor       its DV changes
+                                   § neighbors then notify their
+  if DV to any destination has       neighbors – only if necessary
+   changed, notify neighbors       § no notification received, no
+                                     actions taken!
+
+                                                                  Network Layer: 5-44
+Distance vector: link cost changes
+link cost changes:                                                                     1
+                                                                                                y
+                                                                                           4        1
+§ node detects local link cost change                                                 x                 z
+                                                                                               50
+§ updates routing info, recalculates local DV
+§ if DV changes, notify neighbors
+          Y       via       Y       via       Y       via       Y       via
+              X         Z       X         Z       X         Z       X         Z
+          X   4         6   X   1         6   X   1         6   X   1         3   Good news
+                                                                                   goes fast!
+          Z       via       Z       via       Z    via          Z       via
+              X         Y       X         Y       X         Y       X         Y
+          X   50        5   X   50        5   X   50        2   X   50        2
+Distance vector: link cost changes
+link cost changes:                                                                      60
+                                                                                                y
+                                                                                            4        1
+§ node detects local link cost change                                                   x                z
+                                                                                                50
+§ updates routing info, recalculates local DV
+§ if DV changes, notify neighbors
+          Y       via       Y       via       Y       via       Y       via
+              X         Z       X         Z       X         Z       X         Z       Count to infinity
+          X   4         6   X   60        6   X   60        6   X   60        8       problem
+          Z       via       Z       via       Z    via          Z    via          The process goes
+              X         Y       X         Y       X         Y       X         Y   on….
+
+          X   50        5   X   50        5   X   50        7   X   50        7   Bad news goes
+                                                                                      slow…
+Distance vector: poison reverse
+                                                                                               60
+§ If Z routes through Y to get to X :                                                                    y
+                                                                                                    4         1
+
+ • Z tells Y its (Zʼs) distance to X is infinite (so Y wonʼt route                             x                   z
+                                                                                                         50
+   to X via Z)
+
+            Y       via       Y       via       Y       via        Y       via        Y       via
+                X         Z       X         Z       X         Z        X         Z        X         Z
+            X   4         ∞   X   60        ∞   X   60        ∞    X   60 51          X   60        51
+
+            Z       via       Z       via       Z    via           Z    via           Z    via
+                X         Y       X         Y       X         Y        X         Y        X         Y
+            X   50        5   X   50        5   X   50        61   X   50        61   X   50       ∞
+
+
+
+                                                                                                                  Network Layer: 5-61
+Comparison of LS and DV algorithms
+message complexity                     robustness: what happens if router
+ LS: n routers, O(n2) messages sent      malfunctions, or is compromised?
+ DV: exchange between neighbors;       LS:
+    convergence time varies             • router can advertise incorrect link cost
+                                        • each router computes only its own
+speed of convergence                       table
+ LS: O(n2) algorithm, O(n2) messages   DV:
+  • may have oscillations
+                                        • DV router can advertise incorrect path
+ DV: convergence time varies              cost (“I have a really low-cost path to
+  • may have routing loops                everywhere”): black-holing
+  • count-to-infinity problem
+                                        • each router’s DV is used by others:
+                                          error propagate thru network
+

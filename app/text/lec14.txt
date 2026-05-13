@@ -1,0 +1,385 @@
+QUIZ: File distribution time
+100 clients would like to download a popular file (50MB). Each client
+has 1Mbps download capacity and 0.5Mbps upload capacity.
+
+§ How much time would it take if they are downloading from a server
+  in a client-server architecture, assuming the server supports 10
+  concurrent downloads?
+   A: 10 * (50M*8/1Mbps) = 4000 secs
+§ How much time would it take if they form a BitTorrent P2P system,
+  assuming perfect distribution? Approximation is fine.
+  A: 50MB*8*100/(0.5Mbps*100) = 800 secs
+                                                                  Transport Layer: 3-146
+Other options?
+§ Every RTT, we can
+  • Multiplicative increase or decrease: CWND à a*CWND
+  • Additive increase or decrease: CWND à CWND + b
+
+
+§ Four options
+  • AIAD: gentle increase, gentle decrease
+  • AIMD: gentle increase, drastic decrease
+  • MIAD: drastic increase, gentle decrease
+  • MIMD: drastic increase and decrease
+
+
+
+                                                         Transport Layer: 3-147
+Simple Model of Congestion Control
+§ Two users                              1              Efficiency                                                      Fairness
+                                                           line                                                           line
+  • rates x1 and x2
+
+
+
+
+                                   User 2’s rate (x2)
+§ Congestion when x1+x2 > 1
+§ Unused capacity when x1+x2 < 1                                                                                        d
+                                                                                                                            à
+                                                                                                                    ste
+                                                                                                                  e
+                                                                                                             ng
+                                                                                                        co
+§ Fair when x1 =x2
+                                                                                              ie   nt
+                                                                                         f ic
+                                                                                    ef
+                                                                               in
+                                                                           ß
+
+                                                                     User 1’s rate (x1)                                     1
+                                                                                                                      Transport Layer: 3-148
+AIAD
+                         Efficiency
+§ Increase: x + aI          line                                                             Fairness
+                                  (x1-aD+aI,                                                   line
+§ Decrease: x – aD                x2-aD+aI)
+
+                                             (x1,x2)
+
+§ Does not                                                                                   à
+  converge to fairness   (x1-aD,x2-aD)                                             e ste
+                                                                                         d
+                                                                              ng
+                                                                         co
+
+                                                                     t
+                                                                en
+                                                       f   ic i
+                                                  ef
+                                             in
+                                         ß
+
+                                      User 1: x1                                     Transport Layer: 3-149
+MIMD
+§ Increase: x*bI                               Efficiency                                                       Fairness
+                                                  line                                                            line
+§ Decrease: x*bD                                     (x1,x2)
+                                                               (bIbDx1,
+                                                               bIbDx2)
+
+
+                                  User 2: x2
+§ Does not converge to fairness                                                                                     à
+                                               (bdx1,bdx2)                                                  ste
+                                                                                                                d
+                                                                                                          e
+                                                                                                     ng
+                                                                                                co
+
+                                                                                            t
+                                                                                       en
+                                                                              f   ic i
+                                                                         ef
+                                                                    in
+                                                                ß
+
+                                                             User 1: x1                                      Transport Layer: 3-150
+AIMD
+§ Increase: x+aI                        Efficiency                                                     Fairness
+                                           line    (x1,x2)                                               line
+§ Decrease: x*bD                                             (bDx1+aI,
+                                                             bDx2+aI)
+
+
+                           User 2: x2
+§ Converges to fairness!
+                                                                                                           à
+                                        (bDx1,bDx2)                                                 te
+                                                                                                       d
+                                                                                                 e s
+                                                                                            ng
+                                                                                       co
+
+                                                                                   t
+                                                                              en
+                                                                    ff   ic i
+                                                                e
+                                                             in
+                                                         ß
+
+                                                      User 1: x1
+                                                                                                     Transport Layer: 3-151
+TCP congestion control: details
+  sender sequence number space
+                        cwnd                       TCP sending behavior:
+                                                   § roughly: send cwnd bytes,
+                                                     wait RTT for ACKS, then
+                                                     send more bytes
+  last byte
+  ACKed       sent, but not-       available but
+                                                     TCP rate ~~ cwnd bytes/sec
+              yet ACKed            not used                       RTT
+              (“in-flight”)    last byte sent
+
+
+
+ § TCP sender limits transmission: LastByteSent- LastByteAcked < cwnd
+ § cwnd is dynamically adjusted in response to observed
+   network congestion (implementing TCP congestion control)
+                                                                           Transport Layer: 3-152
+Two kinds of loss in TCP
+§ Triple duplicate ACK
+   • Packet n is lost, but packets n+1, n+2, … arrive
+   • Receiver sends duplicate ACKs, sender resends packet n
+à Do a multiplicative decrease and keep going
+
+§ Timeout
+   • Packet n is lost and detected via a timeout (e.g., because all packets in flight
+     were lost)
+   • After the timeout, blasting away for the entire CWND, would trigger a very
+     large burst in traffic
+à Better to start over with a low CWND
+
+                                                                                 Transport Layer: 3-153
+When timeout happens
+§ CWND goes back to one packet (1 MSS)
+    Window
+                                    Timeout
+
+
+
+
+                                         How to increase
+                                          CWNDTime
+                                                 next?
+                                                           Transport Layer: 3-154
+TCP: from slow start to congestion avoidance
+ Q: when should the exponential
+  increase switch to linear?
+                                                                                                            X
+A: when cwnd gets to 1/2 of its
+ value before timeout.
+
+ Implementation:
+ § variable ssthresh
+ § on loss event, ssthresh is set to
+   1/2 of cwnd just before loss event
+
+
+ * Check out the online interactive exercises for more examples: http://gaia.cs.umass.edu/kurose_ross/interactive/
+                                                                                                                     Transport Layer: 3-155
+Repeat slow start after timeout
+      Window
+                                        Timeout
+
+
+
+
+                                        ssthresh
+
+
+
+                                                   Slow start until it
+                                                    reaches half of
+                                                         Time
+                                                    previous cwnd.
+ Slow-start restart: : Go back to CWND of MSS, but take advantage of
+                 knowing the previous value of CWND
+                                                                         Transport Layer: 3-156
+Summary: TCP congestion control
+                                                                                                         New
+                                                  New                                                    ACK!
+                              duplicate ACK
+                             dupACKcount++
+                                                  ACK!
+                                               new ACK
+                                                                                           new ACK
+                                                                                                    .
+                                                                                cwnd = cwnd + MSS (MSS/cwnd)
+                                                                                         dupACKcount = 0
+                                              cwnd = cwnd+MSS                  transmit new segment(s), as allowed
+                                              dupACKcount = 0
+            L                                 transmit new segment(s), as allowed
+      cwnd = 1 MSS
+     ssthresh = 64 KB                                 cwnd > ssthresh
+     dupACKcount = 0
+                              slow                          L                       congestion
+                              start                       timeout                   avoidance
+                                                     ssthresh = cwnd/2
+                                                       cwnd = 1 MSS                                       duplicate ACK
+                timeout                               dupACKcount = 0                                    dupACKcount++
+          ssthresh = cwnd/2                     retransmit missing segment
+            cwnd = 1 MSS
+           dupACKcount = 0
+     retransmit missing segment
+                                      timeout
+                                                                                New
+                                                                                ACK!
+                                     ssthresh = cwnd/2
+                                     cwnd = 1                                   New ACK
+                                     dupACKcount = 0
+                                                                          cwnd = ssthresh       dupACKcount == 3
+               dupACKcount == 3      retransmit missing segment          dupACKcount = 0
+                ssthresh= cwnd/2                                                               ssthresh= cwnd/2
+             cwnd = ssthresh + 3                                                               cwnd = ssthresh + 3
+                                                                                               retransmit missing segment
+      retransmit missing segment
+                                                          fast
+                                                       recovery
+                                                                        duplicate ACK
+                                                                        cwnd = cwnd + MSS
+                                                                        transmit new segment(s), as allowed
+
+                                                                                                                            Transport Layer: 3-157
+TCP CUBIC
+§ Is there a better way than AIMD to “probe” for usable bandwidth?
+§ Insight/intuition:
+  • Wmax: sending rate at which congestion loss was detected
+  • congestion state of bottleneck link probably (?) hasn’t changed much
+  • after cutting rate/window in half on loss, initially ramp to to Wmax faster, but then
+    approach Wmax more slowly
+
+
+     Wmax                                                        classic TCP
+
+                                                                 TCP CUBIC - higher
+   Wmax/2
+                                                                 throughput in this
+                                                                 example
+
+
+
+                                                                                  Transport Layer: 3-158
+TCP CUBIC
+§ K: point in time when TCP window size will reach Wmax
+  • K itself is tunable
+§ increase W as a function of the cube of the distance between current
+  time and K
+   • larger increases when further away from K
+   • smaller increases (cautious) when nearer K
+§ TCP CUBIC default               Wmax
+  in Linux, most
+                                                                  TCP Reno
+  popular TCP for                                                 TCP CUBIC
+  popular Web                      TCP
+                               sending
+  servers                          rate
+
+                                                                      time
+                                          t0      t1   t2   t3   t4
+                                                                             Transport Layer: 3-159
+TCP and the congested “bottleneck link”
+§ TCP (classic, CUBIC) increase TCP’s sending rate until packet loss occurs
+  at some router’s output: the bottleneck link
+
+
+
+
+                       source                                             destination
+                     application                                          application
+                        TCP                                                  TCP
+                      network                                              network
+                        link                                                 link
+                      physical                                             physical
+   packet queue almost
+never empty, sometimes
+ overflows packet (loss)
+
+
+                                   bottleneck link (almost always busy)
+                                                                                        Transport Layer: 3-160
+TCP and the congested “bottleneck link”
+§ TCP (classic, CUBIC) increase TCP’s sending rate until packet loss occurs
+  at some router’s output: the bottleneck link
+§ understanding congestion: useful to focus on congested bottleneck link
+
+                                  insight: increasing TCP sending rate will
+                      source           not increase end-end throughout
+                                                                              destination
+                                       with congested bottleneck
+                    application                                               application
+                       TCP                                                       TCP
+                     network                                                   network
+                       link                                                      link
+                     physical                                                  physical
+
+ insight: increasing TCP
+       sending rate will
+increase measured RTT
+                                                    Goal: “keep the end-end pipe just full, but not fuller”
+                                             RTT
+                                                                                                Transport Layer: 3-161
+Delay-based TCP congestion control
+Keeping sender-to-receiver pipe “just full enough, but no fuller”: keep
+bottleneck link busy transmitting, but avoid high delays/buffering
+                                                                         # bytes sent in
+                                                           measured      last RTT interval
+          RTTmeasured                                     throughput
+                                                                     =
+                                                                         RTTmeasured
+Delay-based approach:
+ § RTTmin: minimum observed RTT (uncongested path)
+ § uncongested throughput with congestion window cwnd is cwnd/RTTmin
+          if measured throughput “very close” to uncongested throughput
+               increase cwnd linearly        /* since path not congested */
+          else if measured throughput “far below” uncongested throughout
+                                                                              Is this AIAD?
+              decrease cwnd linearly         /* since path is congested */
+                                                                                       Transport Layer: 3-162
+Delay-based TCP congestion control
+§ congestion control without inducing/forcing loss
+§ control is triggered by increased delay/RTT, not loss events
+§ maximizing throughout (“keeping the just pipe full… ”) while
+  keeping delay low (“…but not fuller”)
+§ stable performance: small queue, low delay, minimal loss
+
+§ Any issues?
+  § detect congestion earlier and reduce cwnd earlier when competing
+    with loss-based TCP à starvation
+                                                               Transport Layer: 3-163
+Model-based TCP congestion control
+§Build explicit model of the network path and estimate
+ sending rate accordingly
+  • Estimate bottleneck bandwidth, propagation delay
+
+§Best for high bandwidth-delay product networks
+
+§BBR (Bottleneck Bandwidth and Round-trip propagation time)
+ deployed on Google’s (internal) backbone network
+
+
+                                                              Transport Layer: 3-164
+Explicit congestion notification (ECN)
+TCP deployments often implement network-assisted congestion control:
+ § two bits in IP header (ToS field) marked by network router to indicate congestion
+    • policy to determine marking chosen by network operator
+ § congestion indication carried to destination
+ § destination sets ECN-Echo (ECE) bit on ACK segment to notify sender of congestion
+ § involves both IP (IP header ECN bit marking) and TCP (TCP header C,E bit marking)
+                   source                     TCP ACK segment
+                                                                destination
+                 application                                    application
+                                      ECE=1
+                    TCP                                            TCP
+                  network                                        network
+                    link                                           link
+                  physical                                       physical
+
+                         ECN=10       ECN=11
+
+
+              IP datagram
+                                                                              Transport Layer: 3-165
+

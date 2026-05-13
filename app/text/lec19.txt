@@ -1,0 +1,415 @@
+ Network layer: “control plane” roadmap
+§ introduction
+§ routing protocols
+§ intra-ISP routing: OSPF
+§ routing among ISPs: BGP
+§ SDN control plane
+§ Internet Control Message Protocol
+§ network management, configuration
+  • SNMP, NETCONF/YANG
+
+
+                                          Network Layer: 5-64
+Making routing scalable
+our routing study thus far - idealized
+§ all routers identical
+§ network “flat”
+… not true in practice
+scale: billions of destinations:    administrative autonomy:
+§ can’t store all destinations in   § Internet: a network of networks
+  routing tables!                   § each network admin may want to
+§ routing table exchange would        control routing in its own network
+  swamp links!
+
+
+
+                                                                     Network Layer: 5-65
+Internet approach to scalable routing
+aggregate routers into regions known as “autonomous
+systems” (AS) (a.k.a. “domains”)
+
+intra-AS (aka “intra-domain”):                inter-AS (aka “inter-domain”):
+routing among routers within same               routing among AS’es
+AS (“network”)                                § gateways perform inter-domain
+§ all routers in AS must run same intra-        routing (as well as intra-domain
+  domain protocol                               routing)
+§ routers in different AS can run different
+  intra-domain routing protocols
+§ gateway router: at “edge” of its own AS,
+  has link(s) to router(s) in other AS’es
+                                                                           Network Layer: 5-66
+Interconnected ASes
+                                                    forwarding table configured by intra-
+                                                    and inter-AS routing algorithms
+                       Intra-AS      Inter-AS
+                       Routing       Routing           § intra-AS routing determine entries for
+                             forwarding                  destinations within AS
+                                table
+                                                       § inter-AS & intra-AS determine entries
+                                                         for external destinations
+
+     intra-AS
+       3c
+      routing3a     inter-AS routing              intra-AS
+                                                     2c
+    3b                                          2a routing
+                                                         2b
+                      1c
+                     intra-AS
+    AS3
+                  1a routing 1b                               AS2
+                      1d
+                                          AS1
+
+                                                                                       Network Layer: 5-67
+ Inter-AS routing: a role in intradomain forwarding
+§ suppose router in AS1 receives             AS1 inter-domain routing must:
+  datagram destined outside of AS1:              1. learn which destinations reachable
+  • router should forward packet to                 through AS2, which through AS3
+    gateway router in AS1, but which             2. propagate this reachability info to all
+    one?                                            routers in AS1
+
+
+
+             3c                                                     other
+                  3a                              2c
+           3b                               2a                      networks
+                                                       2b
+                            1c
+           AS3
+other                  1a        1b                         AS2
+networks
+                            1d
+                                      AS1
+
+                                                                                      Network Layer: 5-68
+Intra-AS routing: routing within an AS
+most common intra-AS routing protocols:
+§ RIP: Routing Information Protocol [RFC 1723]
+  • classic DV: DVs exchanged every 30 secs
+  • no longer widely used
+§ EIGRP: Enhanced Interior Gateway Routing Protocol
+  • DV based
+  • formerly Cisco-proprietary for decades (became open in 2013 [RFC 7868])
+§ OSPF: Open Shortest Path First [RFC 2328]
+  • link-state routing
+§ IS-IS protocol (ISO standard, not RFC standard): essentially same as OSPF
+  • Common in Tier-1 ISP core network
+                                                                          Network Layer: 5-69
+OSPF (Open Shortest Path First) routing
+§ “open”: publicly available
+§ classic link-state
+   • each router floods OSPF link-state advertisements (directly over IP
+     rather than using TCP/UDP) to all other routers in entire AS
+   • multiple link costs metrics possible: bandwidth, delay
+   • each router has full topology, uses Dijkstra’s algorithm to compute
+     forwarding table
+§ security: all OSPF messages authenticated (to prevent malicious
+  intrusion)
+
+
+                                                                    Network Layer: 5-70
+    Hierarchical OSPF
+    § two-level hierarchy: local area, backbone.
+       • link-state advertisements flooded only in area, or backbone
+       • each node has detailed area topology; only knows direction to reach
+         other destinations
+area border routers:                                          boundary router:
+“summarize” distances to                                      connects to other ASes
+                                        backbone
+destinations in own area,                                                backbone router:
+advertise in backbone                                                    runs OSPF limited
+                                                                         to backbone
+local routers:
+• flood LS in area only                                         area 3
+• compute routing within
+  area
+                                                   internal
+• forward packets to outside                       routers
+                             area 1
+  via area border router
+                                          area 2                                Network Layer: 5-71
+ Network layer: “control plane” roadmap
+§ introduction
+§ routing protocols
+§ intra-ISP routing: OSPF
+§ routing among ISPs: BGP
+§ SDN control plane
+§ Internet Control Message Protocol
+§ network management, configuration
+  • SNMP, NETCONF/YANG
+
+
+                                          Network Layer: 5-72
+Interconnected ASes
+
+                   intra-AS
+                     3c
+                    routing3a     inter-AS routing      intra-AS
+                                                           2c
+                  3b                                  2a routing
+                                                               2b
+                                    1c
+                                   intra-AS
+              AS3
+                                1a routing 1b                       AS2
+                                    1d
+                                                AS1
+
+
+ intra-AS (aka “intra-domain”): routing among routers within same
+ AS (“network”)
+ inter-AS (aka “inter-domain”): routing among AS’es
+                                                                          Network Layer Control Plane: 5-73
+Internet inter-AS routing: BGP
+§ BGP (Border Gateway Protocol): the de facto inter-domain routing
+  protocol
+   • “glue that holds the Internet together”
+§ allows subnet to advertise its existence, and the destinations it can
+  reach, to rest of Internet: “I am here, here is who I can reach, and how”
+§ BGP provides each AS a means to:
+   • obtain destination network reachability info from neighboring ASes
+      (eBGP)
+   • determine routes to other networks based on reachability information
+      and policy
+   • propagate reachability information to all AS-internal routers (iBGP)
+   • advertise (to neighboring networks) destination reachability info
+                                                               Network Layer Control Plane: 5-74
+eBGP, iBGP connections
+                                           2b
+
+                                  2a               2c
+                                                    ∂
+                1b                                                 3b
+                                           2d
+      1a                  1c                                 ∂
+                                                            3a            3c
+                                         AS 2
+                1d                                                 3d
+
+                AS 1                   eBGP connectivity           AS 3
+                                       logical iBGP connectivity
+
+
+           1c        gateway routers run both eBGP and iBGP protocols
+
+
+
+                                                                               Network Layer: 5-75
+BGP basics
+§ BGP session: two BGP routers (“peers”) exchange BGP messages over
+  semi-permanent TCP connection:
+   • advertising paths to different destination network prefixes (BGP is a “path
+     vector” protocol)
+§ when AS3 gateway 3a advertises path AS3,X to AS2 gateway 2c:
+   • AS3 promises to AS2 it will forward datagrams towards X
+                                                           AS 3         3b
+
+   AS 1     1b                                               3a              3c
+
+     1a           1c           AS 2                                     3d
+                                      2b
+            1d                                     BGP advertisement:
+                               2a            2c                                                  X
+                                                   AS3, X
+                                      2d
+                                                                                  Network Layer: 5-76
+BGP protocol messages
+§ BGP messages exchanged between peers over TCP connection
+§ BGP messages [RFC 4371]:
+ • OPEN: opens TCP connection to remote BGP peer and authenticates
+   sending BGP peer
+ • UPDATE: advertises new path (or withdraws old)
+ • KEEPALIVE: keeps connection alive in absence of UPDATES; also ACKs
+   OPEN request
+ • NOTIFICATION: reports errors in previous msg; also used to close
+   connection
+Path attributes and BGP routes
+§ BGP advertised route: prefix + attributes
+  • prefix: destination being advertised
+  • two important attributes:
+    • AS-PATH: list of ASes through which prefix advertisement has passed
+    • NEXT-HOP: indicates specific internal-AS router to next-hop AS
+§ policy-based routing:
+  • gateway receiving route advertisement uses import policy to
+    accept/decline path (e.g., never route through AS Y).
+  • AS policy also determines whether to advertise path to other other
+    neighboring ASes
+
+                                                                            Network Layer: 5-78
+BGP path advertisement
+                                                         AS 3      3b
+
+  AS 1     1b                                                 3a        3c
+
+    1a            1c          AS 2                                 3d         X
+                                     2b
+           1d                                        AS3, X
+                 AS2,AS3,X    2a            2c
+
+                                     2d
+
+
+§ AS2 router 2c receives path advertisement AS3,X (via eBGP) from AS3 router 3a
+§ based on AS2 policy, AS2 router 2c accepts path AS3,X, propagates (via iBGP) to all
+  AS2 routers
+§ based on AS2 policy, AS2 router 2a advertises (via eBGP) path AS2, AS3, X to
+  AS1 router 1c
+                                                                                  Network Layer: 5-79
+BGP path advertisement: multiple paths
+                                                      AS 3      3b
+
+ AS 1     1b             AS3,X                             3a        3c
+                AS3,X
+        AS3,X
+  1a                1c           AS 2                           3d        X
+                                        2b
+                AS3,X
+          1d                                      AS3, X
+                   AS2,AS3,X     2a          2c
+
+                                        2d
+
+
+ gateway router may learn about multiple paths to destination:
+  § AS1 gateway router 1c learns path AS2,AS3,X from 2a
+  § AS1 gateway router 1c learns path AS3,X from 3a
+  § based on policy, AS1 gateway router 1c chooses path AS3,X and advertises path
+    within AS1 via iBGP
+                                                                              Network Layer: 5-80
+   BGP: populating forwarding tables
+                                                                             AS 3      3b
+
+       AS 1               1b               AS3,X                                  3a        3c
+                                  AS3,X
+                  1
+                          AS3,X
+             1a                       1c           AS 2                                3d         X
+              2                                           2b
+local link                         AS3,X
+                      2        1
+interfaces                1d                                             AS3, X
+at 1a, 1d                           AS2,AS3,X      2a          2c
+
+                                                          2d
+
+
+
+      dest interface                  § recall: 1a, 1b, 1d learn via iBGP from 1c: “path to X goes through 1c”
+       …    …
+       1c    1                        § at 1d: OSPF intra-domain routing: to get to 1c, use interface 1
+       X     1                        § at 1d: to get to X, use interface 1
+       … …
+    BGP: populating forwarding tables
+                                                              AS 3     3b
+
+       AS 1       1b                                            3a           3c
+              1
+         1a            1c         AS 2                                 3d          X
+           2                              2b
+                  1d
+                                   2a           2c
+
+                                          2d
+
+
+dest interface
+ …    …                § recall: 1a, 1b, 1d learn via iBGP from 1c: “path to X goes through 1c”
+ 1c   2
+                       § at 1d: OSPF intra-domain routing: to get to 1c, use interface 1
+  X    2
+ … …                   § at 1d: to get to X, use interface 1
+                       § at 1a: OSPF intra-domain routing: to get to 1c, use interface 2
+                       § at 1a: to get to X, use interface 2
+Hot potato routing
+                                                                 AS 3     3b
+
+ AS 1   1b                                                           3a        3c
+
+   1a         1c         AS 2                                             3d        X
+                                      2b   112
+        1d   AS1,AS3,X                                   AS3,X
+                         2a                      2c
+                                201    263
+
+                                      2d
+                                                 OSPF link weights
+
+
+
+
+ § 2d learns (via iBGP) it can route to X via 2a or 2c
+ § hot potato routing: choose local gateway that has least intra-domain
+   cost (e.g., 2d chooses 2a, even though more AS hops to X): don’t worry
+   about inter-domain cost!
+                                                                                        Network Layer: 5-83
+ BGP: achieving policy via advertisements
+                      A,w
+                              B                                  provider
+                                          x                      network
+            w         A                            legend:
+                       A,w     C         y                       customer
+                                                                 network:
+
+ISP only wants to route traffic to/from its customer networks (does not want
+to carry transit traffic between other ISPs – a typical “real world” policy)
+   § A advertises path Aw to B and to C
+   § B chooses not to advertise BAw to C!
+      § B gets no “revenue” for routing CBAw, since none of C, A, w are B’s customers
+      § C does not learn about CBAw path
+   § C will route CAw (not using B) to get to w
+                                                                               Network Layer: 5-84
+ BGP: achieving policy via advertisements (more)
+                              B                                  provider
+                                          x                      network
+            w         A                            legend:
+                               C         y                       customer
+                                                                 network:
+
+ISP only wants to route traffic to/from its customer networks (does not want
+to carry transit traffic between other ISPs – a typical “real world” policy)
+         § A,B,C are provider networks
+         § x,w,y are customer (of provider networks)
+         § x is dual-homed: attached to two networks
+         § policy to enforce: x does not want to route from B to C via x
+             § .. so x will not advertise to B a route to C
+                                                                               Network Layer: 5-85
+BGP route selection
+§ router may learn about more than one route to destination
+  AS, selects route based on:
+   1. local preference value attribute: policy decision
+   2. shortest AS-PATH
+   3. closest NEXT-HOP router: hot potato routing
+   4. additional criteria
+
+
+
+
+                                                          Network Layer: 5-86
+Why different Intra-, Inter-AS routing ?
+ policy:
+ § inter-AS: admin wants control over how its traffic routed, who
+   routes through its network
+ § intra-AS: single admin, so policy less of an issue
+ scale:
+ § hierarchical routing saves table size, reduced update traffic
+ performance:
+  § intra-AS: can focus on performance
+  § inter-AS: policy dominates over performance
+
+                                                                    Network Layer: 5-87
+Quiz: TCP Throughput
+
+TCP uses Additive Increase and             Sliding Window Size in Bytes
+
+Multiplicative Decrease (AIMD) to          W
+manage the sliding window during
+congestion avoidance phase, as shown      W/2
+in the right figure. The sliding window
+size indicates the # of bytes to send
+before waiting for ACK.
+                                                                          Time
+
+Let’s ignore the slow start phase. What is the average throughput as a
+function of W and RTT?
+

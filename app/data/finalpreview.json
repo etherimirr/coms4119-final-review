@@ -1,0 +1,47 @@
+[
+  {
+    "title": "丢包是否一定意味着拥塞？",
+    "topic": "TCP 拥塞控制",
+    "question": "对 TCP 来说，丢失一个 segment 被解读为拥塞信号：如果 sender 没收到 ACK，sender 就会降速。<br>问：什么场景下丢包并 <b>不</b> 代表拥塞？",
+    "answer": "如果 segment 存在 <b>比特错误</b>（bit errors），它通不过 receiver 的 checksum 校验，receiver 会直接丢弃且 <b>不发 ACK</b>。这种情况发生在物理层/数据链路层（噪声、衰落、干扰），跟路由器队列拥塞没关系。",
+    "walkthrough": "**为什么 TCP 把『没 ACK』当拥塞？**\n\nTCP 是端到端协议，它看不到中间路由器到底发生了什么。它能观察到的只有两件事：\n\n1. 超时还没收到 ACK → timeout\n2. 收到 3 个 duplicate ACK（说明丢了一个包，但后续包到了）\n\n这两种现象在 IP 网络里最常见的成因都是 **路由器队列溢出 → 丢包**，所以 TCP 一律把它当成拥塞，做 multiplicative decrease。\n\n**那它什么时候『冤枉』了网络？**\n\n- **比特错误**：链路层（特别是无线链路）会因为衰落、干扰、噪声把 bit 翻转。Receiver 算 checksum 不过就 silently drop。在无线网络里这是常见的『TCP over wireless』问题：TCP 误以为是拥塞就把 cwnd 减半，结果反而越来越慢。\n- **路由抖动 / 包乱序**：如果某个包绕了远路晚到，可能被误判丢失。\n- **被中间节点显式 drop**（QoS policy / firewall），跟拥塞无关。\n\n**这就是为什么后来有了 ECN（Explicit Congestion Notification）**：让网络主动在 IP header 里打标记，明确告诉 sender『我开始拥塞了』，而不是让 sender 靠丢包来猜。",
+    "gotcha": "考试时如果题目让你举一个例子，最稳的答法就是『链路层 bit error → checksum 失败 → 丢弃』。",
+    "related": ["TCP 拥塞控制", "ECN", "checksum"]
+  },
+  {
+    "title": "DHCP 给的 IP + 子网掩码 → 算前缀 / 主机号 / 主机数",
+    "topic": "IP 寻址",
+    "question": "DHCP 返回 IP = <code>128.16.51.2</code>，子网掩码 = <code>255.255.240.0</code>。<br>问：<br>(a) 网络前缀是什么？<br>(b) 主机地址是什么？<br>(c) 这个子网能容纳多少台主机？",
+    "answer": "(a) 前缀 <code>128.16.48.0/20</code><br>(b) 主机地址 <code>0.0.3.2</code><br>(c) <code>2^12 = 4096</code> 个地址（实际可分配主机数还要减去网络/广播地址，但教材答案这里写 2^12）",
+    "walkthrough": "**第一步：把掩码翻成二进制，数 1 的个数**\n\n`255.255.240.0` →\n```\n11111111 11111111 11110000 00000000\n```\n前 20 个 1，所以是 `/20`。\n\n**第二步：把 IP 跟掩码做按位 AND，得到网络前缀**\n\n```\n128.16.51.2  = 10000000 00010000 00110011 00000010\n255.255.240.0= 11111111 11111111 11110000 00000000\nAND          = 10000000 00010000 00110000 00000000\n             = 128.16.48.0\n```\n\n第三段 `00110011`（51）和掩码 `11110000` AND 得到 `00110000` = 48。所以 **网络前缀是 `128.16.48.0/20`**。\n\n**第三步：主机部分 = IP 减掉网络前缀**\n\n把 `128.16.51.2` 跟 `128.16.48.0` 相减：\n- 前两段一样，差 0\n- 第三段：51 − 48 = 3\n- 第四段：2\n\n所以 **主机地址 = `0.0.3.2`**。\n\n**第四步：主机数 = 2^(32-prefix)**\n\n`/20` 表示主机部分还剩 32−20 = **12 bit**，可表达 `2^12 = 4096` 个地址。\n\n> ⚠️ 严格地讲，可用于主机的地址是 `2^12 − 2`（要扣除『全 0 的网络地址』和『全 1 的广播地址』），但 Xia 在 final-preview 给的答案是 `2^12`，考试照写就行。",
+    "gotcha": "**最容易错的地方是第三段加减**：51 和 48 别算错。建议直接把第三段写成二进制 `00110011` 再跟 `11110000` AND，比心算稳。",
+    "related": ["CIDR", "subnet mask", "longest prefix matching", "DHCP"]
+  },
+  {
+    "title": "BGP 出口策略 — Columbia/CERN/NYU 中转问题",
+    "topic": "BGP / 域间路由",
+    "question": "Columbia 跟 Geneva 的 CERN 有直连（为了 LHC 项目合作）。Columbia 同时跟 NYU 是 peering 关系。<br>问：NYU 的学生能不能通过 Columbia 走到 CERN？如果不行，BGP 的哪个机制能保证 Columbia 网络上所有人都能到 CERN，但外人（如 NYU）不能借道 Columbia 到 CERN？",
+    "answer": "不能。靠 BGP 的 <b>路径导出策略（path export policy / advertisement policy）</b>：Columbia 选择 <b>不</b> 把自己到 CERN 的路径 advertise 给 NYU。NYU 学到不了这条路径，自然就不会路由过来。",
+    "walkthrough": "**BGP 的核心思想：你 advertise 什么，邻居才知道什么**\n\nBGP 不是『所有路由全网广播』，而是 ASes 之间通过 advertisement 互相告诉对方『嘿，我能到 X，路径是 AS-PATH = [...]』。**一个 AS 如果不 advertise 某条路径，邻居就完全不知道这条路存在。**\n\n**为什么 Columbia 不愿意当 NYU 的中转？**\n\n- 经济动机：Columbia 把 CERN 这条专线买/铺出来是为 **自己的研究人员** 用的（LHC 合作）。Columbia 给 NYU 当『免费中转』就是替别人付带宽钱、没好处。\n- 这跟典型的『provider 不愿意 carry transit traffic between other ISPs』策略一模一样（lec19 BGP policy 那一页）。\n\n**具体怎么实现？**\n\n在 BGP 配置里，Columbia 的 gateway router 对 NYU 这个 BGP peer 设置 **export policy**：\n```\nto NYU: do NOT advertise path (CU, CERN)\nto Columbia-internal (iBGP): advertise it\n```\n这样 NYU 的 BGP table 里就根本没有『去 CERN 经 Columbia』这条路径，NYU 的路由器自然会选别的路径（比如 NYU → 商业 ISP → CERN）。\n\n**记忆点：『policy 决定 advertise / accept 哪条路径』**\n\n- **export policy**：我要不要把这条路径告诉这个邻居？\n- **import policy**：邻居告诉我这条路径，我接不接？",
+    "gotcha": "考试看到『policy』『control who can traverse my network』关键词 → 一定是 BGP advertisement policy，不是 OSPF / Dijkstra / cost。OSPF 是 intra-AS（一个 AS 内部），BGP 才管 AS 之间的策略。",
+    "related": ["BGP", "AS-PATH", "policy routing", "intra-AS vs inter-AS"]
+  },
+  {
+    "title": "Distance Vector — 初始表 / 收敛表（4 节点）",
+    "topic": "DV 路由",
+    "question": "4 个节点构成下图拓扑：A-B=2, B-C=3, A-D=5, C-D=3, A-C=6。所有节点运行 Distance Vector 算法。<br>问：写出 A 和 B 的 <b>初始</b> distance vector 表；以及与邻居交换后 <b>收敛</b> 的 distance vector。",
+    "answer": "<b>A 的初始 DV：</b><br>到 B = 2 (via B)，到 C = ∞ via B，到 C = 6 via C，到 D = 5 via D，到 D = ∞ via C/B。<br><br><b>B 的初始 DV：</b><br>到 A = 2 (via A)，到 C = 3 (via C)，到 D = ∞。<br><br><b>A 收敛后：</b><br>B → 2, C → 5 (经 B，2+3), D → 5 (直连)<br><br><b>B 收敛后：</b><br>A → 2, C → 3, D → 6 (经 C，3+3)",
+    "walkthrough": "**DV 的基本套路（Bellman-Ford）**\n\n每个节点维护一张 distance table：\n- 行：目的节点\n- 列：经过哪个邻居\n- 单元格：『经这个邻居到目的的代价』\n\n然后 `Dx(y) = min_v { c(x,v) + Dv(y) }` —— 我到 y 的最短代价 = 在所有邻居 v 里挑一个『直连 v 的代价 + v 估计到 y 的代价』最小的。\n\n**第 0 步（初始）：只看自己直连**\n\nA 的邻居：B(2)、C(6)、D(5)\n```\n      via B   via C   via D\nB     2       ∞       ∞\nC     ∞       6       ∞\nD     ∞       ∞       5\n```\nA 的 DV（每行取 min）：B=2, C=6, D=5。\n\nB 的邻居：A(2)、C(3)\n```\n      via A   via C\nA     2       ∞\nC     ∞       3\nD     ∞       ∞      （B 没直连 D）\n```\nB 的 DV：A=2, C=3, D=∞。\n\n**第 1 步：交换**\n\nA 收到 B 发来的 DV `(A=2, C=3, D=∞)`：\n- A 到 C 经 B 的新估算 = `c(A,B) + DB(C) = 2 + 3 = 5` < 6（旧的经 C 直连）→ 更新到 C = 5 经 B\n- A 到 D 经 B 的新估算 = 2 + ∞ = ∞ → 不变\n\nA 还会收到 C(6, 3, 3) 和 D(5, ∞, 3) 的 DV（具体看图的边），最终：\n- A → C：取 min(6 直, 2+3 经 B, 5+3 经 D) = **5**（经 B）\n- A → D：取 min(5 直, 6+3 经 C, …) = **5**（直连）\n\nB 类似：\n- B → A：直连 2\n- B → C：直连 3\n- B → D：经 C 走 3+3 = **6**\n\n**收敛后的 DV：**\n\n| 节点 | A | B | C | D |\n|---|---|---|---|---|\n| A | — | 2 | **5** (经 B) | **5** (直) |\n| B | 2 | — | 3 | **6** (经 C) |\n\n**几轮才能收敛？**\n\n经验法则（lec21 给的）：在最短路径树里找『跳数最多』的那对节点，最大跳数 − 1 就是收敛轮数（假设同步、无 count-to-infinity、拓扑不变）。",
+    "gotcha": "**不要漏掉每个节点跟自己每个邻居的列**。初始表里『经某个邻居到自己直连不到的目的』必须是 ∞，不能写空。\n\n另一个常见错：把 `min` 算成 `sum`。DV 的公式永远是『所有邻居里 min』。",
+    "related": ["Bellman-Ford", "Distance Vector", "收敛轮数", "count-to-infinity"]
+  },
+  {
+    "title": "隐藏终端 / 暴露终端识别",
+    "topic": "无线 MAC",
+    "question": "4 个节点 A、B、C、E 位置如图（圆圈是各自的 carrier sensing 范围）。<br>当 A 正在向 B 传数据时，谁是 <b>潜在的</b> 隐藏终端 (hidden terminal) 和暴露终端 (exposed terminal)？",
+    "answer": "<b>隐藏终端：C、E</b>；<b>暴露终端：没有</b>。",
+    "walkthrough": "**两个定义一定要分清，考试每年都考。**\n\n### 隐藏终端 (Hidden Terminal)\n场景：节点 X 听不到 sender A，但能干扰到 receiver B。\n- X 因为听不到 A 的载波，会以为信道空闲，开始发\n- X 的信号到 B 处和 A 的信号叠在一起 → **B 处发生碰撞**\n- A 觉得自己发得好好的，结果 B 收不到 → 浪费、重传\n\n判断方法：\n- C 在 A 的 sensing range **外**？✓\n- C 在 B 的 sensing range **内**（会干扰 B）？✓\n→ C 是隐藏终端\n\n同理判断 E。\n\n### 暴露终端 (Exposed Terminal)\n场景：节点 X 听到 sender A 在发，于是 X 抑制自己的传输；但其实 X 想发给一个不会受 A 影响的目的（X 的接收端在 A 的范围外）。\n- 结果是 X 白白延迟了发送，**牺牲了并行机会**\n\n判断方法：\n- X 在 A 的 sensing range **内**（能听到 A）？✓\n- X 的目标 receiver 在 A 的 range **外**（不会被 A 干扰）？✓\n→ X 是暴露终端\n\n这题中：C、E 都听不到 A，所以 **没有暴露终端**。\n\n### 解药：RTS/CTS\n- 隐藏终端：用 CTS 解决（receiver B 发 CTS，所有听到 CTS 的节点都安静）\n- 暴露终端：CSMA/CA 也没完美解，是 802.11 仍然存在的问题之一",
+    "gotcha": "**判断隐藏 / 暴露看的是『谁的范围里 / 谁的范围外』**：\n- 隐藏 = 在 sender 范围**外**，但在 receiver 干扰范围**内**\n- 暴露 = 在 sender 范围**内**，但自己的目标 receiver 在 sender 范围**外**\n\n别把两者弄反。",
+    "related": ["RTS/CTS", "CSMA/CA", "carrier sense", "NAV"]
+  }
+]

@@ -1,0 +1,834 @@
+Quiz: TCP Throughput
+TCP uses Additive Increase and              Sliding Window Size in Bytes
+Multiplicative Decrease (AIMD) to          W
+manage the sliding window during
+congestion avoidance phase, as shown W/2
+in the right figure. The sliding window
+size indicates the # of bytes to send                                    Time
+before waiting for ACK.
+Let’s ignore the slow start phase. What is the average throughput as a
+function of W and RTT?
+Answer: the average sliding window size is (W/2+W)/2 = 3W/4. Thus,
+there are on average 3W/4 bytes sent in one RTT, and the throughput is
+3W/4RTT.
+Network layer: SDN
+§ SDN data plane: generalized forwarding
+ • Match+action, OpenFlow: match+action in action
+
+§ SDN control plane
+
+
+
+
+                                                    Network Layer: 5-3
+Generalized forwarding: match plus action
+Review: each router contains a forwarding table (aka: flow table)
+ § “match plus action” abstraction: match bits in arriving packet, take action
+    • destination-based
+        values in arriving
+        packet header
+                                forwarding: forward based on dest. IP address
+    • generalized forwarding:
+                           0111         1
+                                          2
+                                      3
+       • many header fields can determine action
+       • many action possible: drop/copy/modify/log packet
+
+
+  forwarding table
+  (aka: flow table)
+
+
+
+
+                                                                     Network Layer: 4-4
+Flow table abstraction
+§ flow: defined by header field values (in link-, network-, transport-layer fields)
+§ generalized forwarding: simple packet-handling rules
+  • match: pattern values in packet header fields
+  • actions: for matched packet: drop, forward, modify, matched packet or send
+    matched packet to controller
+  • priority: disambiguate overlapping patterns
+  • counters: #bytes and #packets
+
+               Flow table     Router’s flow table define
+             match action     router’s match+action rules
+
+
+
+
+                                                                             Network Layer: 4-6
+Flow table abstraction
+§ flow: defined by header fields
+§ generalized forwarding: simple packet-handling rules
+  • match: pattern values in packet header fields
+  • actions: for matched packet: drop, forward, modify, matched packet or send
+    matched packet to controller
+  • priority: disambiguate overlapping patterns
+  • counters: #bytes and #packets
+
+              Flow table               src = *.*.*.*, dest=3.4.*.*     forward(2)
+            match action               src=1.2.*.*, dest=*.*.*.*       drop
+                                       src=10.1.2.3, dest=*.*.*.*      send to controller
+                                                        * : wildcard
+      1                        4
+                                   3
+                           2                                                          Network Layer: 4-7
+OpenFlow: flow table entries
+       Match         Action                 Stats
+
+
+                                        Packet + byte counters
+                1. Forward packet to port(s)
+                2. Drop packet
+                3. Modify fields in header(s)
+                4. Encapsulate and forward to controller
+
+     Header fields to match:
+     Ingress   Src   Dst       Eth   VLAN     VLAN                       IP     IP   TCP/UDP     TCP/UDP
+                                                     IP Src   IP Dst                  Src Port   Dst Port
+       Port    MAC   MAC      Type     ID      Pri                     Proto   ToS
+
+
+
+                           Link layer                         Network layer           Transport layer
+                                                                                                            Network Layer: 4-8
+ OpenFlow: examples
+Destination-based forwarding:
+Switch MAC    MAC    Eth   VLAN VLAN      IP          IP         IP     IP    TCP TCP
+ Port  src    dst   type    ID   Pri      Src         Dst       Prot   ToS   s-port d-port Action
+  *      *     *      *     *      *       *         51.6.0.8     *     *      *      *    port6
+IP datagrams destined to IP address 51.6.0.8 should be forwarded to router output port 6
+
+Firewall:
+Switch MAC    MAC    Eth   VLAN VLAN      IP          IP         IP     IP    TCP TCP
+ Port  src    dst   type    ID   Pri      Src         Dst       Prot   ToS   s-port d-port Action
+   *     *     *      *     *      *       *            *         *     *      *     22     drop
+Block (do not forward) all datagrams destined to TCP port 22 (ssh port #)
+
+Switch MAC    MAC    Eth   VLAN VLAN      IP          IP         IP     IP    TCP TCP
+ Port  src    dst   type    ID   Pri      Src         Dst       Prot   ToS   s-port d-port Action
+  *      *     *      *     *      *   128.119.1.1      *         *     *     *      *     drop
+Block (do not forward) all datagrams sent by host 128.119.1.1
+                                                                                                    Network Layer: 4-9
+OpenFlow: examples
+Layer 2 destination-based forwarding:
+Switch MAC    MAC         Eth   VLAN VLAN   IP    IP     IP     IP    TCP TCP
+ Port  src    dst        type    ID   Pri   Src   Dst   Prot   ToS   s-port d-port Action
+             22:A7:23:
+  *     *    11:E1:02     *      *    *     *     *      *     *      *      *     port3
+layer 2 frames with destination MAC address 22:A7:23:11:E1:02 should be forwarded to
+output port 3
+
+
+
+
+                                                                                            Network Layer: 4-10
+OpenFlow abstraction
+§ match+action: abstraction unifies different kinds of devices
+
+    Router                             Firewall
+      • match: longest                   • match: IP addresses and
+        destination IP prefix              TCP/UDP port numbers
+      • action: forward out a            • action: permit or deny
+        link
+   Switch                              NAT
+      • match: destination MAC           • match: IP address and port
+        address                          • action: rewrite address and
+      • action: forward or flood           port
+
+                                                                     Network Layer: 4-11
+OpenFlow example
+                                        Host h6                          Orchestrated tables can create
+                                        10.3.0.6
+                                   1    s3         controller
+                                                                         network-wide behavior, e.g.,:
+                          2
+                                        4
+                                                                          § datagrams from hosts h5 and
+               Host h5
+                               3
+                                                                            h6 should be sent to h3 or h4,
+               10.3.0.5                                                     via s1 and from there to s2
+
+                               1       s1             1         s2
+    Host h1               2                                                 Host h4
+    10.1.0.1                                4         2              4
+                                                                            10.2.0.4
+                               3                           3
+
+
+
+                                                   Host h3
+                              Host h2
+                                                   10.2.0.3
+                              10.1.0.2
+
+
+
+                                                                                                  Network Layer: 4-12
+OpenFlow example
+    match            action
+ IP Src = 10.3.*.*                               Host h6                          Orchestrated tables can create
+                   forward(3)                    10.3.0.6
+ IP Dst = 10.2.*.*
+                                            1    s3         controller
+                                                                                  network-wide behavior, e.g.,:
+                                   2
+                                                 4
+                                                                                   § datagrams from hosts h5 and
+                        Host h5
+                                        3
+                                                                                     h6 should be sent to h3 or h4,
+                        10.3.0.5                                                     via s1 and from there to s2
+
+                                        1       s1             1         s2
+             Host h1               2                                                  Host h4
+             10.1.0.1                                4         2              4
+                                                                                      10.2.0.4
+                                        3                           3
+
+
+
+    match               action                                                match              action
+                                                            Host h3
+                                       Host h2                           ingress port = 2
+ingress port = 1                       10.1.0.2
+                                                            10.2.0.3                       forward(3)
+IP Src = 10.3.*.*   forward(4)                                           IP Dst = 10.2.0.3
+IP Dst = 10.2.*.*                                                        ingress port = 2
+                                                                                           forward(4)
+                                                                         IP Dst = 10.2.0.4
+                                                                                                           Network Layer: 4-13
+Generalized forwarding: summary
+§ “match plus action” abstraction: match bits in arriving packet header(s) in
+  any layers, take action
+    • matching over many fields (link-, network-, transport-layer)
+    • local actions: drop, forward, modify, or send matched packet to
+      controller
+    • “program” network-wide behaviors
+§ simple form of “network programmability”
+    • programmable, per-packet “processing”
+    • historical roots: active networking
+    • today: more generalized programming:
+       P4 (see p4.org).
+                                                                     Network Layer: 4-14
+Network layer: SDN
+§ SDN data plane: generalized forwarding
+ • Match+action, OpenFlow: match+action in action
+
+§ SDN control plane
+
+
+
+
+                                                    Network Layer: 5-15
+Software defined networking (SDN)
+§ Internet network layer: historically implemented via
+  distributed, per-router control approach:
+  • monolithic router contains switching hardware, runs proprietary
+    implementation of Internet standard protocols (IP, RIP, IS-IS, OSPF,
+    BGP) in proprietary router OS (e.g., Cisco IOS)
+  • different “middleboxes” for different network layer functions:
+    firewalls, load balancers, NAT boxes, ..
+§ ~2005: renewed interest in rethinking network control plane
+
+
+                                                                     Network Layer: 5-16
+Per-router control plane
+Individual routing algorithm components in each and every router
+interact in the control plane to computer forwarding tables
+                                                                  4.1       •       OVERVIEW OF NETWORK LAYER   309
+
+
+                                            Routing
+                                           Algorithm
+                                       Routing algorithm                                                              control
+                 Control plane                                                                                         plane
+                 Data plane
+
+                                           Local forwarding
+                                                 table
+                                                                                                                      data
+                                           header    output
+                                                                                                                      plane
+                                            0100       3
+                                            0110       2
+                                            0111       2
+                                            1001       1
+
+
+
+                      Values in arriving
+     values in arriving
+                 packet’s header
+                                                           1
+     packet header                   1101
+
+
+                                                              2
+                                                       3
+                                  0111                                  1
+                                                                                2
+                                                                   3
+
+          Figure 4.2 ♦ Routing algorithms determine values in forward tables
+                                                                                                                                Network Layer: 4-17
+          tables. In this example, a routing algorithm runs in each and every router and both
+          forwarding and routing functions are contained within a router. As we’ll see in Sec-
+          tions 5.3 and 5.4, the routing algorithm function in one router communicates with
+          the routing algorithm function in other routers to compute the values for its forward-
+          ing table. How is this communication performed? By exchanging routing messages
+          containing routing information according to a routing protocol! We’ll cover routing
+          algorithms and protocols in Sections 5.2 through 5.4.
+               The distinct and different purposes of the forwarding and routing functions can
+          be further illustrated by considering the hypothetical (and unrealistic, but technically
+          feasible) case of a network in which all forwarding tables are configured directly by
+          human network operators physically present at the routers. In this case, no routing
+Software-Defined Networking (SDN) control plane
+Remote controller computes, installs forwarding tables in routers
+
+                                                     Remote Controller
+
+
+                                                                                   control
+                                                                                    plane
+
+                                                                                   data
+                                                                                   plane
+
+                                    CA
+
+                                                     CA      CA          CA   CA
+        values in arriving
+        packet header
+
+
+                             0111            1
+                                                 2
+                                         3
+
+                                                                                             Network Layer: 4-18
+Software defined networking (SDN)
+Why a logically centralized control plane?
+ § easier network management: avoid router misconfigurations,
+   greater flexibility of traffic flows
+ § table-based forwarding (recall OpenFlow API) allows
+   “programming” routers
+     • centralized “programming” easier: compute tables centrally and distribute
+     • distributed “programming” more difficult: compute tables as result of
+       distributed algorithm (protocol) implemented in each-and-every router
+ § open (non-proprietary) implementation of control plane
+   • foster innovation: let 1000 flowers bloom
+
+                                                                            Network Layer: 5-19
+          SDN analogy: mainframe to PC revolution
+                                                     Ap Ap Ap Ap Ap Ap Ap Ap Ap Ap
+                                                   App
+                               Specialized           p p p p p p p p p p
+                               Applications                Open Interface
+                               Specialized
+                               Operating                    or           or
+                                 System
+                                                 Windows         Linux        MAC OS
+                               Specialized                 Open Interface
+                                Hardware
+                                                             Microprocessor
+
+                         Vertically integrated           Horizontal
+                         Closed, proprietary          Open interfaces
+                           Slow innovation            Rapid innovation
+                            Small industry             Huge industry
+* Slide courtesy: N. McKeown                                                           Network Layer: 5-20
+    Software defined networking (SDN)
+                                                                                  3. control plane functions
+ 4. programmable          routing   access              …           load
+                                    control                        balance
+                                                                                   external to data-plane
+   control                                                                         switches
+   applications                           Remote Controller
+
+
+                                                                                       control
+                                                                                        plane
+
+                                                                                       data
+                                                                                       plane
+
+                           CA                                                         2. control, data
+                                              CA   CA         CA             CA
+                                                                                        plane separation
+
+
+1: generalized “flow-based”
+  forwarding (e.g., OpenFlow)
+                                                                                                  Network Layer: 5-24
+Software defined networking (SDN)
+                                                    network-control applications
+Data-plane switches:                                                …
+                                                routing
+§ fast, simple, commodity switches                                       load
+                                                          access
+  implementing generalized data-plane                     control       balance
+  forwarding in hardware                                                           control
+                                                                                    plane
+§ flow (forwarding) table computed,                              northbound API
+
+  installed under controller supervision              SDN Controller
+§ API for table-based switch control             (network operating system)
+
+  (e.g., OpenFlow)                                               southbound API
+  • defines what is controllable, what is not
+§ protocol for communicating with                                                  data
+                                                                                   plane
+  controller (e.g., OpenFlow)
+                                                   SDN-controlled switches
+                                                                                           Network Layer: 5-25
+Software defined networking (SDN)
+                                             network-control applications
+SDN controller (network OS):                                 …
+                                         routing
+§ maintain network state                                          load
+                                                   access
+  information                                      control       balance
+
+§ interacts with network control                          northbound API
+                                                                            control
+                                                                             plane
+  applications “above” via
+  northbound API                               SDN Controller
+                                          (network operating system)
+§ interacts with network switches
+  “below” via southbound API                              southbound API
+
+
+§ implemented as distributed system                                         data
+  for performance, scalability, fault-                                      plane
+
+  tolerance, robustness
+                                            SDN-controlled switches
+                                                                                    Network Layer: 5-26
+Software defined networking (SDN)
+                                         network-control applications
+network-control apps:                                    …
+                                     routing
+§ “brains” of control:                         access         load
+  implement control functions                  control       balance
+
+  using lower-level services, API                     northbound API
+                                                                        control
+                                                                         plane
+  provided by SDN controller
+                                           SDN Controller
+§ unbundled: can be provided by       (network operating system)
+  3rd party: distinct from routing
+  vendor, or SDN controller                           southbound API
+
+
+
+                                                                        data
+                                                                        plane
+
+
+                                        SDN-controlled switches
+                                                                                Network Layer: 5-27
+Components of SDN controller
+                                       routing         access         load
+                                                       control       balance
+
+
+interface layer to network           Interface, abstractions for network control apps
+
+control apps: abstractions API           network
+                                          graph
+                                                         RESTful
+                                                          API
+                                                                     …          intent
+
+
+network-wide state                               statistics   …        flow tables
+                                                                                         SDN
+management : state of
+networks links, switches,
+                                   Network-wide distributed, robust state management
+                                                                                         controller
+services: a distributed database     Link-state info     host info   … switch info
+communication: communicate                     OpenFlow       …         SNMP
+between SDN controller and             Communication to/from controlled devices
+controlled switches
+
+                                                                                           Network Layer: 5-28
+OpenFlow protocol
+§ operates between controller, switch     OpenFlow Controller
+§ TCP used to exchange messages
+  • optional encryption
+§ three classes of OpenFlow messages:
+  • controller-to-switch
+  • asynchronous (switch to controller)
+  • symmetric (misc.)
+§ distinct from OpenFlow API
+  • API used to specify generalized
+    forwarding actions
+
+                                                           Network Layer: 5-29
+OpenFlow: controller-to-switch messages
+Key controller-to-switch messages          OpenFlow Controller
+§ features: controller queries switch
+  features, switch replies
+§ configure: controller queries/sets
+  switch configuration parameters
+§ modify-state: add, delete, modify flow
+  entries in the OpenFlow tables
+§ packet-out: controller can send this
+  packet out of specific switch port
+
+
+                                                            Network Layer: 5-30
+OpenFlow: switch-to-controller messages
+Key switch-to-controller messages                      OpenFlow Controller
+§ packet-in: transfer packet (and its
+  control) to controller. See packet-out
+  message from controller
+§ flow-removed: flow table entry deleted
+  at switch
+§ port status: inform controller of a
+  change on a port.
+
+  Fortunately, network operators don’t “program” switches by creating/sending
+  OpenFlow messages directly. Instead use higher-level abstraction at controller
+                                                                             Network Layer: 5-31
+SDN: control/data plane interaction example
+               Dijkstra’s link-state
+                      routing                           1 S1, experiencing link failure uses
+                   4                                      OpenFlow port status message to
+  network
+   graph
+                           RESTful
+                            API
+                                       …       intent     notify controller
+
+  statistics
+               3                 …       flow tables
+                                                        2 SDN controller receives OpenFlow
+                                                           message, updates link status info
+  Link-state info          host info   … switch info
+                       2                                3 Dijkstra’s routing algorithm
+           OpenFlow
+                                …        SNMP
+                                                           application has previously registered
+                                                           to be called when ever link status
+                                                           changes. It is called.
+                       1
+                                                        4 Dijkstra’s routing algorithm
+                                s2                         access network graph info, link
+         s1
+                                        s4                 state info in controller, computes
+                           s3                              new routes
+                                                                                         Network Layer: 5-32
+SDN: control/data plane interaction example
+               Dijkstra’s link-state
+                      routing
+
+                   4                    5
+  network
+   graph
+                           RESTful
+                            API
+                                       …       intent   5 link state routing app interacts
+               3                  …                       with flow-table-computation
+  statistics                             flow tables
+                                                          component in SDN controller,
+  Link-state info          host info   … switch info      which computes new flow tables
+                       2                                  needed
+           OpenFlow
+                                …        SNMP
+                                                        6 controller uses OpenFlow to
+                              6
+                                                          install new tables in switches
+                       1                                  that need updating
+                                s2
+         s1
+                                        s4
+                           s3
+                                                                                        Network Layer: 5-33
+Google ORION SDN control plane
+ORION: Google’s SDN control plane (NSDI’21): control plane for
+Google’s datacenter (Jupiter) and wide area (B4) networks
+ § routing (intradomain, iBGP), traffic            Orion SDN architecture and core apps
+
+   engineering: implemented in applications
+   on top of ORION core
+ § edge-edge flow-based controls (e.g.,
+   CoFlow scheduling) to meet contract SLAs
+ § management: pub-sub distributed
+   microservices in Orion core, OpenFlow for
+   switch signaling/monitoring
+
+          Note: ORION provides intradomain services within Google’s network
+OpenDaylight (ODL) controller
+     Traffic
+   Engineering       Firewalling      Load Balancing       …   Network Orchestrations and Applications
+                                                               Northbound API
+
+       REST/RESTCONF/NETCONF APIs
+  Enhanced                    Basic Network Functions
+  Services
+                          Topology Switch         Stats
+      AAA        …        processing   mgr.       mgr.
+                                   Forwarding      Host
+  …                                rules mgr.     Tracker
+                                                                                             Service Abstraction Layer:
+               config. and
+             operational data               messaging          Service Abstraction           § interconnects internal,
+                  store                                        Layer (SAL)                     external applications
+                                                       …       Southbound API                  and services
+ OpenFlow   NETCONF         SNMP         OVSDB
+
+
+
+
+                                                                                                               Network Layer: 5-35
+Open Network OS (ONOS) controller
+     Traffic
+   Engineering         Firewalling     Load Balancing   …               Network Applications
+                                                                        Northbound API
+                                                                                               § control apps separate
+                                                        northbound
+   REST          API             Intent                 abstractions,                            from controller
+                                                        protocols
+                                                                                               § intent framework: high-
+    hosts               paths           flow rules        topology
+                                                                                                 level specification of
+                                                                                                 service: what rather
+   devices              links           statistics
+                                                         ONOS
+                                                         distributed
+                                                                                                 than how
+                                                         core                                  § considerable emphasis
+                                                                                                 on distributed core:
+ device     link        host         flow packet        southbound
+                                                        abstractions,                            service reliability,
+ OpenFlow              Netconf          OVSDB           protocols                                replication performance
+                                                                          Southbound API         scaling
+
+
+                                                                                                                 Network Layer: 5-36
+SDN: selected challenges
+§ hardening the control plane: dependable, reliable, performance-
+  scalable, secure distributed system
+  • robustness to failures: leverage strong theory of reliable distributed
+    system for control plane
+  • dependability, security: “baked in” from day one?
+§ networks, protocols meeting mission-specific requirements
+  • e.g., real-time, ultra-reliable, ultra-secure
+§ Internet-scaling: beyond a single AS
+§ SDN critical in 5G cellular networks
+
+
+                                                                             Network Layer: 5-37
+   CSEE4199: COMPUTER NETWORKS
+
+
+               DATA LINK LAYER
+
+
+
+Apr. 2, 2026   Xia Zhou
+    Link Layer
+2
+
+
+
+
+     L7   Application   HTTP            FTP          DASH     DNS
+
+
+
+     L4   Transport               TCP                 UDP
+
+
+
+     L3    Network                            IP
+
+
+     L2    Data link              Ethernet         802.11     PPP
+
+
+     L1     Physical    optical         copper        radio    PSTN
+    From a Network to a Single Link
+3
+
+
+    ¨   Each hop may use different link technology
+        ¤ Ethernet, 802.11 wireless LAN, …
+
+
+
+    ¨   Link layer protocol for each hop
+        ¤ Hide the detail of link technology from upper layers
+    Data Link Layer
+4
+
+
+    ¨   Implemented in network interface card (adapter)
+        ¤ Ethernet card, 802.11 card, PC card
+
+
+                   Datagram
+                              Link Layer Protocol
+
+                    Frame                            Frame
+                   Adapter                          Adapter
+          Sender                                              Receiver
+    • Encapsulate datagram                   • Look for errors, flow
+      in a frame                               control
+    • Add error checking bits,               • Extract datagram and
+      flow control                             pass it to upper layer
+    Data Link Layer Services
+5
+
+
+    ¨   Framing
+        ¤ Add header and trailer, encapsulate packet into frame
+
+
+    ¨   Error detection and correction
+        ¤ Errors caused by signal attenuation, noise
+
+
+
+    ¨   Medium access control
+        ¤ Who can access the medium and when
+
+
+    ¨   Reliable delivery
+        ¤ Local retransmission upon frame losses
+        ¤ Seldom used on low-bit error links
+     Error Detection
+10
+
+
+     ¨   Errors are unavoidable
+         ¤ Electrical interference, thermal noise…
+
+
+
+     ¨   Solution: transmit extra (redundant) information
+         ¤ A tradeoff between accuracy and overhead
+
+
+
+     ¨   Detection techniques
+         ¤ Parity checking
+
+         ¤ Checksum
+
+         ¤ Cyclic redundancy check (CRC)
+     Error Detection: Parity Check
+11
+
+
+     ¨   Add an extra bit to a 7-bit code
+
+     ¨   Odd parity: ensure an odd number of 1s
+         ¤ e.g., 0101011 à 01010111
+
+
+
+     ¨   Even parity: ensure an even number of 1s
+         ¤ e.g., 0101011 à 01010110
+
+
+
+     ¨   Fail to deal with multiple bit errors
+     Error Detection: Parity Check
+12
+
+
+     ¨   two-dimensional parity: detect and correct
+         single bit errors      row parity
+                               d1,1     ...   d1,j   d1,j+1
+                               d2,1     ...   d2,j   d2,j+1
+                                 ...    ...    ...       ...
+                               di,1     ...   di,j   di,j+1
+                     column
+                      parity   di+1,1   ...   di+1,j di+1,j+1
+
+            Assume even parity
+              no errors: 1 0 1 0 1 1        detected           10101 1
+                                                  and          10110 0   parity
+                         11110 0          correctable
+                                                                         error
+                         01110 1            single-bit         01110 1
+                         10101 0                error:         10101 0
+                                                               parity
+                                                               error
+     Error Detection: Checksum
+13
+
+
+     ¨   Treat data as a sequence of 16-bit words
+
+     ¨   Compute a sum of all the words, with no carries
+
+     ¨   Transmit the sum along with the packet
+
+     ¨   Similar as TCP checksum
+     Error Detection: Cyclic Redundancy
+14
+     Check (CRC)
+     ¨   Key idea: divide the information by a number, and take
+         the remainder as the check value
+         ¤ e.g., 1000 / 6 = 166, remainder 4
+         ¤ If any errors lead to 996, remainder won’t be the same
+
+
+
+     ¨   CRC: a bit more complicated than that
+         ¤ Generator G: (r+1)-bit pattern
+           known by sender and receiver                             r CRC bits
+         ¤ Choose r additional bits to append to      d data bits
+           data D, so that the resulting numbers is      D            R
+           divisible by G using modulo-2
+         ¤ CRC code is the r additional bits
+      Error Detection: CRC
+15
+
+
+
+     Sender wants to compute R such G
+                                               1 0 1 0 1 1
+      that:                      1 0 0 1 1 0 1 1 1 0 0 0 0
+         . r
+       D 2 XOR R = nG                               1 0 0 1
+                                                        1 0 1       D * 2r
+     ... or equivalently (XOR R both sides):            0 0 0
+        D . 2r = nG XOR R                               1 0 1 0
+                                                        1 0 0 1
+      ... which says:                                       1 1 0
+        if we divide D . 2r by G, we want                   0 0 0
+        remainder R to satisfy:                             1 1 0 0
+                                                            1 0 0 1
+                                                              1 0 1 0
+         R = remainder [ D.2r
+                              ]     algorithm for             1 0 0 1
+                          G         computing R                 0 1 1
+                                                                  R
+     Quiz
+16
+
+
+     ¨   Consider a network topology with three nodes shown
+         in the right. All nodes are running the distance vector
+         routing algorithm to find the shortest path to other
+         nodes.
+
+         How many rounds does it take for the algorithm to
+         converge? Feel free to draw the distance vector
+         tables at each round.                      9
+                                                   A       D
+                                                  4            1
+                                                   B       C
+                                                       3
+

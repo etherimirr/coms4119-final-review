@@ -1,0 +1,791 @@
+Explicit congestion notification (ECN)
+TCP deployments often implement network-assisted congestion control:
+ § two bits in IP header (ToS field) marked by network router to indicate congestion
+    • policy to determine marking chosen by network operator
+ § congestion indication carried to destination
+ § destination sets ECN-Echo (ECE) bit on ACK segment to notify sender of congestion
+ § involves both IP (IP header ECN bit marking) and TCP (TCP header C,E bit marking)
+                   source                     TCP ACK segment
+                                                                destination
+                 application                                    application
+                                      ECE=1
+                    TCP                                            TCP
+                  network                                        network
+                    link                                           link
+                  physical                                       physical
+
+                         ECN=10       ECN=11
+
+
+              IP datagram
+                                                                              Transport Layer: 3-165
+TCP fairness
+Fairness goal: if K TCP sessions share same bottleneck link of
+bandwidth R, each should have average rate of R/K
+         TCP connection 1
+
+
+
+
+                            bottleneck
+         TCP connection 2     router
+                            capacity R
+
+
+
+                                                           Transport Layer: 3-166
+Q: is TCP Fair?
+ Example: two competing TCP sessions:
+  § additive increase gives slope of 1, as throughout increases
+  § multiplicative decrease decreases throughput proportionally
+
+       R                                 equal bandwidth share
+                                                                                            Is TCP fair?
+
+
+
+
+  Connection 2 throughput
+                                                                                           A: Yes, under idealized
+                                              loss: decrease window by factor of 2         assumptions:
+                                              congestion avoidance: additive increase      § same RTT
+                                                   loss: decrease window by factor of 2
+                                                 congestion avoidance: additive increase   § fixed number of sessions
+                                                                                             only in congestion
+                                                                                             avoidance
+
+                            Connection 1 throughput   R
+                                                                                                            Transport Layer: 3-167
+Fairness: must all network apps be “fair”?
+Fairness and UDP                         Fairness, parallel TCP
+§ multimedia apps often do not           connections
+  use TCP                                § application can open multiple
+  • do not want rate throttled by
+    congestion control                     parallel connections between two
+                                           hosts
+§ instead use UDP:
+  • send audio/video at constant rate,   § web browsers do this , e.g., link of
+    tolerate packet loss                   rate R with 9 existing connections:
+§ there is no “Internet police”            • new app asks for 1 TCP, gets rate R/10
+  policing use of congestion               • new app asks for 11 TCPs, gets R/2
+  control
+
+
+                                                                          Transport Layer: 3-168
+Bottom line: Active Research Topic
+
+
+
+
+                A list of papers on TCP:
+         http://cpham.perso.univ-pau.fr/TCP/
+                                               Transport Layer: 3-169
+Bottom line: An Active Research Topic
+§ TCP ex Machina: Computer-Generated Congestion Control. SIGCOMM 2013.
+  • Can computer configure TCP parameters automatically?
+§ Recursively Cautious Congestion Control. NSDI 2014.
+§ PCC: Re-architecting Congestion Control for Consistent High Performance. NSDI 2015.
+§ Principles for Internet Congestion Management. SIGCOMM 2024.
+§ CCAnalyzer: An Efficient and Nearly-Passive Congestion Control Classifier. SIGCOMM
+  2024.
+§ CClinguist: An Expert-Free Framework for Future-Compatible Congestion Control
+  Algorithm Identification. SIGCOMM 2025.
+§ LeoCC: Making Internet Congestion Control Robust to LEO Satellite Dynamics.
+  SIGCOMM 2025.
+§ … and maybe your future paper J
+
+                                                                                 Transport Layer: 3-170
+CSEE4119: Computer Networks
+          Network Layer – Data Plane
+                            Xia Zhou
+                 Department of Computer Science
+                       Columbia University
+                           Slides credited to J.F Kurose and K.W. Ross and their textbook “Computer Networking: A Top-Down Approach”
+Move on to Network Layer
+
+L7   Application   HTTP            FTP          DASH     DNS
+
+
+
+L4   Transport               TCP                  UDP
+
+
+L3    Network                            IP
+
+
+L2     Data link          Ethernet            802.11     PPP
+
+
+L1     Physical    optical         copper        radio    PSTN
+
+
+
+                                                                 Network Layer: 4-2
+Network layer: data plane roadmap
+§ Network layer: overview
+  • data plane
+  • control plane
+§ What’s inside a router
+  • input ports, switching, output ports, buffer management, scheduling
+§ IP: the Internet Protocol
+  • datagram format, addressing, network address translation, IPv6
+§ Generalized Forwarding, SDN
+§ Middleboxes
+
+                                                                     Network Layer: 4-3
+Network-layer services and protocols
+§ transport segment from sending                            mobile network
+
+  to receiving host                                                                national or global ISP
+
+  • sender: encapsulates segments into
+    datagrams, passes to link layer       application
+
+  • receiver: delivers segments to         transport
+                                            network
+
+    transport layer protocol                  link
+                                            physical
+                                                                        network            network
+
+§ network layer protocols in every                                        link
+                                                                        physical
+                                                                                             link
+                                                                                           physical
+
+
+  Internet device: hosts, routers                            network
+
+§ routers:                                                     link                  network
+                                                             physical                  link
+                                                                                     physical         network
+                                                                                                                    datacenter
+  • examines header fields in all IP
+                                                                                                        link
+                                                                                                      physical      network
+
+    datagrams passing through it
+                                                                                                          application
+  • moves datagrams from input ports to                                                                    transport
+                                                                                                            network
+                                                        enterprise
+    output ports to transfer datagrams                       network
+                                                                                                              link
+                                                                                                            physical
+
+    along end-end path
+                                                                                                                 Network Layer: 4-4
+Two key network-layer functions
+network-layer functions:           analogy: taking a trip
+§ forwarding: move packets from    § forwarding: process of getting
+  a router’s input link to           through single interchange
+  appropriate router output link   § routing: process of planning trip
+§ routing: determine route taken     from source to destination
+  by packets from source to
+  destination
+   • routing algorithms
+                                     forwarding
+
+                                                  routing
+                                                                  Network Layer: 4-5
+Network layer: data plane, control plane
+Data plane:                        Control plane
+§ local, per-router function       § network-wide logic
+§ determines how datagram          § determines how datagram is
+  arriving on router input port      routed among routers along end-
+  is forwarded to router             end path from source host to
+  output port                        destination host
+  values in arriving               § two control-plane approaches:
+  packet header
+                                      • traditional routing algorithms:
+            0111           1            implemented in routers
+                               2
+                       3              • software-defined networking (SDN):
+                                        implemented in (remote) servers
+
+                                                                    Network Layer: 4-6
+Per-router control plane
+Individual routing algorithm components in each and every
+router interact in the control plane
+
+                              Routing
+                             Algorithm
+                                                     control
+                                                      plane
+
+                                                     data
+                                                     plane
+
+
+
+
+     values in arriving
+     packet header
+                          0111               1
+                                                 2
+                                         3
+
+
+                                                               Network Layer: 4-7
+Software-Defined Networking (SDN) control plane
+Remote controller computes, installs forwarding tables in routers
+                                                     Remote Controller
+
+                                                                                   control
+                                                                                    plane
+
+                                                                                   data
+                                                                                   plane
+
+                                    CA
+                                                     CA      CA          CA   CA
+        values in arriving
+        packet header
+
+
+                             0111            1
+                                                 2
+                                         3
+
+                                                                                             Network Layer: 4-8
+  Network-layer service model
+                                           Quality of Service (QoS) Guarantees ?
+   Network     Service
+Architecture   Model                  Bandwidth         Loss      Order     Timing
+
+    Internet   best effort            none              no        no        no
+
+       ATM     Constant Bit Rate      Constant rate     yes       yes       yes
+             Internet “best effort” service model
+       ATM
+              NoAvailable
+                  guaranteesBit Rate
+                                   on: Guaranteed min no          yes       no
+
+    Internet      i.
+                Intservsuccessful
+                         Guaranteeddatagram
+                                         yes    delivery to
+                                                         yesdestination
+                                                                  yes       yes
+                  ii. 1633
+                (RFC   timing
+                          )      or order of delivery
+    Internet      iii. bandwidth
+                Diffserv  (RFC 2475) available  to end-end
+                                         possible           flow possibly
+                                                         possibly           no
+
+
+
+                                                                                     Network Layer: 4-10
+  Network-layer service model
+                                           Quality of Service (QoS) Guarantees ?
+   Network     Service
+Architecture   Model                 Bandwidth          Loss      Order     Timing
+
+    Internet   best effort           none               no        no        no
+
+       ATM     Constant Bit Rate     Constant rate      yes       yes       yes
+
+       ATM     Available Bit Rate    Guaranteed min no            yes       no
+
+    Internet   Intserv Guaranteed    yes                yes       yes       yes
+               (RFC 1633)
+
+    Internet   Diffserv (RFC 2475)   possible           possibly possibly   no
+
+
+
+                                                                                     Network Layer: 4-11
+Reflections on best-effort service:
+§ simplicity of mechanism has allowed Internet to be widely deployed
+  adopted
+
+§ Why packet-switching?
+  • No bandwidth waste upon bursty traffic
+  • Allow multiplexing over the same set of links
+
+§ Why best-effort?
+  • Simpler (no bandwidth reservation)
+  • Easier to survive failures
+  It’s hard to argue with success of best-effort service model
+                                                                 Network Layer: 4-12
+Network layer: data plane roadmap
+§ Network layer: overview
+  • data plane
+  • control plane
+§ What’s inside a router
+  • input ports, switching, output ports, buffer management, scheduling
+§ IP: the Internet Protocol
+  • datagram format, addressing, network address translation, IPv6
+§ Generalized Forwarding, SDN
+§ Middleboxes
+
+                                                                     Network Layer: 4-13
+Router architecture overview
+high-level view of generic router architecture:
+                                                             routing, management
+                             routing                       control plane (software)
+                            processor                       operates in millisecond
+                                                                        time frame
+                                                               forwarding data plane
+                                                                 (hardware) operates
+                                                                      in nanosecond
+                                                                           timeframe
+                            high-speed
+                             switching
+                               fabric
+
+
+
+       router input ports                router output ports
+
+                                                                                       Network Layer: 4-14
+Router architecture overview
+analogy view of generic router architecture:
+                                                       routing, management
+                           Station                   control plane (software)
+                           manager                    operates in millisecond
+                                                                  time frame
+                                                      forwarding data plane
+                                                        (hardware) operates
+                                                             in nanosecond
+                                                                  timeframe
+
+
+
+
+                           roundabout
+
+          entry stations                exit roads
+
+                                                                                Network Layer: 4-15
+    Input port functions
+                                                lookup,
+                                     link
+                                    layer     forwarding
+                        line                                 switch
+                    termination   protocol                   fabric
+                                  (receive)
+                                              queueing
+                                                             Datagram
+     physical layer:
+bit-level reception
+                             decentralized switching:
+          link layer:
+     e.g., Ethernet          § using header field values, lookup output port using
+        (chapter 6)            forwarding table in input port memory (“match plus action”)
+                             § goal: complete input port processing at ‘line speed’
+            Frame            § input port queuing: if datagrams arrive faster than forwarding
+                               rate into switch fabric
+                                                                                      Network Layer: 4-16
+    Input port functions
+                                                lookup,
+                                     link
+                                    layer     forwarding
+                        line                                     switch
+                    termination   protocol                       fabric
+                                  (receive)
+                                               queueing
+
+     physical layer:
+bit-level reception
+                             decentralized switching:
+          link layer:
+     e.g., Ethernet          § using header field values, lookup output port using
+        (chapter 6)            forwarding table in input port memory (“match plus action”)
+                             § destination-based forwarding: forward based only on
+                               destination IP address (traditional)
+                             § generalized forwarding: forward based on any set of header
+                               field values                                          Network Layer: 4-17
+Destination-based forwarding
+
+
+
+                                                            3
+
+
+
+
+ Q: but what happens if ranges don’t divide up so nicely?
+                                                                Network Layer: 4-18
+Longest prefix matching
+  longest prefix match
+  when looking for forwarding table entry for given
+  destination address, use longest address prefix that
+  matches destination address.
+
+            Destination Address Range                     Link interface
+
+            11001000    00010111    00010***   ********   0
+
+            11001000    00010111    00011000   ********   1
+
+            11001000    00010111    00011***   ********   2
+
+            otherwise                                     3
+
+            11001000    00010111    00010110   10100001   which interface?
+examples:
+            11001000    00010111    00011000   10101010   which interface?
+                                                                             Network Layer: 4-19
+Longest prefix matching
+  longest prefix match
+  when looking for forwarding table entry for given
+  destination address, use longest address prefix that
+  matches destination address.
+
+            Destination Address Range                     Link interface
+
+            11001000    00010111    00010***   ********   0
+
+            11001000    00010111    00011000   ********   1
+
+            11001000    match!
+                        00010111    00011***   ********   2
+
+            otherwise                                     3
+
+            11001000    00010111    00010110   10100001   which interface?
+examples:
+            11001000    00010111    00011000   10101010   which interface?
+                                                                             Network Layer: 4-20
+Longest prefix matching
+  longest prefix match
+  when looking for forwarding table entry for given
+  destination address, use longest address prefix that
+  matches destination address.
+
+            Destination Address Range                     Link interface
+
+            11001000    00010111    00010***   ********   0
+
+            11001000    00010111    00011000   ********   1
+
+            11001000    00010111    00011***   ********   2
+
+            otherwise                                     3
+                        match!
+            11001000    00010111    00010110   10100001   which interface?
+examples:
+            11001000    00010111    00011000   10101010   which interface?
+                                                                             Network Layer: 4-21
+Longest prefix matching
+  longest prefix match
+  when looking for forwarding table entry for given
+  destination address, use longest address prefix that
+  matches destination address.
+
+            Destination Address Range                     Link interface
+
+            11001000    00010111    00010***   ********   0
+
+            11001000    00010111    00011000   ********   1
+
+            11001000    00010111    00011***   ********   2
+
+            otherwise                                     3
+                        match!
+            11001000    00010111    00010110   10100001   which interface?
+examples:
+            11001000    00010111    00011000   10101010   which interface?
+                                                                             Network Layer: 4-22
+Longest prefix matching
+§ we’ll see why longest prefix matching is used shortly, when
+  we study addressing
+§ longest prefix matching: often performed using ternary
+  content addressable memories (TCAMs)
+  • content addressable: present address to TCAM: retrieve address in
+    one clock cycle, regardless of table size
+  • Cisco Catalyst: ~1M routing table entries in TCAM
+
+
+
+
+                                                                 Network Layer: 4-23
+Switching fabrics
+§ transfer packet from input link to appropriate output link
+§ switching rate: rate at which packets can be transfer from
+  inputs to outputs
+  • often measured as multiple of input/output line rate
+  • N inputs: switching rate N times line rate desirable
+
+              R                 (rate: NR,            R
+                                 ideally)
+
+         N input ports   ...   high-speed
+                                switching    ...
+                                              N output ports
+                                  fabric
+
+              R                                       R
+
+
+                                                               Network Layer: 4-24
+Switching fabrics
+§ transfer packet from input link to appropriate output link
+§ switching rate: rate at which packets can be transfer from
+  inputs to outputs
+  • often measured as multiple of input/output line rate
+  • N inputs: switching rate N times line rate desirable
+§ three major types of switching fabrics:
+
+        memory
+
+
+
+
+        memory                       bus          interconnection
+                                                  network
+                                                                    Network Layer: 4-25
+Switching via memory
+first generation routers:
+§ traditional computers with switching under direct control of CPU
+§ packet copied to system’s memory
+§ speed limited by memory bandwidth (2 bus crossings per datagram)
+
+                input                    output
+                 port       memory         port
+                (e.g.,                    (e.g.,
+              Ethernet)                 Ethernet)
+
+
+                                                    system bus
+
+
+
+                                                                 Network Layer: 4-26
+Switching via a bus
+§datagram from input port memory to output port memory
+ via a shared bus
+§bus contention: switching speed limited by bus bandwidth
+§32 Gbps bus, Cisco 5600: sufficient speed for access routers
+
+
+
+
+                                                           Network Layer: 4-27
+Switching via interconnection network
+§ Crossbar, Clos networks, other
+  interconnection nets initially
+  developed to connect processors in
+  multiprocessor
+§ multistage switch: nxn switch from                        3x3 crossbar
+  multiple stages of smaller switches
+§ exploiting parallelism:
+  • fragment datagram into fixed length cells on
+    entry
+  • switch cells through the fabric, reassemble
+    datagram at exit                                     8x8 multistage switch
+                                                   built from smaller-sized switches
+                                                                              Network Layer: 4-28
+Switching via interconnection network
+§ scaling, using multiple switching “planes” in parallel:
+  § speedup, scaleup via parallelism
+
+§ Cisco CRS router:                                               fabric plane 0
+  § basic unit: 8                                                fabric plane 1
+                                                                fabric plane 2
+    switching planes                     . . .. . .           fabric plane 3
+                                                                                 . . .. . .
+                                                  . . .. . .                              . . .. . .
+                                                            fabric plane 4
+  § each plane: 3-stage                                    fabric plane 5
+
+    interconnection                                        . . .. . .                              . . .. . .
+                                                          fabric plane 6
+                                                         fabric plane 7
+    network                                                         . . .. . .                              . . .. . .
+
+  § up to 100’s Tbps
+    switching capacity
+
+                                                                                                                         Network Layer: 4-29
+Input port queuing
+§ If switch fabric slower than input ports combined -> queueing may
+  occur at input queues
+   • queueing delay and loss due to input buffer overflow!
+§ Head-of-the-Line (HOL) blocking: queued datagram at front of queue
+  prevents others in queue from moving forward
+
+
+
+                      switch                              switch
+                      fabric                              fabric
+
+
+
+       output port contention: only one red      one packet time later: green
+      datagram can be transferred. lower red   packet experiences HOL blocking
+                packet is blocked
+                                                                                 Network Layer: 4-30
+Output port queuing
+                datagram
+    switch        buffer      link
+                             layer        line
+     fabric                protocol   termination
+(rate: NR)      queueing    (send)                  R
+
+
+§ Buffering required when datagrams
+  arrive from fabric faster than link                   Datagrams can be lost
+  transmission rate. Drop policy: which                 due to congestion, lack of
+  datagrams to drop if no free buffers?
+                                                        buffers
+§ Scheduling discipline chooses                         Priority scheduling – who
+  among queued datagrams for                            gets best performance,
+  transmission                                          network neutrality
+                                                                          Network Layer: 4-31
+Output port queuing
+
+
+                     switch                     switch
+                     fabric                     fabric
+
+
+
+
+               at t, packets more        one packet time later
+              from input to output
+
+§ buffering when arrival rate via switch exceeds output line speed
+§ queueing (delay) and loss due to output port buffer overflow!
+
+
+                                                                     Network Layer: 4-32
+    Buffer Management
+                                                                 buffer management:
+switch
+            datagram
+             buffer                 link
+                                                                 § drop: which packet to add,
+fabric                             layer          line       R    drop when buffers are full
+                                 protocol      termination
+            queueing              (send)                           • tail drop: drop arriving
+            scheduling                                               packet
+                                                                   • priority: drop/remove on
+                                                                     priority basis
+
+     Abstraction: queue                                          § marking: which packets to
+                                                                  mark to signal congestion
+                                      R               packet
+                                                    departures
+                                                                  (ECN, RED)
+     packet
+     arrivals      queue              link
+                (waiting area)      (server)
+
+                                                                                           Network Layer: 4-34
+Packet Scheduling: FCFS
+packet scheduling: deciding                         FCFS: packets transmitted in
+which packet to send next on                         order of arrival to output
+link                                                 port
+   • first come, first served
+   • priority                                        § also known as: First-in-first-
+   • round robin                                       out (FIFO)
+   • weighted fair queueing                          § real world examples?
+
+Abstraction: queue
+                              R          packet
+                                       departures
+packet
+arrivals      queue           link
+           (waiting area)   (server)
+
+                                                                                Network Layer: 4-35
+Scheduling policies: priority
+Priority scheduling:                            high priority queue
+
+
+ § arriving traffic classified,
+                                  arrivals
+
+
+   queued by class                       classify                               link       departures
+
+   • any header fields can be                       low priority queue
+
+     used for classification                   2
+§ send packet from highest        arrivals
+                                              1 3               4                  5
+
+  priority queue that has           packet
+  buffered packets                    in
+                                    service
+                                                1       3       2       4              5
+
+   • FCFS within priority class    departures
+                                                    1       3       2       4              5
+
+
+                                                                                               Network Layer: 4-36
+Scheduling policies: round robin
+Round Robin (RR) scheduling:
+ §arriving traffic classified,
+  queued by class
+  • any header fields can be
+    used for classification
+                                             R
+§server cyclically, repeatedly
+ scans class queues,             classify   link departures
+                                 arrivals
+ sending one complete
+ packet from each class (if
+ available) in turn
+                                                 Network Layer: 4-37
+Scheduling policies: weighted fair queueing
+
+Weighted Fair Queuing (WFQ):
+§ generalized Round Robin
+§ each class, i, has weight, wi,              w1
+  and gets weighted amount
+  of service in each cycle:                   w2    R
+            wi
+                                   classify        link departures
+           Sjwj                    arrivals   w3
+
+§ minimum bandwidth
+  guarantee (per-traffic-class)
+                                                        Network Layer: 4-38
+Sidebar: Network Neutrality
+What is network neutrality?
+§ technical: how an ISP should share/allocation its resources
+   • packet scheduling, buffer management are the mechanisms
+§ social, economic principles
+   • protecting free speech
+   • encouraging innovation, competition
+§ enforced legal rules and policies
+
+  Different countries have different “takes” on network neutrality
+                                                                     Network Layer: 4-39
+Sidebar: Network Neutrality
+2015 US FCC Order on Protecting and Promoting an Open Internet: three
+“clear, bright line” rules:
+§no blocking … “shall not block lawful content, applications, services,
+  or non-harmful devices, subject to reasonable network management.”
+§no throttling … “shall not impair or degrade lawful Internet traffic
+  on the basis of Internet content, application, or service, or use of a
+  non-harmful device, subject to reasonable network management.”
+§no paid prioritization. … “shall not engage in paid prioritization”
+
+                                                                      Network Layer: 4-40
+ISP: telecommunications or information service?
+Is an ISP a “telecommunications service” or an “information
+service” provider?
+  § the answer really matters from a regulatory standpoint!
+
+US Telecommunication Act of 1934 and 1996:
+  • Title II: imposes “common carrier duties” on telecommunications
+    services: reasonable rates, non-discrimination and requires regulation
+  • Title I: applies to information services:
+      • no common carrier duties (not regulated)
+      • but grants FCC authority “… as may be necessary in the execution
+        of its functions”
+                       4
+
+
+
+
+                                                                      Network Layer: 4-41
+

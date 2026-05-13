@@ -1,0 +1,544 @@
+Midterm Grades
+
+
+ • Median: 50
+ • Mean: 49.55
+ • Max: 90
+ • Min: 7
+
+
+
+
+                 Network Layer: 4-42
+Network layer: data plane roadmap
+§ Network layer: overview
+  • data plane
+  • control plane
+§ What’s inside a router
+  • input ports, switching, output ports, buffer management, scheduling
+§ IP: the Internet Protocol
+  • datagram format, addressing, network address translation, IPv6
+§ Generalized Forwarding, SDN
+§ Middleboxes
+
+                                                                     Network Layer: 4-43
+Network Layer: Internet
+host, router network layer functions:
+
+                                     transport layer: TCP, UDP
+
+                                                         IP protocol
+               Path-selection
+                                                         • datagram format
+               algorithms:                               • addressing
+    network    implemented in                            • packet handling conventions
+                                        forwarding
+       layer   • routing protocols
+                 (OSPF, BGP)               table              ICMP protocol
+               • SDN controller                               • error reporting
+                                                              • router “signaling”
+
+                                            link layer
+                                           physical layer
+
+                                                                                         Network Layer: 4-44
+      IP Datagram format
+                                                          32 bits
+          IP protocol version number                type of                          total datagram
+                                          ver head.                    length        length (bytes)
+                header length(bytes)           len service
+                                                                         fragment    fragmentation/
+                     “type” of service:     16-bit identifier   flgs
+                      § diffserv (0:5)                                      offset   reassembly
+                                          time to     upper             header
+                      § ECN (6:7)                                                    header checksum
+                                            live       layer           checksum
+           TTL: remaining max hops                  source IP address                32-bit source IP address
+           (decremented at each router)
+                                                                                      Maximum length: 64K bytes
+                                                  destination IP address             32-bit destination IP address
+upper layer protocol (e.g., TCP or UDP)                                               Typically: 1500 bytes or less
+                                                      options (if any)               e.g., timestamp, record
+          overhead                                                                   route taken
+          § 20 bytes of TCP                           payload data
+          § 20 bytes of IP                           (variable length,
+          § = 40 bytes + app                         typically a TCP
+            layer overhead for                      or UDP segment)
+            TCP+IP
+                                                                                                        Network Layer: 4-45
+IP addressing: introduction
+                                                   223.1.1.1
+
+§ IP address: 32-bit identifier                                                          223.1.2.1
+  associated with each host or         223.1.1.2
+  router interface                                               223.1.1.4        223.1.2.9
+
+
+
+§ interface: connection between                     223.1.1.3
+                                                                        223.1.3.27
+
+  host/router and physical link                                                           223.1.2.2
+
+
+ • router’s typically have multiple
+   interfaces                                                         223.1.3.1        223.1.3.2
+
+ • host typically has one or two
+   interfaces (e.g., wired Ethernet,
+   wireless 802.11)                        dotted-decimal IP address notation:
+                                           223.1.1.1 = 11011111 00000001 00000001 00000001
+
+                                                                223          1            1                  1
+                                                                                                   Network Layer: 4-46
+IP addressing: introduction
+                                                   223.1.1.1
+
+§ IP address: 32-bit identifier                                                          223.1.2.1
+  associated with each host or         223.1.1.2
+  router interface                                               223.1.1.4        223.1.2.9
+
+
+
+§ interface: connection between                     223.1.1.3
+                                                                        223.1.3.27
+
+  host/router and physical link                                                           223.1.2.2
+
+
+ • router’s typically have multiple
+   interfaces                                                         223.1.3.1        223.1.3.2
+
+ • host typically has one or two
+   interfaces (e.g., wired Ethernet,
+   wireless 802.11)                        dotted-decimal IP address notation:
+                                           223.1.1.1 = 11011111 00000001 00000001 00000001
+
+                                                                223          1            1                  1
+                                                                                                   Network Layer: 4-47
+IP addressing: introduction
+                                                        223.1.1.1
+
+
+Q: how are interfaces                                                                       223.1.2.1
+   actually connected?                      223.1.1.2
+
+A: we’ll learn about        A: wired
+                                                                     223.1.1.4       223.1.2.9
+
+
+   that in chapters 6, 7    Ethernet interfaces
+                            connected by                 223.1.1.3
+                                                                            223.1.3.27
+                                                                                             223.1.2.2
+                            Ethernet switches
+
+
+                                                                         223.1.3.1        223.1.3.2
+   For now: don’t need to worry
+   about how one interface is
+   connected to another (with no
+   intervening router)                                       A: wireless WiFi interfaces
+                                                             connected by WiFi base station
+
+                                                                                                      Network Layer: 4-48
+Subnets
+                                                  223.1.1.1
+
+
+§ What’s a subnet ?                                                                   223.1.2.1
+
+  • device interfaces that can        223.1.1.2
+                                                               223.1.1.4       223.1.2.9
+    physically reach each other
+    without passing through an                     223.1.1.3
+                                                                      223.1.3.27
+    intervening router                                                                 223.1.2.2
+
+
+
+§ IP addresses have structure:
+  • subnet part: devices in same subnet                            223.1.3.1        223.1.3.2
+
+
+    have common high order bits
+  • host part: remaining low order bits                  network consisting of 3 subnets
+
+
+
+                                                                                                Network Layer: 4-49
+Subnets                                          subnet 223.1.1.0/24
+                                                 223.1.1.1                    subnet 223.1.2.0/24
+
+Recipe for defining subnets:                                                         223.1.2.1
+
+
+§detach each interface from its      223.1.1.2
+                                                              223.1.1.4       223.1.2.9
+
+ host or router, creating
+ “islands” of isolated networks                   223.1.1.3
+                                                                     223.1.3.27
+                                                                                      223.1.2.2
+
+
+§each isolated network is
+                                     subnet
+ called a subnet                223.1.3.0/24                      223.1.3.1        223.1.3.2
+
+
+
+
+                                                 subnet mask: /24
+                                   (high-order 24 bits: subnet part of IP address)
+
+                                                                                               Network Layer: 4-50
+Subnets                                                        223.1.1.2
+
+                                                                                       subnet 223.1.1/24
+                                             223.1.1.1
+ § where are the                                                           223.1.1.4
+
+   subnets?                                                223.1.1.3
+
+ § what are the                                223.1.9.2             223.1.7.0
+   /24 subnet          subnet 223.1.9/24
+                                                                                   subnet 223.1.7/24
+
+   addresses?
+                                   223.1.9.1                                     223.1.7.1
+                                                   223.1.8.1       223.1.8.0
+
+           subnet 223.1.2/24           223.1.2.6   subnet 223.1.8/24 223.1.3.27
+                                                                                             subnet 223.1.3/24
+                           223.1.2.1               223.1.2.2         223.1.3.1            223.1.3.2
+
+
+                                                                                                      Network Layer: 4-51
+IP addressing: CIDR
+CIDR: Classless InterDomain Routing (pronounced “cider”)
+  • subnet portion of address of arbitrary length
+  • address format: a.b.c.d/x, where x is # bits in subnet portion
+    of address
+                        subnet              host
+                         part               part
+             11001000 00010111 00010000 00000000
+                          200.23.16.0/23
+
+
+
+                                                            Network Layer: 4-52
+IP addresses: how to get one?
+That’s actually two questions:
+ 1. Q: How does a host get IP address within its network (host part of
+    address)?
+ 2. Q: How does a network get IP address for itself (network part of
+    address)
+
+ How does host get IP address?
+ § hard-coded by sysadmin in config file (e.g., /etc/rc.config in UNIX)
+ § DHCP: Dynamic Host Configuration Protocol: dynamically get address
+   from as server
+    • “plug-and-play”
+                                                                 Network Layer: 4-53
+DHCP: Dynamic Host Configuration Protocol
+goal: host dynamically obtains IP address from network server when it
+ “joins” network
+  § can renew its lease on address in use
+  § allows reuse of addresses (only hold address while connected/on)
+  § support for mobile users who join/leave network
+
+DHCP overview:
+  § host broadcasts DHCP discover msg [optional]
+  § DHCP server responds with DHCP offer msg [optional]
+  § host requests IP address: DHCP request msg
+  § DHCP server sends address: DHCP ack msg
+                                                                 Network Layer: 4-54
+DHCP client-server scenario
+                                                            Typically, DHCP server will be co-located
+                                       DHCP server          in router, serving all subnets to which
+              223.1.1.1
+                                                  223.1.2.1
+                                                            router is attached
+
+                                          223.1.2.5
+  223.1.1.2
+                           223.1.1.4       223.1.2.9
+
+
+
+               223.1.1.3
+                                   223.1.3.27                      arriving DHCP client needs
+                                                       223.1.2.2   address in this network
+
+                                   223.1.3.1    223.1.3.2
+
+
+
+
+                                                                                            Network Layer: 4-55
+DHCP client-server scenario
+       DHCP server: 223.1.2.5                      DHCP discover                       Arriving client
+                                                            src : 0.0.0.0, 68
+                                                      Broadcast: is
+                                                      dest.:             there a
+                                                             255.255.255.255,67
+                                                     DHCPyiaddr:
+                                                             server out
+                                                                      0.0.0.0there?
+                                                         transaction ID: 654
+
+                                                       DHCP offer
+                                                             src: 223.1.2.5, 67
+                                                        Broadcast:
+                                                        dest:           I’m a 68
+                                                               255.255.255.255, DHCP
+                                                         server!
+                                                              yiaddr:Here’s   an IP
+                                                                      223.1.2.4
+                                                           transaction ID: 654
+                                                         address      you can use
+                                                            lifetime: 3600 secs
+                                                                                          The two steps above can
+                                DHCP request                                              be skipped “if a client
+                                            src: 0.0.0.0, 68                              remembers and wishes to
+                                     dest::
+                                   Broadcast:255.255.255.255,
+                                                   OK. I would67                          reuse a previously
+                                           yiaddr: 223.1.2.4
+                                 like to transaction
+                                          use this ID:IP 655
+                                                           address!                       allocated network address”
+                                                                                          [RFC 2131]
+                                         lifetime: 3600 secs
+
+                                                       DHCP ACK
+                                                             src: 223.1.2.5, 67
+                                                        dest: 255.255.255.255, 68
+                                                        Broadcast:      OK. You’ve
+                                                              yiaddr: 223.1.2.4
+                                                         got    that IPID:address!
+                                                            transaction     655
+                                                            lifetime: 3600 secs
+                                                                                                         Network Layer: 4-56
+DHCP: more than IP addresses
+DHCP can return more than just allocated IP address on
+ subnet:
+  § address of first-hop router for client
+  § name and IP address of DNS sever
+  § network mask (indicating network versus host portion of address)
+
+
+
+
+                                                                Network Layer: 4-57
+DHCP: example
+  DHCP      DHCP                           § Connecting laptop will use DHCP
+            UDP
+                                             to get IP address, address of first-
+  DHCP
+  DHCP        IP
+  DHCP       Eth                             hop router, address of DNS server.
+             Phy
+                                           § DHCP REQUEST message encapsulated
+         DHCP
+
+
+                                             in UDP, encapsulated in IP, encapsulated
+     DHCP       DHCP          168.1.1.1      in Ethernet
+     DHCP       UDP
+     DHCP         IP
+     DHCP        Eth   router with DHCP
+                                           § Ethernet frame broadcast (dest:
+                 Phy   server built into     FFFFFFFFFFFF) on LAN, received at router
+                       router                running DHCP server
+
+                                           § Ethernet de-mux’ed to IP de-mux’ed,
+                                             UDP de-mux’ed to DHCP
+                                                                                 Network Layer: 4-58
+DHCP: example
+  DHCP      DHCP                           § DHCP server formulates DHCP ACK
+  DHCP      UDP                              containing client’s IP address, IP
+  DHCP        IP                             address of first-hop router for client,
+             Eth
+                                             name & IP address of DNS server
+  DHCP
+
+             Phy
+
+
+                                           § encapsulated DHCP server reply
+     DHCP       DHCP                         forwarded to client, de-muxing up to
+                UDP
+     DHCP
+     DHCP         IP
+                                             DHCP at client
+     DHCP        Eth   router with DHCP
+         DHCP
+                 Phy   server built into   § client now knows its IP address, name
+                       router                and IP address of DNS server, IP
+                                             address of its first-hop router
+
+
+                                                                                 Network Layer: 4-59
+IP addresses: how to get one?
+Q: how does network get subnet part of IP address?
+A: gets allocated portion of its provider ISP’s address space
+  ISP's block      11001000 00010111 00010000 00000000   200.23.16.0/20
+
+
+
+  If ISP allocates out its address space in 8 blocks:
+  Organization 0   11001000 00010111 00010000 00000000   200.23.16.0/23
+  Organization 1   11001000 00010111 00010010 00000000   200.23.18.0/23
+  Organization 2   11001000 00010111 00010100 00000000   200.23.20.0/23
+   ...                       …..                  ….         ….
+  Organization 7   11001000 00010111 00011110 00000000   200.23.30.0/23
+
+                                                                          Network Layer: 4-60
+Hierarchical addressing: route aggregation
+hierarchical addressing allows efficient advertisement of
+routing information:
+      Organization 0
+          200.23.16.0/23
+      Organization 1
+                                                  “Send me anything
+          200.23.18.0/23                          with addresses
+      Organization 2                              beginning
+          200.23.20.0/23   .   Fly-By-Night-ISP   200.23.16.0/20”
+                           .
+                       .   .                                           Internet
+                       .
+      Organization 7   .
+         200.23.30.0/23
+                                                   “Send me anything
+                                 ISPs-R-Us
+                                                   with addresses
+                                                   beginning
+                                                   199.31.0.0/16”
+
+
+                                                                                  Network Layer: 4-61
+IP addressing: last words ...
+Q: how does an ISP get block of          Q: are there enough 32-bit IP
+ addresses?                                addresses?
+A: ICANN: Internet Corporation for       § ICANN allocated last chunk of
+ Assigned Names and Numbers                IPv4 addresses to RRs in 2011
+ http://www.icann.org/                   § NAT (next) helps IPv4 address
+ • allocates IP addresses, through 5       space exhaustion
+    regional registries (RRs) (who may
+   then allocate to local registries)    § IPv6 has 128-bit address space
+ • manages DNS root zone, including
+   delegation of individual TLD (.com,    "Who the hell knew how much address
+   .edu , …) management                   space we needed?" Vint Cerf (reflecting
+                                          on decision to make IPv4 address 32 bits
+                                          long)
+                                                                           Network Layer: 4-62
+Network layer: “data plane” roadmap
+§ Network layer: overview
+  • data plane
+  • control plane
+§ What’s inside a router
+  • input ports, switching, output ports, buffer management, scheduling
+§ IP: the Internet Protocol
+  • datagram format, addressing
+  • network address translation, IPv6
+§ Generalized Forwarding, SDN
+ • match+action, OpenFlow: match+action in action
+§ Middleboxes                                                      Network Layer: 4-63
+NAT: network address translation
+NAT: all devices in local network share just one IPv4 address as
+far as outside world is concerned
+                          rest of                  local network (e.g., home
+                         Internet                     network) 10.0.0/24
+
+                                                                               10.0.0.1
+                                138.76.29.7    10.0.0.4
+
+                                                                               10.0.0.2
+
+
+                                                                           10.0.0.3
+
+
+
+ all datagrams leaving local network have     datagrams with source or destination in
+same source NAT IP address: 138.76.29.7,      this network have 10.0.0/24 address for
+        but different source port numbers     source, destination (as usual)
+                                                                                          Network Layer: 4-64
+NAT: network address translation
+§ all devices in local network have 32-bit addresses in a “private” IP
+  address space (10/8, 172.16/12, 192.168/16 prefixes) that can only
+  be used in local network
+§ advantages:
+   § just one IP address needed from provider ISP for all devices
+   § can change addresses of host in local network without notifying
+      outside world
+   § can change ISP without changing addresses of devices in local
+      network
+   § security: devices inside local net not directly addressable, visible
+      by outside world
+
+                                                                       Network Layer: 4-65
+NAT: network address translation
+implementation: NAT router must (transparently):
+ § outgoing datagrams: replace (source IP address, port #) of every
+   outgoing datagram to (NAT IP address, new port #)
+    • remote clients/servers will respond using (NAT IP address, new port
+      #) as destination address
+ § remember (in NAT translation table) every (source IP address, port #)
+   to (NAT IP address, new port #) translation pair
+ § incoming datagrams: replace (NAT IP address, new port #) in
+   destination fields of every incoming datagram with corresponding
+   (source IP address, port #) stored in NAT table
+                                                                      Network Layer: 4-66
+ NAT: network address translation
+                                           NAT translation table
+2: NAT router changes                                                                         1: host 10.0.0.1 sends
+                                       WAN side addr    LAN side addr                         datagram to
+datagram source address
+from 10.0.0.1, 3345 to                    138.76.29.7, 5001 10.0.0.1, 3345                    128.119.40.186, 80
+                                            ……                       ……
+138.76.29.7, 5001,
+updates table
+                                                                            S: 10.0.0.1, 3345
+                                                                            D: 128.119.40.186, 80
+                                                                                                     10.0.0.1
+                                                                                          1
+                                   S: 138.76.29.7, 5001
+                            2      D: 128.119.40.186, 80       10.0.0.4                              10.0.0.2
+                                           138.76.29.7            S: 128.119.40.186, 80
+                                                                  D: 10.0.0.1, 3345
+                                                                                              4
+                          S: 128.119.40.186, 80                                                      10.0.0.3
+                          D: 138.76.29.7, 5001       3
+                      3: reply arrives, destination
+                      address: 138.76.29.7, 5001
+
+                                                                                                                 Network Layer: 4-67
+NAT: network address translation
+§ NAT has been controversial:
+  • routers “should” only process up to layer 3
+  • violates end-to-end argument (port # manipulation by network-layer device)
+  • address “shortage” should be solved by IPv6
+  • NAT traversal: what if client wants to connect to server behind NAT?
+§ but NAT is here to stay:
+  • extensively used in home and institutional nets, 4G/5G cellular nets
+
+
+
+                                                                        Network Layer: 4-68
+Quiz
+Suppose a router stores the following IP lookup table:
+1010.xxxx.xxxx.xxxx (/4) --> Port 2
+10xx.xxxx.xxxx.xxxx (/2) --> Port 1
+1010.11xx.xxxx.xxxx (/6) --> Port 3
+
+A packet with destination address 1010.1000.0100.1000 arrives.
+Which output port would the router forward the packet to?
+
+
+
+
+                                                                 Network Layer: 4-69
+

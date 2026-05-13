@@ -1,0 +1,631 @@
+                             The Physics of Radio Propagation
+      Signal  Propagation
+         The Physics of Radio Propagation
+             • ReﬂecMon"
+13
+              – PropagaMng"wave"impinges"on"an"object"which"is"large"compared"to"
+• ReﬂecMon"
+    ¨ Reflection  wavelength""
+   – PropagaMng"wave"impinges"on"an"object"which"is"large"compared"to"
+              – E.g.,"the"surface"of"the"Earth,"buildings,"walls,"etc."
+       ¤ Propagation
+     wavelength""         wave impinges on an object larger than its
+     – E.g.,"the"surface"of"the"Earth,"buildings,"walls,"etc."
+             wavelength, e.g., buildings, walls
+
+
+
+
+                            Boost WiFi signals
+                            using a beer can!
+     Signal Propagation
+14
+
+
+     ¨
+                The Physics
+         Diffraction        of Radio Propagation
+                     (shadowing)
+                        The Physics of Radio Propagation
+          ¤ Radio path between TX and RX are blocked by surface
+         • DiﬀracMon"(shadowing)"
+             with sharp irregular edges
+            •– DiﬀracMon"(shadowing)"
+               Radio"path"between"transmiYer"and"receiver"obstructed"by"surface"with"
+               sharp"irregular"edges"
+                – Radio"path"between"transmiYer"and"receiver"obstructed"by"surface"with"
+          ¤  Waves bend around the obstacle, even when line of
+                   sharp"irregular"edges"
+             – Waves"bend"around"the"obstacle,"even"when"line"of"sight"(LOS)"does"not"exist"
+             sight (LOS) does not exist
+                – Waves"bend"around"the"obstacle,"even"when"line"of"sight"(LOS)"does"not"exist"
+     Signal Propagation
+              The Physics of Radio Propagation
+15
+
+
+     ¨      • ScaYering"
+         Scattering
+                 – Like"diﬀracMon,"but"at"objects"smaller"than"the"wavelength"of"the"
+         ¤ Like diffraction, but at objects smaller than the
+                   propagaMng"wave"
+           wavelength      of the propagation wave
+                 – E.g.,"foliage,"street"signs,"lamp"posts"
+         ¤ e.g., – The"most"diﬃcult"to"capture"
+                 foliage,    street signs, lamp posts
+         ¤ The most difficult to capture
+                   – AYenuaMon:"in"free"space,"power"degrades"by"1/d2"
+                   – Shadows:"signals"blocked"by"obstrucMng"structures"
+
+     The Impact of Mobility
+               • Small"scale"fades"
+                   – MulMpath"eﬀects:"                                                      The Impact o
+                       • Rapid"changes"in"signal"strength"over"a"small"area"or"Mme"interval"
+16
+                   – Even"when"mobile"is"staMonary,"the"received"signals"may""fade"due"to"
+                                                             • Mobility"creates"ﬂuctuaMons"of"signal"
+                     movement"of"surrounding"objects!"
+     ¨   Mobility creates signal fluctuations                • Large"scale"fades"
+                                                                        – AYenuaMon:"in"free"space,"power"degr
+                                                                        – Shadows:"signals"blocked"by"obstrucMn
+
+     ¨   Large-scale fading                                        • Small"scale"fades"
+                                                                        – MulMpath"eﬀects:"
+         ¤ Attenuation: in free space,                                       • Rapid"changes"in"signal"strength"over"a
+           power degrades by 1/d2                – Even"when"mobile"is"staMonary,"the"re
+                                                   movement"of"surrounding"objects!"
+         ¤ Shadows: signals blocked by obstacles
+
+
+     ¨   Small-scale fading
+         ¤ Multipath effects
+            n Rapid changes in signal strength in a small area or time interval
+         ¤ Even when mobile is stationary, the received signals may
+           fade because of the movement of surrounding objects
+     Multipath Fading
+17
+
+
+     ¨ Signals from different paths arrive at the receiver
+       at different times
+     à Cause inter-symbol interference, limit maximum
+     symbol rate
+
+               reflected path
+
+
+            line of sight       reflected path
+             (LOS) path
+         Multipath
+18
+
+
+              transmitted
+                 pulses
+                                                                        time
+
+                                       received       received
+                                    multipath pulses LOS pulse      received
+                                                                 multipath pulses
+                             received
+                received    LOS pulse
+                  pulse                                                 time
+
+                                      Tc: coherence time
+     ¨   Coherent time
+         ¤ Time duration over which the channel impulse response is
+           invariant
+         ¤ influences maximum possible transmission rate, since
+           coherence times can not overlap
+     Noise and Interference
+19
+
+
+     ¨   Interference from other sources on the same wireless
+         frequencies
+
+     ¨   Two important metrics evaluate the quality of a wireless
+         link
+                                                           #$%&'(
+         ¤ Signal to noise ratio (SNR) in dB: 10 ∗ 𝑙𝑜𝑔!"
+                                                           )*$+,
+         ¤ Signal to interference and noise ratio (SINR) in dB: 10 ∗
+                          #$%&'(
+           𝑙𝑜𝑔!"
+                   )*$+, . /&0,12,1,&3,
+
+
+     ¨   SNR/SINR vs bit error rate (BER)
+         ¤ Higher SNR/SINR à Lower BER
+     ReceivedReceived
+              SignalSignal
+                      OverOver
+                            Time
+                               Time
+20
+
+
+
+
+         Challenging to model wireless propagation!
+     Simulating Wireless Environment
+24
+
+
+     ¨ A tough task
+     ¨ Depends on indoor or outdoor
+
+     ¨ Attenuation in dB
+
+           PL(d) = PL(d0) + 10 αlog(d/d0) + X
+                           Reference point
+
+     ¨   Testbed and real measurements are highly
+         appreciated!
+     Difference Between Wireless and
+25
+     Wired
+     ¨   Time-varying, often unpredictable channel quality
+         ¤ Nature of radio propagation,
+           mobility, dynamic environment
+
+
+
+     ¨   Interference
+         ¤ Broadcast nature
+26   Wireless MAC Protocols
+     The More, The Messier
+27
+     Role of MAC
+28
+
+
+     ¨   Select transmission rate
+         to adapt to channel variations
+
+     ¨   Avoid interference
+
+     ¨   Provide fairness
+     MAC Categories
+29
+
+
+      Centralized                  Decentralized
+
+
+            Base        Controlled access   Random access
+           station
+
+
+
+     Cellular network
+      BS assigns time    Channel reservation 1) ALOHA
+ slots/frequencies/codes      (token)        2) 802.11, CSMA/CA
+  to users (TDMA, FDMA,                      3) TDMA, FDMA
+          CDMA)
+     All These Ranges
+30
+
+
+
+
+                            Carrier
+                            sensing range
+     Interference
+            range   C   A   B
+
+
+
+                            Transmission
+                            range
+     Carrier Sense Medium Access (CSMA)
+31
+
+
+     ¨   Sense before transmitting
+         ¤ Channel idle: transmit
+
+         ¤ Channel busy: defer transmission to avoid collision
+
+
+         C                 D
+                                         CSMA is sender-driven
+                  A              B
+
+
+
+
+             A’s carrier sensing range
+     Discussion Time
+32
+
+
+     ¨   Is CSMA good enough?
+     Discussion Time
+33
+
+
+     ¨   Is CSMA good enough?
+
+
+
+
+                       CSMA is sender-driven,
+                 but interference is receiver-driven
+                        Examples
+     Hidden Terminal Problem
+34             !   Slotted ALOHA
+     ¨ Limited sensing
+               ! Purerange
+                       ALOHA  à
+       Cannot always sense ongoing transmissions
+     ¨ A is communicating with B
+
+     ¨ C cannot sense A’s transmission, so C also transmits
+       à Collision occurs at B
+               !   CSMA, CSMA/CA
+                    A        B            C
+
+                              Ouch!
+                                          CS290N W 2010
+     Exposed Terminal Problem
+35
+
+
+     ¨ Defer transmissions when it’s not necessary
+     ¨ C wants to transmit to D but hears B
+
+     ¨ C defers its transmission although it won’t disturb A’s
+       reception
+
+
+             A           B         C          D
+     How to deal
+     with hidden
+     terminal
+     problem?
+                   A     B     C
+
+                       Ouch!
+
+
+
+
+36
+     Solution #1: Avoid it
+37
+
+
+     ¨   Busy tone
+         ¤ Receiver broadcasts a busy tone while receiving data
+
+         ¤ Nodes hearing busy tone keep silent
+
+
+         Busy tone                               Busy tone
+            A                              A         B
+                       B
+                                                              C
+                           C      D
+     Solution #1: Avoid it
+38
+
+
+     ¨   MACA* (Karn90)
+         ¤ Transmitter sends a Request-to-Send (RTS) to receiver
+
+         ¤ Receiver responds with a Clear-to-Send (CTS)
+
+         ¤ Nodes hearing RTS keep silent for a short time so that
+           transmitter can receive CTS
+         ¤ Nodes hearing CTS keep silent for the duration of the
+           transmission
+
+
+
+     * MACA - A New Channel Access Method for Packet Radio. Philip Karn.
+     Example of RTS and CTS
+39
+
+
+
+
+          RTS
+      A         B
+
+          CTS       C   D
+
+
+                            A   RTS B
+                                        RTS
+                                              C
+                                CTS
+     802.11MAC (CSMA/CA)
+40
+
+
+     ¨   Carrier Sense Medium Access/Collision Avoidance
+
+     ¨   Carrier sense
+         ¤ When a node wants to transmit, it waits until the channel is
+           idle
+
+     ¨   Collision avoidance
+         ¤ RTS and CTS packets carrying network allocation vector (NAV)
+           (remaining duration to keep quiet)
+         ¤ Nodes overhearing RTS keep silent for NAV (avoid collision w/ ACK)
+         ¤ Nodes overhearing CTS keep silent for NAV (avoid HT)
+
+         ¤ Once channel is idle, wait for randomly chosen duration before
+           transmitting again à backoff
+      CSMA/CA Example
+41
+
+     Reserved area for                     Reserved area for
+     BàA transmission                      AàB transmission
+                             1) RTS
+                             3) DATA
+                         A             B
+              NAV=8                        NAV=8
+                C             2) CTS         D
+                              4) ACK
+     CSMA/CA
+42
+
+
+     ¨   Carrier Sense Medium Access/Collision Avoidance
+
+     ¨   Carrier sense           Physical carrier sense (energy detection)
+         ¤ When a node wants to transmit, it waits until the channel is idle
+
+
+
+     ¨   Collision avoidance Virtual carrier sense (packet sniffing)
+         ¤ RTS and CTS packets carrying NAV (remaining duration to keep quiet)
+
+         ¤ Nodes overhearing CTS keep silent for NAV (avoid HT)
+
+         ¤ Nodes overhearing RTS keep silent for NAV (avoid collision w/ ACK)
+
+                                     Collision avoidance (random backoff)
+         ¤ Once channel is idle, wait for randomly chosen duration before
+           transmitting again à backoff
+             Random Backoff
+        43
+
+
+             ¨   When transmitting a packet, choose a backoff interval within
+                 [0, CW]          Random Backoff
+                  ¤ CW: contention window
+                       • When transmitting a packet, choose a backoff interval in the
+             ¨ Count downrange
+                          the [0,CW]
+                               backoff interval when the medium is idle
+                               • CW is contention window
+n)               ¤ Freeze the count-down if medium is busy
+                         • Count down the backoff interval when medium is idle
+             ¨   When backoff intervalis suspended
+                          • Count-down    reachesif medium
+                                                    0, transmit
+                                                           becomes RTS
+                                                                   busy
+
+                            • When backoff interval reaches 0, transmit RTS
+                             B1 = 25                                B1 = 5
+                                                       wait                     data
+
+iffing)
+                                                     data                           wait
+                             B2 = 20                               B2 = 15                    B2 = 10
+koff)
+                                  B1: backoff interval of node 1, B2: backoff interval of node 2
+     Put All Together:
+44
+     Transmit or Not Transmit?
+     ¨   Sense the channel
+
+     à If the channel is idle, wait for the DIFS interval (Distributed Inter
+     Frame Space)
+     ¨ If the channel is still idle, transmit
+
+     ¨ For response packets (e.g., CTS, ACK), wait for SIFS interval (Short
+        Inter Frame Space)
+         ¤ Why?
+
+
+     à If the channel is busy, wait until it’s free
+     ¨ Realize it after DIFS (the time needed to sense the channel)
+
+     ¨ Start random backoff process
+
+     ¨ Transmit when the backoff timer counts down to zero
+
+     ¨ If no ACK, increase the backoff interval
+     How to Choose the Backoff Interval?
+45
+
+
+     ¨   The time spent on counting down backoff interval is
+         part of MAC overhead
+         ¤ Channel is idle!
+
+
+
+     ¨   Tricky to pick the right CW
+         ¤ Large CW à large MAC overhead
+
+         ¤ Small CW à many collisions
+
+
+
+     ¨   What’s your solution?
+     802.11 DCF
+46
+     (Distributed Coordination Function)
+     ¨   CW depends the #of contending nodes
+         ¤ Varies over time
+
+
+
+     à Adapt CW based on collision occurrence
+     Binary Exponential Backoff
+47
+
+
+     ¨   When a node fails to receive CTS in response to RTS, it
+         doubles its CW
+
+     ¨   When a node successfully completes a data transfer,
+         restore CW to CWmin
+         ¤ CWmin=31 for 802.11b, and 15 for 802.11g
+
+
+
+     ¨   Any problems?
+         ¤ Fast oscillation in CW
+         ¤ Unfairness occurs when one node has backed off much more
+           than other nodes
+                Key reason: CW is reduced too fast!
+     MACAW* Solution
+48
+
+
+     ¨   Update CW by exponential increase, linear
+         decrease
+         ¤ When a node successfully transfers data, reduces CW
+           by 1
+         ¤ How does it compare to TCP’s congestion control?
+
+
+     ¨   Append CW value to the packet
+         ¤ Each node maintains CW independently
+
+         ¤ CW as an indication of the level of congestion in the
+           receiver vicinity
+     * MACAW: A Media Access Protocol for Wireless LAN’s. SIGCOMM’94
+     (http://www.cs.mcgill.ca/~cs535/docs/BhD94.pdf)
+     Solution #2: Deal with it
+50
+
+
+     ¨   Can we design receiver to cancel/utilize the impact
+         of interference?
+     ZigZag Decoding
+51
+
+
+     ¨   Leverage two factsAliceof 802.11
+                                    AP
+                                          transmissions
+                                          Bob
+
+         ¤ Sender retransmits packet until it’s ACKed or timed out
+                        Figure 1: A Hidden Terminals Scenario.
+         ¤ Senders jitter every transmissions by a random interval
+
+
+
+                       1 3      Pa                       1 3     Pa
+                     ∆1 2 4      Pb                  ∆2 2 4       Pb                        Figure
+                                                                                            quire In
+                                                                                            user cha
+                                                                                            by the m
+Step #1: decode
+         Figure 2:chunkZigZag1Decoding.      1st collided
+                                 from theZigZag               packet
+                                                     decodes first chunk 1 in the first     will be (
+                                                                                            decoded
+         collision, which is interference free. It subtracts chunk 1 from the second
+Step #2: subtract
+         collision to chunk   1 from
+                      decode chunk        2nd collided
+                                      2, which            packet
+                                               it then subtract fromand    decode
+                                                                     the first collisionchunk 2
+Step #3: subtract     chunk3, 2etc.from the 1st collided packet to get chunk 3 bit rate
+         to decode chunk
+                                                                                            their re
+….       to transmit at the best rate supported by the medium in the absence                Zigbee
+     Zigzag of
+            decoding:  combating
+               collisions.       hidden
+                           However,  if terminals
+                                        collisionsinoccur,
+                                                     wirelessZigZag
+                                                              networks. SIGCOMM
+                                                                    decodes       2006.
+                                                                             pairs of       ZigBee
+            collisions that contain the same packets. The average information
+     IEEE 802.11Wireless Protocols
+52
+
+     ¨   802.11b (1997/1999)
+         ¤ 2.4 GHz, DSSS/FHSS, up to 11 Mbps
+
+
+     ¨   802.11a (1999)
+         ¤ 5 GHz, OFDM, up to 54 Mbps
+
+
+     ¨   802.11g (2003)
+         ¤ 2.4 GHz, OFDM, up to 54 Mbps
+
+
+     ¨   802.11n (2009)
+         ¤ 2.4/5 GHz, MIMO-OFDM (at most 4 MIMO streams), 300 – 500 Mbps
+
+
+     ¨   802.11ac, Wi-Fi 5 (2013)
+         ¤ 5 GHz, MIMO-OFDM (at most 8 MIMO streams), > 1 Gbps!
+     IEEE 802.11Wireless Protocols
+53
+
+
+     ¨   802.11af, White-Fi (2014)
+         ¤ Unused TV bands (54 – 590 MHz) -- TV whitespaces, 35 -
+           560 Mbps, 1-km range
+
+     ¨   802.11ah, Wi-Fi HaLow (2017)
+         ¤ 900 MHz, 347 Mbps, 1-km range, low power consumption,
+           supporting IoT
+
+     ¨   802.11ax, Wi-Fi 6 (2020)
+         ¤ 2.4 GHz, 5 GHz,   max 14 Gbps, better performance for
+           crowded places
+
+         They all use CSMA/CA for medium access control
+     802.11 LAN Architecture
+54
+
+     ¨   wireless host communicates with base
+         station, i.e., access point (AP)            Internet
+
+     ¨   Modes: Infrastructure mode,
+         ad-hoc mode                                     switch
+                                                        or router
+     ¨   Basic Service Set (BSS) in
+         infrastructure mode has:            BSS 1
+         ¤ wireless hosts
+         ¤ access point (AP): base station
+         ¤ ad hoc mode: hosts only
+                                                       BSS 2
+     802.11 Channels
+55
+
+
+     ¨   802.11b: 11 channels in US
+         ¤ Each channel is 20+2 MHz wide
+
+         ¤ Three orthogonal channels
+
+
+
+
+         Channel 1         Channel 6       Channel 11
+
+
+
+
+ 2400      2412              2437            2462       2483.5
+                            22 MHz                       MHz
+

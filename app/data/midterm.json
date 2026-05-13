@@ -1,0 +1,65 @@
+[
+  {
+    "title": "DNS 套接字 / HTTP 套接字 / RTT 计数",
+    "full": 15,
+    "got": 4,
+    "question": "我们学过 DNS 主要用 UDP，HTTP 用 TCP。\n\n**(1) (4 pts)** 当 20 个 host 同时向一台 DNS server 发查询，DNS server 维持 **多少个 socket 连接**？\n\n**(2) (4 pts)** 当 20 个 client 同时连一台 web server，web server 维持 **多少个 socket 连接**？\n\n**(3) (7 pts)** 一个 web client 用 HTTP 1.1（持久连接 + pipelining）请求 index.html。index.html 引了 **4 张 jpg + 1 个 style.css**，style.css 里又引了 **2 张 jpg**。每个文件能装进一个 packet。**总共要多少 RTT 才能把整个网页收完？**",
+    "gold": "**(1) 1 个**。DNS 用 UDP，UDP 是无连接的，server 端只需要一个 socket 接收所有 20 个客户端的查询（按 src IP/port 区分）。\n\n**(2) 21 个**。HTTP 用 TCP，TCP 是有连接的。Server 有 **1 个 welcome socket** 监听连接 + **20 个 connection socket**（每个客户端一个）= 21。\n\n**(3) 4 RTT**：\n- **2 RTT** 拿 index.html（1 RTT 三次握手建 TCP + 1 RTT 发 GET 收 html）\n- **1 RTT** 同时拿 4 jpg + 1 css（持久连接 + pipelining → 一波请求并发返）\n- **1 RTT** 拿 css 里嵌套的 2 jpg（必须先解析完 css 才知道要请求它们，多一层依赖）",
+    "your_mistake": "你 (1) 答的可能是 20（没意识到 UDP 是无连接的），(2) 没加 welcome socket（答 20 而不是 21），(3) RTT 计数错。\n\n**关键原理**：\n- UDP socket：server **一个 socket** 就行，因为它不维护连接状态\n- TCP socket：每个 client 一个 socket + server 一个 welcome 监听 socket\n- HTTP RTT 画依赖图：base → 同层 inline → 嵌套引用，每多一层依赖 +1 RTT；非持久还要 ×2",
+    "takeaway": "看到『UDP 多少 socket』→ 答 1；『TCP 多少 socket』→ 答 N+1。RTT 题画依赖树数层数。"
+  },
+  {
+    "title": "两段链路 DNS 查询/响应延迟（store-and-forward）",
+    "full": 15,
+    "got": 7,
+    "question": "laptop ↔ router (1 Mbps) ↔ DNS server (8 Mbps)。每条 DNS 查询 = **400 byte physical frame**，响应 = **500 byte**。Router 用 store-and-forward，**忽略 propagation/queuing/processing delay**，full-duplex。Laptop **不等** 前一个响应就发下一个查询。\n\n**(1) (2 pts)** 第一条查询到达 DNS server 要多久？\n\n**(2) (5 pts)** laptop 发出第一条查询的第一个 bit 到收到第一条响应最后一个 bit，总时间？\n\n**(3) (8 pts)** Laptop 发 3 条 DNS 查询，收到全部 3 条响应的总时间？",
+    "gold": "**(1)** 400 × 8 = 3.2 Kbit。\n- Laptop → router：3.2 Kb / 1 Mbps = **3.2 ms**\n- Router → DNS：3.2 Kb / 8 Mbps = **0.4 ms**\n- 合计 = **3.6 ms**\n\n**(2)** 第一条查询到达 DNS (3.6 ms) + 第一条响应回到 laptop：\n- 响应 500 × 8 = 4 Kb\n- DNS → router：4 Kb / 8 Mbps = 0.5 ms\n- Router → laptop：4 Kb / 1 Mbps = 4 ms\n- 合计 = 3.6 + 0.5 + 4 = **8.1 ms**\n\n**(3)** 关键：**laptop 不等响应就发，所以 3 条查询在 1Mbps 链路上背靠背排队。瓶颈是 1Mbps 那段**：\n```\n3.2/1 + 3.2/8 + 4/8 + 3 × (4/1)\n= 3.2 + 0.4 + 0.5 + 12 = 16.1 ms\n```\n（第一条查询过两段 3.6 ms + 第一条响应的 router→DNS 段 0.5 ms + 三条响应在 1Mbps 上排队各 4 ms）",
+    "your_mistake": "(3) 大概率忘了『瓶颈 1Mbps 上 3 条响应要排队 3 次』，或者算成 N 个独立 round-trip。\n\n**口诀**：多段链路 + 连续 N 个包 → 第一个包跑完所有段 + (N−1) × 瓶颈段发送时间。",
+    "takeaway": "Store-and-forward 链路链：第 1 个包 = Σ 每段 L/R，后面的包 = 瓶颈段 L/R 累加。"
+  },
+  {
+    "title": "无线 + 有线混合下选 GBN 还是 SR",
+    "full": 10,
+    "got": 0,
+    "question": "两个 host 用一条 **有线 + 一条 wireless** 通道，传 data 和 ACK 分开走。Wireless 丢包严重，wired 几乎不丢。\n\n**(1) (5 pts)** 如果 **wireless 走 data、wired 走 ACK**，应该选 GBN 还是 SR？为什么？\n\n**(2) (5 pts)** 如果 **wireless 走 ACK、wired 走 data**，应该选 GBN 还是 SR？为什么？",
+    "gold": "**(1) SR**。这种场景 data 丢得多、ACK 几乎不丢。SR 用独立 ACK + receiver buffer 可以精确定位丢哪个包并只重传那个；GBN 一个包丢就重传整窗，会有大量冗余重传。\n\n**(2) GBN**。这种场景 ACK 丢得多、data 几乎不丢。**GBN 的累积 ACK 天然容错 ACK 丢失**——后到的 ACK 隐含确认前面所有，丢一两个无所谓。SR 是每包独立 ACK，丢了 ACK 就 timeout 触发不必要的重传。",
+    "your_mistake": "整题 0 分，两个小问的协议选择和理由都没拿到。\n\n**记忆抓手**：\n- SR = 精准。Data 不可靠时用它\n- GBN = 累积 ACK 容错。ACK 不可靠时用它\n\n**理由要点必须写到**：\n- (1) SR：精准重传 / GBN 会重传整窗造成浪费\n- (2) GBN：累积 ACK 容忍 ACK 丢失 / SR 会因 ACK 丢失触发不必要 timeout",
+    "takeaway": "判断哪个协议看『哪边在丢』。Data 丢 → SR；ACK 丢 → GBN。**永远要写出原因**，老师扣的就是『没解释』的分。"
+  },
+  {
+    "title": "水下机器人 — 传播延迟、端到端延迟、整图传输",
+    "full": 16,
+    "got": 9,
+    "question": "水下机器人 →（acoustic 40 Kbps, 30 m）→ buoy →（cellular 2 Mbps, 3 km）→ ground station。声速 1.5 km/s，光速 3×10⁸ m/s。Buoy 用 store-and-forward。\n\n**(1) (4 pts)** acoustic 段和 air 段的 propagation delay 分别多少？\n\n**(2) (5 pts)** 一个 **2 Kbit 帧**端到端到 ground station 要多久？\n\n**(3) (7 pts)** 机器人把图像拆成 **100 个 2 Kbit 帧**，ground station 收完整张图要多久？",
+    "gold": "**(1)**\n- Acoustic：30 m / 1.5 km/s = 30 / 1500 = **0.02 s = 20 ms**\n- Cellular：3 km / 3×10⁸ m/s = 3000 / 3×10⁸ = **10⁻⁵ s = 0.01 ms**\n\n**(2)** 端到端 = 两段发送 + 两段传播：\n- 2 Kb / 40 Kbps = 50 ms（acoustic 发送）\n- + 20 ms（acoustic 传播）\n- + 2 Kb / 2 Mbps = 1 ms（cellular 发送）\n- + 0.01 ms（cellular 传播）\n- 合计 = **71.01 ms**\n\n**(3)** 100 帧 pipelined，**瓶颈是 acoustic 50 ms/帧**：\n- 第 1 个帧端到端到达 = 71.01 ms\n- 后续 99 个帧 = 99 × 50 ms = 4950 ms\n- 合计 = **5021.01 ms ≈ 5.021 s**\n\n或者按 rubric 等价写法：100 × 0.05 s + 20 ms + 1 ms + 0.01 ms = 5 s + 21.01 ms ≈ **5.021 s**。",
+    "your_mistake": "9/16 — (2) 或 (3) 部分分丢了，多半是 **漏算 propagation delay** 或者 **把 100 帧当作 stop-and-wait 算成 100×71.01**。\n\n关键：pipeline 下后续帧只占 **瓶颈段** 的发送时间，不是整条 round-trip。",
+    "takeaway": "端到端延迟 = Σ (size/bandwidth + distance/speed)。Pipeline N 个包 = 第一个端到端 + (N−1) × 瓶颈段发送时间。"
+  },
+  {
+    "title": "Cellular 链路利用率 + Stop-and-Wait acoustic 链路利用率",
+    "full": 14,
+    "got": 14,
+    "question": "**(4) (4 pts)** 100 帧连续传输期间，**cellular 链路（buoy→base）的利用率**是多少？（假设没别人用 cellular）\n\n**(5) (10 pts)** 改用 **stop-and-wait** 协议（每帧 ACK 才发下一个），base station 一收到帧就发回 ACK。\n- 2 Kbit 帧时 acoustic 链路利用率？\n- 200 bit 帧时呢？\n- Stop-and-wait 在 200 bit 这种情况下是好选择吗？为什么？",
+    "gold": "**(4)** cellular 上看到的『流入速率』就是 acoustic 出的速率 40 Kbps。\nU = 40 Kbps / 2 Mbps = **0.02**\n\n**(5)** Stop-and-wait：U = T_trans / (T_trans + 2·T_prop)。RTT ≈ 2 × (20 + 0.01) ≈ **42 ms**。\n- 2 Kbit 帧：T_trans = 2000/40000 = 50 ms。U = 50/(50+42) = **0.54**\n- 200 bit 帧：T_trans = 200/40000 = 5 ms。U = 5/(5+42) = **0.11**\n\n**不是好选择**：当 T_trans ≪ RTT，sender 大部分时间在等 ACK，链路空跑。需要用滑动窗口/pipelining 提升利用率。",
+    "your_mistake": "这题满分 14/14！🎉",
+    "takeaway": "Stop-and-wait U 公式：分子 transmission，分母 transmission + 2·prop。包小 / RTT 大 → U 暴跌 → 必须用滑窗。"
+  },
+  {
+    "title": "IoT 接收 buffer 受限 + selective repeat 窗口",
+    "full": 15,
+    "got": 4,
+    "question": "你电脑 SR 协议给 IoT 设备发数据。Sender 支持 4095 包窗口，但 **IoT 接收 buffer 只有 4 个包**。RTT 足够大允许 10 个包同时在路上（双向各 5）。\n\n**(1) (7 pts)** IoT 错以为自己能处理 10 个包，**advertise window = 10**。会发生什么？\n\n**(2) (4 pts)** 一批 10 个包里只有 1 个丢了，**sender 可能需要重传超过 6 个吗**？为什么？\n\n**(3) (4 pts)** Initial handshake 时 IoT 应该 advertise 多大的窗口？",
+    "gold": "**(1)** 10 个包到达时，**out-of-order 现象会让 buffer 溢出**。SR 必须保留 out-of-order 的包等齐再交付，所以 buffer 装满后又有包到就只能丢。具体例子：包 1 丢，buffer 收到 2、3、4 留着等 1；后面 5、6、7、8、9、10 来了没地方放只能 drop。\n\n**(2) 是的**。如题 (1) 解释：丢 1 后，2、3、4 占满 buffer，剩下 5-10 共 6 个被丢。加上原本丢的 1，**共 7 个需要重传**（> 6）。\n\n**(3) 4**（match buffer size 4）。Initial handshake 就应该如实告诉 sender『我只能 buffer 4 个』，避免上面那种受 buffer 大小撑爆的事故。",
+    "your_mistake": "4/15 — (2) 你答了『No』。这是关键的概念误区：**SR receiver 必须保留 out-of-order 包等齐才能交付**，所以 buffer 不能简单当 FIFO 计数，它会被 stuck 住。\n\n再举一遍场景：包 1 丢失 → 包 2 到 → 放 buffer 位置 2 → 包 3 到 → 放位置 3 → 包 4 到 → 放位置 4。Buffer 满了。包 5 到了 → 没地方 → 丢。包 6 也丢。直到包 1 重传到达，整组 1-4 才能一起交付，buffer 才腾出来。",
+    "takeaway": "Receive buffer 不是简单容量计数，是『等齐才交付』占用。Advertised window 必须 ≤ buffer，否则会丢包。"
+  },
+  {
+    "title": "Amazon 视频分发 — Client-Server vs BitTorrent",
+    "full": 15,
+    "got": 14,
+    "question": "1 GB 电影，N = 100 用户。60% 用户：上传 10 Mbps / 下载 20 Mbps。40% 用户：上传 5 Mbps / 下载 10 Mbps。Server 上传 40 Mbps。\n\n**(1) (6 pts)** 用 client-server 架构分发给所有人最少多久？\n\n**(2) (7 pts)** 用 BitTorrent 风格 P2P 分发最少多久？（perfect distribution）\n\n**(3) (2 pts)** P2P 要在 **多大 N** 才开始优于 client-server？为什么？",
+    "gold": "**(1) Client-server**：T = max(N·F/U_s, F/d_min)\n- N·F/U_s = 100 × 8 Gb / 40 Mbps = 100 × 200 = **20000 s**\n- F/d_min = 8 Gb / 10 Mbps = **800 s**（瓶颈是 40% 慢用户的 10 Mbps）\n- max = **20000 s**\n\n**(2) P2P**：T = max(F/U_s, F/d_min, N·F/(U_s + ΣU_i))\n- F/U_s = 8 Gb / 40 Mbps = **200 s**\n- F/d_min = **800 s**\n- ΣU_i = 60×10 + 40×5 = 800 Mbps。U_s + ΣU_i = 840 Mbps。\n- N·F/840 Mbps = 800 Gb / 840 Mbps = **≈ 952 s** (≈ 1000 s)\n- max = **≈ 1000 s**\n\n**(3) N ≥ 5**：CS 受 server 重复上传瓶颈（线性增 N），P2P 受集体上传瓶颈（peer 越多越好）。解 N×F/U_s > 800 得 N ≥ 5。\n\n推导：当 N = 5 时，CS = max(1000, 800) = 1000 s；P2P = max(200, 800, ~800) = 800 s → P2P 开始更快。N = 4 时两边都是 800 s 持平。",
+    "your_mistake": "14/15 — 几乎全对！只扣了 1 分『(3) 没给具体 N 值』。下次记得把数值算出来。\n\n口诀（必背）：\n- CS：`max(N·F/U_s, F/d_min)`\n- P2P：`max(F/U_s, F/d_min, N·F/(U_s + ΣU_i))`",
+    "takeaway": "Client-server 时间随 N 线性增（server 是瓶颈），P2P 时间随 N 微增（集体带宽也增）。N 大时 P2P 优势越来越明显。"
+  }
+]

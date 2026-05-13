@@ -1,0 +1,482 @@
+     Quiz
+16
+
+
+     ¨   Consider a network topology with three nodes shown
+         in the right. All nodes are running the distance vector
+         routing algorithm to find the shortest path to other
+         nodes.
+
+         How many rounds does it take for the algorithm to
+         converge? Feel free to draw the distance vector
+         tables at each round.                      9
+                                                   A       D
+                                                  4            1
+                                                   B       C
+                                                       3
+                                                                               9
+                                                                           A           D
+     Quiz                                                                 4              1
+                                                                           B           C
+17                                                                             3
+                         A       B       D       A
+     A   B   D   A       B       4       ∞       B       4       C   B     D       C
+     B   4   ∞   B   4   C       7       10      C       7       A   7    10       A    7
+     D   ∞   9   D   9   D       ∞       9       D       9       B   3    ∞        B    3
+     B   A   C   B                                               D   ∞     1       D    1
+     A   4   ∞   A   4
+     C   ∞   3   C   3
+
+     C   B   D   C                                               D   A     C       D
+     B   3   ∞   B   3                                           A   9    ∞        A     9
+     D   ∞   1   D   1       B   A           C       B
+                                                                 B   13    4       B     4
+                             A       4    ∞          A       4
+     D   A   C   D                                               C   ∞     1       C     1
+                             C       ∞       3       C       3
+     A   9   ∞   A   9
+                             D   13          4       D       4
+     C   ∞   1   C   1
+                                                       9
+                                                   A       D
+     Quiz                                         4          1
+                                                   B       C
+18                                                     3
+
+
+            A   B   D    A       D   A    C   D
+            B   4   13   B   4   A   9    8   A   8
+            C   7   10   C   7   B   13   4   B   4
+            D   8   9    D   8   C   16   1   C   1
+                                                                   9
+                                                               A          D
+     Quiz                                                     4             1
+                                                               B          C
+19                                                                 3
+     ¨   A quicker method:
+         ¤ Find the shortest path for each pair of node
+         ¤ Among all the shortest paths, identify the one with the most
+           hops
+         ¤ The highest hop count minus 1 is the # of rounds taken to
+           converge
+
+     ¨   This assumes:
+         ¤ Synchronous rounds
+         ¤ No count-to-infinity
+         ¤ Static topology and no triggered update
+     Data Link Layer Services
+20
+
+
+     ¨   Framing
+         ¤ Add header and trailer, encapsulate packet into frame
+
+
+
+     ¨   Error detection and correction
+         ¤ Errors caused by signal attenuation, noise
+
+
+
+     ¨   Medium access control
+         ¤ Who can access the medium and when
+
+
+
+     ¨   Reliable delivery
+         ¤ Local retransmission upon frame losses
+     Two Types of Link Media
+21
+
+
+     ¨   Point-to-point
+         ¤ Long-distance fiber link
+
+         ¤ Point-to-point link between Ethernet switch and host
+
+
+     ¨   Broadcast (shared wire or medium)
+         ¤ Traditional Ethernet
+
+         ¤ 802.11 wireless LAN
+     Share a Medium
+22
+
+
+     ¨   Avoid multiple nodes speaking at once
+
+     ¨   Medium Access Control (MAC) protocol
+         ¤ Distributed algorithm for sharing the medium
+
+         ¤ Determine whether the node can transmit
+
+
+
+     ¨   What’re the possible ways of sharing?
+        #1: Channel Partitioning
+23
+
+
+                 Time Division Multiple     Frequency Division Multiple
+                    Access (TDMA)                 Access (FDMA)
+          ¨      Each node gets a         ¨       Each node gets a
+                 fixed-length time slot           fixed frequency band
+                 in each round                    in all time
+
+
+
+     Frequency                            Frequency
+                                                          Node 1
+                   Node   Node
+                    1      2
+                                 …                        Node 2
+
+                                                          Node 3
+
+                     Time                              Time
+     #2: “Taking Turns”
+24
+
+
+
+                 Polling                              Token Passing
+
+     ¨ Master node invites                    ¨ Pass a control token
+       workers to transmit                      from one node to next
+     ¨ Cons                                   ¨ Cons
+
+         ¤ Polling overhead                       ¤ Token overhead
+
+         ¤ Latency                                ¤ Latency
+
+         ¤ Single point of failure                ¤ Single point of failure
+                              data
+           (master)                   poll          (token)
+                     worker          master
+                         data
+     How Do You Like These So far?
+25
+
+
+     ¨   Controlled access can result into channel waste
+         ¤ Especially given the bursty, dynamic traffic
+
+
+
+     ¨   Any idea to do better?
+
+     ¨   Do not avoid collisions, just recover from them!
+     #3: Random Access Protocol
+26
+
+
+     ¨ No fixed schedule, no special node to coordinate
+     ¨ When a node has packets to send, transmits at the
+       full channel rate
+     ¨ Collision occurs when two or more transmit at the
+       same time
+
+     ¨   Key components
+         ¤ How to detect collisions?
+
+         ¤ How to recover from collisions?
+     Start with the Simplest
+27
+
+
+     ¨   Slotted ALOHA
+         ¤ In Hawaii language, ALOHA means
+           affection, love, peace, compassion,
+           goodbye, and hello!
+
+     ¨   Invented by Prof. Norm
+         Abramson (1970)
+         ¤ Set up the first radio
+           communication system for
+           Hawaiian islands! (AlohaNet)
+     Slotted ALOHA
+28
+
+
+     ¨   Assumptions
+         ¤ Divide time into equal slots, one frame per slot
+         ¤ Nodes start to transmit only at the start of slots, nodes
+           are synchronized
+         ¤ Can detect collision right away
+
+
+
+     ¨   Operations
+         ¤ Have data? Just send
+         ¤ No collision: send a new frame in the next slot
+         ¤ Collision: retransmit frame in the next slot with
+           probability p
+     Slotted ALOHA Example
+29
+                               Examples
+           !   Slotted ALOHA
+
+           !   Pure ALOHA
+
+
+
+
+           !   CSMA, CSMA/CA
+
+
+
+
+                                 CS290N W 2010
+     Efficiency of Slotted ALOHA
+30
+
+
+     ¨   Suppose N nodes have packets to send
+         ¤ Each transmits in a slot with probability p
+
+
+     ¨   Probability of successful transmission:
+             by a particular node i: Si = p (1-p)(N-1)
+             by any of N nodes:         S= N p (1-p)(N-1)
+     ¨   What value of p maximizes the prob. of success:
+         ¤ For fixed p, S à 0 as N increases
+
+         ¤ But if p = 1/N, then S à 1/e = 0.37 as N increases
+
+
+     ¨   Max efficiency is only slightly greater than 1/3!
+     Slotted ALOHA: The Good and Bad
+31
+
+
+     ¨   Pros
+         ¤ Simple
+
+         ¤ Single active node can continuously transmit at full rate
+
+         ¤ Highly decentralized
+
+
+
+     ¨   Cons
+         ¤ Collisions
+
+         ¤ Idle slots
+
+         ¤ Synchronization
+32
+          Why (slotted)
+          The problem with
+          ALOHA
+          Aloha ?    is not        Do not sense medium
+            enough????             Just send send send
+     What’s the
+     problem of
+      ALOHA?
+
+
+
+
+                      Doesn’t sense the medium,
+                        just send send send…
+                   CS290N W 2010                         17
+     Listen before Transmit
+33
+
+
+     ¨   Carrier Sense Multiple Access (CSMA)
+         ¤ If channel sensed idle, transmit entire frame
+         ¤ If channel sensed busy, defer transmission
+
+
+
+     ¨   Problem solved?
+
+     ¨   No... collision can still occur
+         ¤ Propagation delay: nodes do not hear each other
+           immediately
+         ¤ Or the transmitter cannot hear at all!
+     CSMA/CD (Collision Detection)
+34
+
+
+     ¨   Carrier sensing, as in CSMA
+         ¤ Collisions detected within short time
+
+         ¤ Colliding transmissions aborted, reducing wastage
+
+
+
+     ¨   Collision detection easy in wired (broadcast) LANs
+         ¤ Compare transmitted, received signals
+
+
+
+     ¨   Collision detection difficult in wireless LANs
+     Collision Detection Example
+35
+
+
+     ¨   B and D can tell that
+         collision occurred
+
+     ¨   Does it always work?
+         ¤ Packet cannot be
+           too small
+         ¤ Distance cannot be
+           too long
+     Limits on CSMA/CD Network Length
+36
+
+     A                                                            B
+                                    latency d
+
+
+
+     ¨   Latency depends on physical length of link
+         ¤ Time to propagate a packet from one end to the other
+
+
+     ¨   A sends a packet at time t
+         ¤ B sees an idle line until t+d
+     ¨ B sends a packet just before A’s signal arrives
+     ¨ Signals overlap à Collision
+
+     ¨ Distorted waveform propagate back after another d
+
+     ¨ The longest delay for A to detect a collision: 2d
+     Limits on CSMA/CD Network Length
+37
+
+     A                                                         B
+                                 latency d
+
+
+
+
+     ¨   A needs to wait for time 2d to detect collision!
+         ¤ IEEE 802.3 Ethernet specifies max 2d to be 51.2μs
+
+
+
+     ¨   Impose restrictions, e.g., 10Mbps Ethernet
+         ¤ Min length of the frame: 512 bits
+
+         ¤ Max length of Ethernet copper cable: 100m (mostly
+           due to signal attenuation)
+     Key Ideas of Random Access
+38
+
+
+     ¨   Carrier sense
+         ¤ Listen before speaking, and do not interrupt
+
+         ¤ Checking if someone else is already sending data, wait
+           till the other node is done
+     ¨   Collision detection
+         ¤ Realizing when two nodes are transmitting at once by
+           detecting that the data on the wire is garbled
+     ¨   Randomness (Collision recovery)
+         ¤ Do not start talking again right away
+
+         ¤ Waiting for a random time before trying again
+     Ethernet
+39
+
+
+     ¨   Started with a shared wired medium
+     Ethernet Evolution
+40
+
+
+     ¨   Ethernet was invented as a broadcast technology
+         ¤ Hosts share channel
+
+         ¤ Each packet received by all attached hosts
+
+         ¤ Unslotted CSMA/CD with binary backoff for media access
+           control
+
+     ¨   Current Ethernets are “switched”
+                                                           switched
+         ¤ Point-to-point full-duplex links between
+           switches, between a host and switch
+         ¤ No sharing, no CSMA/CD
+     Ethernet Frame Structure
+41
+
+
+
+
+     ¨ Preamble: 7 bytes with a particular pattern used
+       to synchronize receiver, sender clock rates
+     ¨ Addresses: 6 bytes, frame is received by all
+       adapters on a LAN and dropped if address does
+       not match
+     ¨ Type: 2 bytes, indicating higher-layer protocol
+       (e.g., IP, Appletalk)
+     ¨ CRC: 4 bytes for error detection
+
+     ¨ Data payload: 46 – 1500 Bytes
+     Medium Access Control (MAC) Address
+42
+
+     ¨ 6 bytes, e.g., 00-15-C5-49-04-A9 in hexadecimal
+     ¨ Unique, hard-coded in the adapter when it is built
+
+
+
+     ¨   Hierarchical allocation
+         ¤ Blocks: assigned to vendors (e.g., Dell) by the IEEE
+           n First 24 bits (e.g., 00-15-C5-**-**-**)
+         ¤ Adapter: assigned by the vendor from its block
+           n Last 24 bits
+
+
+     ¨   Broadcast address: FF-FF-FF-FF-FF-FF
+
+     ¨   Q: What’re the differences between MAC address and IP
+         address?
+     Two Types of MAC Address
+43
+
+
+     ¨   Burned-in MAC address
+         ¤ Stored in hardware and assigned by manufacturer
+
+         ¤ Globally unique in principle
+
+
+
+     ¨   Effective MAC address used on the network
+         ¤ OS can configure
+
+         ¤ Can be overridden (MAC spoofing)
+
+         ¤ Used for privacy randomization, virtualization, etc.
+
+
+
+     ¨   Network does not rely on MAC addresses for security
+     Bootstrap Communication
+44
+
+
+     ¨ DHCP
+     ¨ ARP
+     Quiz
+45
+
+
+     ¨   Let’s define bandwidth-latency product (BDP) as the
+         multiplication of the link bandwidth and the round-
+         trip time delay. For the midterm network on the
+         right, what is the BDP? Speed of
+         sound is 1.5km/s, and speed
+                          8                   4 Mbps
+         of light is 3x10 m/s.                   km
+                                             3
+
+
+                               30 Kbps    60 m
+

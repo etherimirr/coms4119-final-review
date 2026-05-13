@@ -1,0 +1,486 @@
+     Quiz
+46
+
+     ¨   Let’s define bandwidth-latency product (BDP) as the
+         multiplication of the link bandwidth and the round-trip
+         time delay. For the midterm network on the right, what is
+         the BDP? Speed of sound is 1.5km/s, and speed of light
+         is 3x108m/s.
+         Answer: the average bandwidth is         4Mbps
+         min(30Kbps, 4Mbps) = 30Kbps.              3km
+         The propagation delay
+         of first hop is 60m/(1.5km/s)
+         = 40ms, and the propagation            60m
+         delay of the 2nd hop is       30Kbps
+         3km/(3x108m/s) = 0.01ms. Thus,
+         BDP = 30kbps x 2x(40ms+0.01ms)
+         ≈ 2400 bits
+        Who Am I: Acquiring an IP Address
+47
+
+
+        ¨   Dynamic Host Configuration Protocol (DHCP)
+            ¤ Broadcast “I need an IP address, please!”
+
+            ¤ Response “You can have IP address 1.2.3.4.”
+
+             ????
+                                                    DHCP server
+
+
+
+
+                                                  1A-2F-BB-76-09-AD
+     71-65-F7-2B-08-53
+
+
+                              0C-C4-11-6F-E3-98
+     DHCP
+48
+
+
+     ¨   Configure several parameters of hosts
+         ¤ Temporary IP address
+
+         ¤ Local DNS name server, gateway router, netmask
+
+
+     ¨   DHCP server allocates addresses across users
+
+     ¨   Broadcast a server-discovery message, server sends
+         a reply offering an address
+                                           host   host ... host
+
+
+                                                   DHCP server
+     The Need of Address Resolution
+50
+
+
+
+                                1.2.3.53          1.2.3.156
+                                    host   host ... DNS
+          IP packet
+           1.2.3.53
+          1.2.3.156                            router
+
+
+
+     ¨   Adapters only understand MAC addresses
+         ¤ Translate the destination IP address to MAC address
+      Who Are You: Discovering the Receiver
+51
+
+
+      ¨   Address Resolution Protocol (ARP)
+          ¤ Broadcast “Who has IP address 1.2.3.6?”
+
+          ¤ Response “0C-C4-11-6F-E3-98 has 1.2.3.6!”
+
+
+      DHCP server
+
+
+
+
+     71-65-F7-2B-08-53
+                                                      1A-2F-BB-76-09-AD
+        1.2.3.4
+                                    1.2.3.6
+                              0C-C4-11-6F-E3-98
+     ARP
+52
+
+
+     ¨   Every node maintains an ARP table
+         ¤ <IP address, MAC address> pair, TTL
+
+
+
+     ¨   Consult the table when sending a packet
+         ¤ Map destination IP address to destination MAC address
+         ¤ Encapsulate and transmit the data packet
+
+
+
+     ¨   But: what if IP address not in the table?
+         ¤ Sender broadcasts: “Who has IP address 1.2.3.156?”
+         ¤ Receiver responds: “MAC address 58-23-D7-FA-20-B0”
+         ¤ Sender caches result in its ARP table
+     What if Remote Destination?
+53
+
+     ¨   Look up the MAC address of the first hop router
+         ¤ 1.2.3.48 uses ARP to find MAC address for first-hop router
+           1.2.3.19 rather than ultimate destination IP address
+     ¨   How does the host know the destination is not local?
+         ¤ Uses netmask (discovered via DHCP)
+
+     ¨   How does the red host know about 1.2.3.19?
+         ¤ Also DHCP
+     1.2.3.48 1.2.3.7           1.2.3.156
+            host   host   ...   DNS                  host        host    ...   host
+
+
+       1.2.3.0/24                                                       5.6.7.0/24
+     255.255.255.0              1.2.3.19
+                          router            router          router
+     Key Ideas in ARP and DHCP
+54
+
+
+     ¨   Broadcasting: Can use broadcast to make contact
+         ¤ Scalable because of limited size
+
+
+     ¨   Caching: remember the past for a while
+         ¤ Store the information you learn to reduce overhead
+
+         ¤ Remember your own address & other host’s addresses
+
+
+     ¨   Soft state: eventually forget the past
+         ¤ Associate a time-to-live field with the information
+
+         ¤ … and either refresh or discard the information
+
+         ¤ Key for robustness in the face of unpredictable change
+     802.3 Ethernet standards: link &
+55
+     physical layers
+     ¨   Many different Ethernet standards
+         ¤ Common MAC protocol and frame format
+
+         ¤ Different speeds: 2 Mbps, ... 100 Mbps, 1Gbps, 10
+           Gbps, 40 Gbps, 80 Gbps
+         ¤ Different physical layer media: fiber, cable
+
+                                                 MAC protocol
+          application
+                                               and frame format
+           transport
+            network                  100BASE-TX     100BASE-T2    100BASE-FX
+              link                   100BASE-T4     100BASE-SX    100BASE-BX
+            physical
+
+
+             copper (twister pair) physical layer         fiber physical layer
+     Switches
+56
+
+
+     ¨   Switch is a link-layer device
+         ¨ store, forward Ethernet (or other type of) frames
+         ¨ examine incoming frame’s MAC address, selectively
+           forward frame to one-or-more outgoing links device
+
+     ¨   plug-and-play, self-learning
+         ¨   switches do not need to be configured
+     Switch:
+57
+     Multiple simultaneous transmissions
+     ¨   hosts have dedicated, direct
+         connection to switch                                       A
+                                              C’                            B
+     ¨   switches buffer packets                            1       2
+                                                       6
+                                                                        3
+                                                        5       4
+     ¨   Ethernet protocol used on
+                                              B’                            C
+         each incoming link, so:                                    A’
+         ¤ no collisions; full duplex
+         ¤ each link is its own collision              switch with six interfaces
+                                                                    (1,2,3,4,5,6)
+           domain
+                                            A-to-A’ and C-to-A’ can’t happen
+                                                              simultaneously
+     Switch Forwarding Table
+58
+
+
+     Q: how does switch know A’ reachable via
+       interface 4, B’ reachable via interface 5?
+
+     A: each switch has a switch                            A
+     table, each entry:                   C’                        B
+      § (MAC address of host, interface             1       2
+        to reach host, time stamp)             6
+                                                                3
+      § looks like a routing table!            5        4
+
+                                          B’                        C
+      Switch table is self-learned                          A’
+     Switch: Self Learning
+                                                                           Source: A
+59                                                                         Dest: A’
+
+     ¨   switch learns which hosts can be                           A A’
+                                                                A
+         reached through which            C’                                 B
+         interfaces
+                                                            1   2
+         ¤ when frame received, switch                  6
+           “learns” location of sender                 5 4
+                                                             3
+
+         ¤ records sender/location pair in
+                                             B’                      C
+           switch table                                      A’
+         ¤ Unknow frame destination: flood
+                                        MAC addr interface TTL
+         ¤ Know destination: send on                            Switch table
+                                           A          1     60   (initially
+           just one link                                          empty)
+
+                                                                                       Lin
+     Virtual LAN (VLAN)
+60
+
+
+     ¨   Q: what happens as LAN sizes scale, users change
+         point of attachment?
+                                      single broadcast domain:
+                                       § scaling: all layer-2
+                                         broadcast traffic (ARP,
+         Computer                        DHCP, unknown MAC)
+         Science                EE
+                                         must cross entire LAN
+                                       § efficiency, security,
+                                         privacy issues
+     Virtual LAN (VLAN)
+61
+
+
+     ¨   Q: what happens as LAN sizes scale, users change
+         point of attachment?
+
+                                       administrative issues:
+                                       § CS user moves office to
+         Computer
+                                         EE - physically attached
+         Science                EE       to EE switch, but wants
+                                         to remain logically
+                                         attached to CS switch
+     Port-based VLAN
+62
+
+                          port-based VLAN: switch ports grouped (by switch
+                              management software) so that single physical switch
+                              ……
+     Virtual Local Area
+     Network (VLAN)
+                                                       1         7   9                 15
+
+ switch(es) supporting                                 2         8   10                 16
+
+
+
+ VLAN capabilities can be                              …                                     …
+ configured to define                  EE (VLAN ports 1-8)                    CS (VLAN ports 9-15)
+ multiple virtual LANS over     … operates as multiple virtual switches
+ single physical LAN
+ infrastructure.
+                                               1             7            9              15
+
+                                                2            8           10              16
+
+
+
+
+                                              …                                               …
+
+                                 EE (VLAN ports 1-8)                           CS (VLAN ports 9-15)
+       Port-based VLAN
+63
+
+
+     § traffic isolation: frames to/from ports 1-8 can
+       only reach ports 1-8
+        • can also define VLAN based on MAC addresses of
+          endpoints, rather than switch port
+
+     § dynamic membership: ports can be
+       dynamically assigned among VLANs
+                                                             1       7   9             15
+
+                                                             2       8   10             16
+
+
+
+     § forwarding between VLANS:                            …                                …
+       done via routing (just as with
+       separate switches)                      EE (VLAN ports 1-8)            CS (VLAN ports 9-15)
+
+         • in practice vendors sell combined
+           switches plus routers
+     Routers vs Switches
+64
+                                             application
+                                              transport
+ both are store-and-forward:        datagram   network
+                                    frame        link
+ ¨   routers: network-layer devices            physical             link   frame
+     (examine network-layer headers)                              physical
+ ¨   switches: link-layer devices                    switch
+     (examine link-layer headers)
+                                            router            network    datagram
+ both have forwarding tables:                                   link     frame
+                                                              physical
+ ¨ routers: compute tables using
+   routing algorithms, IP addresses         application
+ ¨ switches: learn forwarding table          transport
+   using flooding, learning, MAC              network
+   addresses                                    link
+                                              physical
+   CSEE4199: COMPUTER NETWORK
+
+
+    WIRELESS PHYSICAL LAYER &
+    MAC PROTOCOLS
+
+
+
+April 9, 2026   Xia Zhou
+    My Goals
+2
+
+
+    ¨   Make sure you know basic physics
+        of wireless communications and basic
+        knowledge on wireless MAC protocols
+
+
+
+    ¨   Expose you to super interesting
+        research on wireless networking
+    Wireless Networks
+3
+
+
+
+                        RFID         Zigbee
+                               Bluetooth
+
+
+                    WPAN: Personal Area Networks
+                                                       Mesh
+                                                               WiFi
+
+
+
+                                                     WLAN: Local Area Networks
+
+                  Cellular
+                 Networks
+                                 WiMAX
+
+
+
+
+               WWAN: Wide Area Networks
+        Centralized Networks for Tight Control and
+                  Seamless Connectivity
+           Radio Propagation 101
+4   Wireless Signal Propagation 101
+     If We can See the Wi-Fi Signals…
+5
+
+
+
+
+    http://gizmodo.com/what-the-world-would-look-like-if-you-could-actually-se-846030448
+     If We can See the Wi-Fi Signals…
+6
+
+
+
+
+    http://gizmodo.com/what-the-world-would-look-like-if-you-could-actually-se-846030448
+     If We can See the Wi-Fi Signals…
+7
+
+
+
+
+    http://gizmodo.com/what-the-world-would-look-like-if-you-could-actually-se-846030448
+     If We can See the Wi-Fi Signals…
+8
+
+
+
+
+    http://gizmodo.com/what-the-world-would-look-like-if-you-could-actually-se-846030448
+    What Happens if We Cut the Wire
+       What Happens After We Cut the Wire?
+9
+     Just Consider the Direct Path
+10
+
+
+     ¨   Free-space pathloss
+         ¤ Transmission power decreases with square of distance
+
+                                    4πd 2     4πdf 2
+           Signal power loss = (         ) =(     )
+                                     λ         c
+         ¤ d: distance between TX and RX
+
+         ¤ λ: signal wavelength in meters
+
+         ¤ f: signal frequency in hertz
+
+         ¤ c: speed of light in a vacuum
+
+             Higher frequency (shorter wavelength) has
+                         higher signal loss
+     Just Consider the Direct Path
+11
+
+
+     ¨   Free-space pathloss
+         ¤ Transmission power decreases with square of distance
+
+                                4πd 2    4πdf 2
+          Signal power loss = (     ) =(     )
+                                 λ        c
+
+          Freq.        900MHz          2.4GHz         5GHz
+         Range        902 – 928     2.4 – 2.4835   5.15 – 5.35
+     Bandwidth          26MHz         83.5MHz        200MHz
+     Wavelength      0.33m /13.1’’ 0.125m / 4.9’’ 0.06m / 2.4’’
+     Just Consider the Direct Path
+12
+
+
+     ¨   In general cases
+                                      4πdf α
+           Signal power loss = (         )        Pathloss
+                                       c          component
+
+            Free space                         2
+            Urban area cellular                2.7 – 3.5
+            Shadowed urban cell                3–5
+            Obstructed in building             4–6
+            Obstructed in factories            2–3
+                             The Physics of Radio Propagation
+      Signal  Propagation
+         The Physics of Radio Propagation
+             • ReﬂecMon"
+13
+              – PropagaMng"wave"impinges"on"an"object"which"is"large"compared"to"
+• ReﬂecMon"
+    ¨ Reflection  wavelength""
+   – PropagaMng"wave"impinges"on"an"object"which"is"large"compared"to"
+              – E.g.,"the"surface"of"the"Earth,"buildings,"walls,"etc."
+       ¤ Propagation
+     wavelength""         wave impinges on an object larger than its
+     – E.g.,"the"surface"of"the"Earth,"buildings,"walls,"etc."
+             wavelength, e.g., buildings, walls
+
+
+
+
+                            Boost WiFi signals
+                            using a beer can!
+
