@@ -1,0 +1,353 @@
+CSEE4119: Computer Networks
+
+ Xia Zhou
+ Columbia University
+ Jan. 20, 2026
+                                                2
+
+
+Why Study Computer Networking?
+#1: Networking is ubiquitous
+ ¡ We use the Internet everyday, in many ways
+               3
+
+
+
+
+What are the
+   types of
+  computer
+networks you
+ have seen?
+                 4
+
+
+Wi-Fi Networks
+                    5
+
+
+Cellular Networks
+                       6
+
+
+Data Center Networks
+                     7
+
+
+Body Area Networks
+Computers Blended into   8
+
+
+Everyday Life
+                                                9
+
+
+The Internet
+¡Ties together different networks
+
+
+user      ISP A      ISP B
+                  Internet    ISP C      user
+
+
+
+
+Tied together by the “Internet Protocol” (IP): a
+single common interface between users and
+the network, and between networks
+                              10
+
+
+Fun Fact about the Internet
+¡ Started out as a
+  military project:
+  ARPANET
+¡ First node of
+  ARPANET is
+  operational in 1969
+¡ ARPANET public
+  demo in 1972
+ ¡ 15 nodes
+ ¡ First e-mail program
+                                                               11
+
+
+ Tremendous Growth
+    Top-end user Internet speed (bps)
+
+
+                                                          1.1Gbps
+
+
+
+
+                        300bps
+
+ Picture credit: NN/g
+ Nielsen Norman Group
+
+
+
+Nielsen’s law of Internet bandwidth: A high-end user’s connection
+speed grows by 50% per year
+                                                       12
+
+
+Tremendous Scale
+¡ 6 billion users (74% of world population)
+¡ 1.3 billion websites
+¡ 376 billion emails sent and received per day
+¡ 5.8 billion mobile users
+¡ 3 billion Facebook monthly active users
+¡ 1 billion hours of YouTube video watched per day
+¡ Video occupies 82% of the Internet traffic in 2025
+                                                              13
+
+
+Why Study Computer Networking?
+#2: The Internet is a critical infrastructure
+ ¡ Highlighted by the pandemic, used by people to work, to
+   socialize, to learn, to entertain, and more…
+
+
+
+
+ ¡ Even in the age of AI, a critical infrastructure for
+   making powerful AI possible
+  ¡ OpenAI relies on Microsoft Azure’s cloud infrastructure
+                                                            14
+
+
+What We Will Learn
+¡ Knowledge: how the Internet works
+ ¡ Internet architecture
+ ¡ Networking protocols
+ ¡ Applications (Web, DNS, …)
+
+¡ Skill: network programming
+ ¡ Socket programing
+ ¡ Network protocol/application implementation and design
+
+¡ Insight: key principles/concepts in networking
+ ¡ Layers
+ ¡ Protocols
+ ¡ Naming
+                                                                   15
+
+
+Topics
+¡Network applications
+ ¡ How common Internet applications work (e.g., web, peer-to-
+   peer applications, DNS, video streaming)
+ ¡ How to build applications that span multiple computers and
+   use Internet to communicate
+
+
+¡Network communication protocols
+ ¡ Transport protocols (how to deliver message across Internet),
+   network layer (how to send data from source to destination),
+   and link layer (medium access control), physical layers
+
+
+¡Advanced topics
+ ¡ Data center networking, software-defined networking
+                                         16
+
+
+How We Will Study Computer Networking
+ ¡ Classroom time
+  ¡ Lectures
+  ¡ Join office hours if any questions
+
+ ¡ Course work
+  ¡ Assignments
+  ¡ Written exams
+  ¡ Class project
+  ¡ In-class quizzes (informal)
+                                                           17
+
+
+Textbook
+                         ¡ Authors went to Columbia!
+
+
+                         ¡ Focus on principle and practice
+                           that supported the tremendous
+                           Internet growth
+
+
+                         ¡ Well-organized supplementary
+                           materials (slides online)
+
+Computer Networking:
+A Top-Down Approach      ¡ 7th/8th edition includes software
+8th edition                defined networking
+Jim Kurose, Keith Ross
+Pearson, 2020
+                                                            18
+
+
+Topics We Will Cover
+                         Chapters 1 - 7
+
+                         ¡ Computer Networks Introduction
+
+                         ¡ Application Layer
+
+                         ¡ Transport Layer
+
+                         ¡ Network Layer: Data Plane
+
+                         ¡ Network Layer: Control Plane
+
+                         ¡ Link Layer
+
+                         ¡ Wireless and Mobile
+
+
+                         We will not cover
+Computer Networking:
+A Top-Down Approach      ¡ Security in Computer Networks
+8th edition
+Jim Kurose, Keith Ross
+Pearson, 2020            ¡ Multimedia Networking
+                                         19
+
+
+Grading
+¡5%: Class participation and quizzes
+ ¡ Class discussions, Q/A
+ ¡ Occasional quizzes
+ ¡ Apple Quiz!
+   ¡ I will pose a question related to
+     course material in class,
+     whoever gives the best/correct
+     answer wins an APPLE!
+                                               20
+
+
+Grading
+¡5%: Class participation and quizzes
+¡40%: Assignments
+ ¡ Three assignments covering application,
+   transport, and network layer protocols
+
+ ¡ Submit on Gradescope
+
+ ¡ Grades, grading feedback/comments will be
+   released on CourseWorks
+                                            21
+
+
+Submit Assignments On time
+
+
+¡ No extension
+
+
+¡ Because you do not need it
+
+
+¡ Late submission (35% reduction per day)
+                                                         22
+
+
+Honor Code
+¡ You can discuss high-level concepts and design ideas
+¡ Cannot code up labs together
+¡ Cannot help others on coding
+¡ Cannot share code snippets
+¡ Cannot post your submission at any public repos
+
+
+¡ We have tools to detect code similarity
+
+¡ Check the honor code on CourseWorks
+
+
+¡ If anything is unclear at anytime, ask first
+                                                     23
+
+
+Policy of the Use of AI
+¡ Permitted for deeper learning of concepts and
+  protocols
+
+
+¡ NOT permitted to write coding assignments or
+  project
+ ¡ Defeating the purpose of learning
+
+
+¡ The work you submit should reflect your own work
+                                                                       24
+
+
+
+
+Uploading course materials to sites such as CourseHero, Chegg, or Github is
+                  academic misconduct at Columbia.
+                                                25
+
+
+Grading
+¡5%: Class participation and quizzes
+¡40%: Assignments
+¡20%: Team project
+ ¡ Last two weeks: no lectures, only invited talks
+ ¡ 3-4 students per team, each team shepherded by
+   a TA
+ ¡ Design and code review
+ ¡ Final project demo with your shepherd
+                                       26
+
+
+Grading
+¡5%: Class participation and quizzes
+¡40%: Assignments
+¡20%: Team project
+¡15%: Midterm
+ ¡ One class period on March 10
+
+¡20%: Final exam (in-person)
+ ¡ May 14, Thursday, 4:10-7pm
+                                                             27
+
+
+Meet the TA Team!
+
+
+
+
+ Mike Azure       Siying Ding   Ananya Kapoor     Dev Bahl
+
+
+
+
+  Harris Ransom       Xiaofeng Yan     Ziang (Lex) Ren
+                                                               28
+
+
+Ask for Help
+¡ Post on Ed Discussion
+
+
+¡ Come to office hours
+ ¡ Xia’s office hour in CEPSR 626 (1:30pm-2:30pm Thursday)
+ ¡ TA’s office hours in EE lounge (check Courseworks for the
+   schedule)
+
+¡ Email:
+ ¡ To reach all TAs:
+   csee4119s26-ta@lists.cs.columbia.edu
+ ¡ To reach me alone: xia@cs.columbia.edu (put [CSEE4119] in
+   the subject line)
+                      29
+
+
+Get Started
+¡Join CourseWorks
+
+
+¡Join Ed Discussion
+

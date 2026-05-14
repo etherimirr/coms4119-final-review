@@ -1,0 +1,538 @@
+Overview/Roadmap
+§ What is the Internet?
+§ What is a protocol?
+§ Network edge: hosts, access network, physical media
+§ Network core: packet/circuit switching, internet structure
+§ Performance: transmission rate, loss, delay, throughput
+§ Protocol layers, service models
+
+
+
+
+                                                               Introduction: 1-1
+A simple daily-life example
+
+
+  Secretary                   Secretary
+
+
+    FedEx                       FedEx
+
+
+
+    Truck                       Truck
+
+
+    Sorting                     Sorting
+    facility                    facility
+
+
+                                           Introduction: 1-2
+Layering: A Modular Approach
+§ Divide and conquer
+  • Each layer relies on services from layer below
+  • Each layer exports services to layer above
+§ Interface between layers defines interaction
+  • Hide implementation details
+  • Can change layers without affecting other layers
+
+                                  Application
+
+                       Application-to-application channels
+
+                            Host-to-host connectivity
+                                 Link hardware
+                                                             Introduction: 1-3
+In the Context of Internet
+                                                  This is
+             Applications                        not a typo
+                                                     nope,
+               …built on…                          not a typo
+
+       Reliable (or unreliable) transport
+               …built on…                   L7      Application
+
+       Best-effort global packet delivery   L4       Transport
+
+                                            L3       Network
+              …built on…
+                                            L2       Data link
+       Best-effort local packet delivery
+                                            L1        Physical
+              …built on…
+
+           Physical transfer of bits
+                                                                  Introduction: 1-4
+In the Context of Internet
+
+                                             7   Application
+     The Open Systems Interconnect (OSI)     6 Presentation
+     model developed by the ISO included     5    Session
+      two additional layers that are often
+                                             4   Transport
+    implemented as part of the application
+                                             3    Network
+                                             2    Data link
+                                             1    Physical
+
+
+
+
+                                                               Introduction: 1-5
+Protocols and Layers
+
+      L7   Application                Application   L7
+
+      L4    Transport                  Transport    L4
+      L3    Network                    Network      L3
+      L2    Data link                  Data link    L2
+      L1    Physical                   Physical     L1
+
+
+       Communication between peer layers on
+       different systems is defined by protocols
+
+                                                         Introduction: 1-6
+Layered Internet protocol stack
+§ application: supporting network applications
+   • HTTP, IMAP, SMTP, DNS
+                                                 application
+                                                 application
+§ transport: process-process data transfer
+   • TCP, UDP                                    transport
+                                                  transport
+§ network: routing of datagrams from source to
+ destination                                      network
+   • IP, routing protocols
+                                                    link
+§ link: data transfer between neighboring
+ network elements                                 physical
+   • Ethernet, 802.11 (WiFi), PPP
+§ physical: bits “on the wire”
+                                                               Introduction: 1-7
+Protocols at Different Layers
+    L7   Application   SMTP            HTTP          DNS      FTP
+
+
+
+    L4   Transport               TCP                   UDP
+
+
+    L3    Network                             IP
+
+
+    L2     Data link          Ethernet             802.11     PPP
+
+
+    L1     Physical    optical         copper         radio    PSTN
+
+
+
+                                 The hourglass model
+                                                                      Introduction: 1-8
+  Services, Layering and Encapsulation
+                                                    M
+         application    Application exchanges messages to implement some            application
+                         application service using services of transport layer
+                                               Ht   M
+         transport     Transport-layer protocol transfers M (e.g., reliably) from   transport
+                       one process to another, using services of network layer
+
+          network      § transport-layer protocol encapsulates                       network
+                         application-layer message, M, with
+            link         transport layer-layer header Ht to create a                   link
+                         transport-layer segment
+                         • Ht used by transport layer protocol to
+          physical          implement its service                                    physical
+
+source                                                                                     destination
+
+                                                                                                  Introduction: 1-9
+  Services, Layering and Encapsulation
+                                                    M
+         application                                                                  application
+
+                                               Ht   M
+         transport     Transport-layer protocol transfers M (e.g., reliably) from     transport
+                       one process to another, using services of network layer
+
+          network                           Hn Ht   M                                  network
+                        Network-layer protocol transfers transport-layer segment
+                       [Ht | M] from one host to another, using link layer services
+            link                                                                         link
+                       § network-layer protocol encapsulates
+                         transport-layer segment [Ht | M] with
+          physical       network layer-layer header Hn to create a                     physical
+                         network-layer datagram
+source                   • Hn used by network layer protocol to                              destination
+                            implement its service
+                                                                                                    Introduction: 1-10
+  Services, Layering and Encapsulation
+                                                    M
+         application                                                                  application
+
+                                               Ht   M
+         transport                                                                    transport
+
+          network                           Hn Ht   M                                  network
+                        Network-layer protocol transfers transport-layer segment
+                       [Ht | M] from one host to another, using link layer services
+            link                         Hl Hn Ht   M                                    link
+                       Link-layer protocol transfers datagram [Hn| [Ht |M] from
+                        host to neighboring host, using network-layer services
+          physical                                                                     physical
+                       § link-layer protocol encapsulates network
+                         datagram [Hn| [Ht |M], with link-layer header
+source                   Hl to create a link-layer frame                                     destination
+
+                                                                                                    Introduction: 1-11
+             Encapsulation
+             Matryoshka dolls (stacking dolls)
+
+
+
+
+                                                          message   segment   datagram   frame
+
+
+
+
+Credit: https://dribbble.com/shots/7182188-Babushka-Boi                                    Introduction: 1-12
+  Services, Layering and Encapsulation
+
+         application   message            M              M   application
+
+         transport     segment       Ht   M        Ht    M   transport
+
+          network      datagram   Hn Ht   M      Hn Ht   M    network
+
+            link       frame   Hl Hn Ht   M   Hl Hn Ht   M
+                                                                link
+
+          physical                                            physical
+
+source                                                              destination
+
+                                                                           Introduction: 1-13
+What Gets Implemented on the End-host?
+§ All the layers!
+
+§ Application
+  • User space: mail, game, browser…
+§ Transport and network
+  • Typically part of the operating system
+§ Data link
+  • Often written by the network interface vendor
+§ Physical
+  • Hardware: network interface card and link
+
+
+                                                    Introduction: 1-14
+               • Interoperability
+What are the     • Diverse implementation of many
+                   technologies
+ benefits of     • They can all talk because they use
+layering and       the same protocols
+  protocols?
+               • Abstraction and reuse
+                 • Build atop a standard interface
+                 • Hide the details
+
+               • Stimulating innovation
+                 • Innovation at each layer can proceed
+                   in parallel           Application Layer: 2-15
+               • High-level layers may duplicate low-
+                 level functionalities
+ When is          • Error recovery to retransmit lost data
+
+layering not   • May hurt performance
+                  • Hide details about what is going on
+  helpful?
+               • May duplicate information as well
+                  • Timestamps, maximum transmission unit
+                    (MTU) size
+               • Some layers are not cleanly separated
+                  • Inter-layer dependencies for performance
+                    reasons
+               • Header overhead
+                  • Can get really big…
+                                              Application Layer: 2-16
+How to place network functionality
+• End-to-end principle
+   • Highly influential paper: End-to-End Arguments in System Design, by Saltzer,
+     Reed, and Clark, 1984
+
+• Some application requirements can only be correctly implemented
+  end-to-end
+   • e.g., reliability, security
+
+• Example: How would you ensure a reliable file transfer?
+End-to-End Principle
+• Implementing functionality in the network
+   • Does not reduce host implementation complexity
+   • Does increase network complexity
+   • Can increase delay and overhead, especially for applications that do not need
+     the functionality
+
+• But, implementing it in the network can improve performance
+   • Say a very lossy link
+
+• Takeaway: Implement a functionality in the network only if sufficient,
+  necessary, and useful
+CSEE4119: Computer Networks
+                Application Layer
+                            Xia Zhou
+                 Department of Computer Science
+                       Columbia University
+                           Slides credited to J.F Kurose and K.W. Ross and their textbook “Computer Networking: A Top-Down Approach”
+Application layer: overview
+§ Principles of network applications
+§ Web and HTTP
+§ The Domain Name System DNS
+§ P2P applications
+§ video streaming and content distribution networks
+§ socket programming with UDP and TCP
+
+
+
+                                                      Application Layer: 2-20
+Network apps
+§ social networking          § voice over IP (e.g., Skype)
+§ Web                        § real-time video conferencing
+§ text messaging               (e.g., Zoom)
+§ e-mail                     § Internet search
+§ multi-user network games   § remote login
+§ streaming stored video     § access to large AI models
+  (YouTube, Hulu, Netflix)   § ….
+§ P2P file sharing
+                                 Q: your favorites?
+                                                    Application Layer: 2-21
+Creating a network app
+                                                       application
+
+write programs that:                                    transport
+                                                         network
+                                               mobile network
+                                                        data link
+                                                         physical
+§ run on (different) end systems                                         national or global ISP
+
+
+§ communicate over network
+§ e.g., web server software
+  communicates with browser software
+                                                                local or
+no need to write software for                                   regional ISP
+
+network-core devices                       home network                           content
+                                                       application                provider
+§ network-core devices do not run user                  transport
+                                                         network                  network        datacenter
+                                                                                      applicationnetwork
+  applications                                          data link
+                                                         physical
+                                                                                       transport
+                                                                                        network
+
+§ applications on end systems allows for
+                                                                                       data link
+                                                                                        physical
+
+  rapid app development, propagation       enterprise
+                                                network
+
+
+                                                                                        Application Layer: 2-22
+Client-server paradigm
+server:                                     mobile network
+ § always-on host                                                 national or global ISP
+
+ § permanent IP address
+ § often in data centers, for scaling
+
+clients:                                                 local or
+                                                         regional ISP
+ § contact, communicate with server
+ § may be intermittently connected      home network                       content
+                                                                           provider
+ § may have dynamic IP addresses                                           network      datacenter
+                                                                                        network
+
+
+ § do not communicate directly with
+   each other
+                                        enterprise
+§ examples: HTTP, IMAP, FTP                  network
+
+
+                                                                                 Application Layer: 2-23
+Peer-peer architecture
+§ no always-on server                              mobile network
+§ arbitrary end systems directly                                         national or global ISP
+
+  communicate
+§ peers request service from other
+  peers, provide service in return to
+  other peers                                                   local or
+                                                                regional ISP
+  • self scalability – new peers bring new
+    service capacity, as well as new service   home network                       content
+    demands                                                                       provider
+                                                                                  network      datacenter
+
+§ peers are intermittently connected                                                           network
+
+
+
+  and change IP addresses
+  • complex management                         enterprise
+                                                    network
+§ example: P2P file sharing [BitTorrent]
+                                                                                        Application Layer: 2-24
+Processes communicating
+process: program running         clients, servers
+ within a host                   client process: process that
+                                  initiates communication
+§within same host, two           server process: process
+ processes communicate            that waits to be contacted
+ using inter-process
+ communication (defined by
+ OS)                            § note: applications with
+                                  P2P architectures have
+§processes in different hosts     client processes &
+ communicate by exchanging        server processes
+ messages
+                                                          Application Layer: 2-25
+Sockets
+§ process sends/receives messages to/from its socket
+§ socket analogous to door
+   • sending process shoves message out of the door
+   • transport layer on other side of door deliver message to socket at receiving
+     process
+   • two sockets involved: one on each side
+
+
+                      application                   application
+                                     socket                       controlled by
+                      process                       process       app developer
+
+                      transport                     transport
+
+                       network                      network       controlled
+                         link                          link       by OS
+                                      Internet
+                       physical                     physical
+
+
+                                                                                  Application Layer: 2-26
+Identifying Receiving Process
+§ Identifying the receiving end-host
+  • Name or address that uniquely identifies the host
+  • IP address (32 bits)
+
+§ Identifying the receiving process in the receiver
+  • Host may run many different processes
+  • Destination port (16 bits)
+
+§ Uniquely identifying the traffic between the hosts
+  • Two IP addresses and two port numbers
+  • Pass them to the underlying transport protocols
+
+                                                        Application Layer: 2-27
+An application-layer protocol defines:
+§ message type,                  open protocols:
+   • e.g., request, response      § defined in RFCs, everyone
+§ message syntax:                   has access to protocol
+   • what fields in messages &      definition
+     how fields are delineated    § allows for interoperability
+§ message semantics               § e.g., HTTP, SMTP
+   • meaning of information in   proprietary protocols:
+     fields
+                                  § e.g., Skype, Zoom
+§ rules for when and how
+  processes send & respond to
+  messages
+                                                             Application Layer: 2-28
+ What transport service does an app need?
+data integrity                              throughput
+§ some apps (e.g., file transfer, web       § some apps (e.g., multimedia)
+  transactions) require 100% reliable         require minimum amount of
+  data transfer                               throughput to be “effective”
+§ other apps (e.g., audio) can tolerate     § other apps (“elastic apps”) make
+  some loss                                   use of whatever throughput they
+                                              get
+
+timing
+§ some apps (e.g., Internet telephony,      security
+  interactive games) require low delay to   § encryption, data integrity, …
+  be “effective”
+
+                                                                              Application Layer: 2-29
+    Transport service requirements: common apps
+
+           application    data loss       throughput           time sensitive?
+
+file transfer/download    no loss         elastic               no
+                 e-mail   no loss         elastic               no
+        Web documents     no loss         elastic               no
+ real-time audio/video    loss-tolerant   audio: 5Kbps-1Mbps    yes, 10’s msec
+                                          video:10Kbps-5Mbps
+streaming audio/video     loss-tolerant   same as above         yes, few secs
+     interactive games    loss-tolerant   Kbps+                 yes, 10’s msec
+        text messaging    no loss         elastic               yes and no
+                                                                         Application Layer: 2-30
+Internet transport protocols services
+TCP service:                            UDP service:
+§ reliable transport between sending    § unreliable data transfer
+  and receiving process                   between sending and receiving
+§ flow control: sender won’t              process
+  overwhelm receiver                    § does not provide: reliability,
+§ congestion control: throttle sender     flow control, congestion
+  when network overloaded                 control, timing, throughput
+                                          guarantee, security, or
+§ connection-oriented: setup required     connection setup.
+  between client and server processes
+§ does not provide: timing, minimum        Q: why bother? Why
+  throughput guarantee, security            is there a UDP?
+                                                                Application Layer: 2-31
+    Internet applications, and transport protocols
+                           application
+           application     layer protocol             transport protocol
+
+file transfer/download     FTP [RFC 959]                          TCP
+                  e-mail   SMTP [RFC 5321]                        TCP
+        Web documents      HTTP [RFC 7230, 9110]                  TCP
+     Internet telephony    SIP [RFC 3261], RTP [RFC        TCP or UDP
+                           3550], or proprietary
+streaming audio/video      HTTP [RFC 7230], DASH                  TCP
+     interactive games     WOW, FPS (proprietary)          UDP or TCP
+
+                                                                  Application Layer: 2-32
+Securing TCP
+Vanilla TCP & UDP sockets:               TLS implemented in
+§ no encryption                          application layer
+§ cleartext passwords sent into socket    § apps use TLS libraries, that
+  traverse Internet in cleartext (!)        use TCP in turn
+Transport Layer Security (TLS)           § cleartext sent into “socket”
+§ provides encrypted TCP connections       traverse Internet encrypted
+§ data integrity                         § more: Chapter 8
+§ end-point authentication
+
+
+
+                                                                 Application Layer: 2-33
+Quiz Time
+§ All the layers get implemented on end hosts
+                                                    What layers are
+§ Application                                       implemented
+  • User space: mail, game, browser…                on routers and
+§ Transport and network                               switches?
+  • Typically part of the operating system
+§ Data link
+  • Often written by the network interface vendor
+§ Physical
+  • Hardware: network interface card and link
+
+
+                                                            Introduction: 1-34
+

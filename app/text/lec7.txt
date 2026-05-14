@@ -1,0 +1,221 @@
+Review
+Network Layers and Services
+
+
+
+
+                              Application Layer: 2-1
+Review
+Client-Server Paradigm
+
+
+
+
+                         Application Layer: 2-2
+Application layer: overview
+▪ Principles of network applications
+▪ Web and HTTP
+▪ video streaming and content distribution networks
+▪ socket programming with UDP and TCP
+▪ The Domain Name System (DNS)
+▪ P2P applications
+
+
+
+                                                      Application Layer: 2-3
+Lecture goals
+
+ ▪Define role of TCP and UDP sockets in network
+  communication
+ ▪Learn how to build client/server applications that
+  communicate using sockets
+ ▪Program a socket-based application in Python
+
+
+
+
+                                                       Application Layer: 2-4
+Socket programming
+Socket: door between application process and end-end-transport
+  protocol
+
+               application              application
+                             socket                   controlled by
+               process                  process       app developer
+
+               transport                transport
+                network                 network       controlled
+                                           link       by OS
+                  link       Internet
+                physical                physical
+
+
+
+
+                                                                      Application Layer: 2-5
+Socket programming
+Two socket types for two transport services:
+ ▪ UDP: unreliable datagram
+ ▪ TCP: reliable, byte stream-oriented
+
+
+
+
+                                               Application Layer: 2-6
+Socket programming with UDP
+UDP: no “connection” between client and server:
+▪ no handshaking before sending data
+▪ sender explicitly attaches IP destination address and port # to
+  each packet
+▪ receiver extracts sender IP address and port# from received
+  packet
+
+UDP: transmitted data may be lost or received out-of-order
+Application viewpoint:
+▪ UDP provides unreliable transfer of groups of bytes (“datagrams”)
+  between client and server processes
+                                                                    Application Layer: 2-7
+Client/server socket interaction: UDP
+     server (running on serverIP)   client
+                                    create socket:
+       create socket, port= x:      clientSocket =
+       serverSocket =               socket(AF_INET,SOCK_DGRAM)
+       socket(AF_INET,SOCK_DGRAM)
+                                    Create datagram with serverIP address
+                                    And port=x; send datagram via
+       read datagram from           clientSocket
+       serverSocket
+
+          write reply to
+          serverSocket               read datagram from
+          specifying                 clientSocket
+          client address,
+          port number                close
+                                     clientSocket
+                                                                      Application Layer: 2-8
+Example Application
+1. client reads a line of characters (data) from its keyboard and sends
+   data to server
+2. server receives the data and converts characters to uppercase
+3. server sends modified data to client
+4. client receives modified data and displays line on its screen
+
+
+
+
+                                                                    Application Layer: 2-9
+   Example app: UDP client
+                                                           Python UDPClient
+                         include Python’s socket library   from socket import *
+                                                           serverName = 'hostname'
+                                                           serverPort = 12000
+                                     create UDP socket     clientSocket = socket(AF_INET,
+                                                                                 SOCK_DGRAM)
+                                get user keyboard input    message = input('Input lowercase sentence:')
+attach server name, port to message; send into socket      clientSocket.sendto(message.encode(),
+                                                                               (serverName, serverPort))
+                    read reply data (bytes) from socket    modifiedMessage, serverAddress =
+                                                                                clientSocket.recvfrom(2048)
+              print out received string and close socket   print(modifiedMessage.decode())
+                                                           clientSocket.close()
+
+Note: this code update (2023) to Python 3                                                                  Application Layer: 2-10
+   Example app: UDP server
+                                                           Python UDPServer
+                                                           from socket import *
+                                                           serverPort = 12000
+                                     create UDP socket     serverSocket = socket(AF_INET, SOCK_DGRAM)
+                bind socket to local port number 12000     serverSocket.bind(('', serverPort))
+                                                           print('The server is ready to receive')
+                                            loop forever   while True:
+         Read from UDP socket into message, getting         message, clientAddress = serverSocket.recvfrom(2048)
+         client’s address (client IP and port)
+                                                            modifiedMessage = message.decode().upper()
+             send upper case string back to this client     serverSocket.sendto(modifiedMessage.encode(),
+                                                                                clientAddress)
+
+
+
+
+Note: this code update (2023) to Python 3                                                               Application Layer: 2-11
+Socket programming with TCP
+Client must contact server             ▪ when contacted by client, server
+▪ server process must first be           TCP creates new socket for server
+  running                                process to communicate with that
+▪ server must have created socket        particular client
+  (door) that welcomes client’s          • allows server to talk with multiple
+  contact                                  clients
+Client contacts server by:               • client source port # and IP address used
+                                           to distinguish clients (more in Chap 3)
+▪ Creating TCP socket, specifying IP
+  address, port number of server
+  process                                  Application viewpoint
+▪ when client creates socket: client        TCP provides reliable, in-order
+  TCP establishes connection to             byte-stream transfer (“pipe”)
+  server TCP                                between client and server
+                                            processes
+                                                                              Application Layer: 2-12
+Client/server socket interaction: TCP
+       server (running on hostid)                client
+                  create socket,
+                  port=x, for incoming
+                  request:
+                  serverSocket = socket()
+
+
+                  wait for incoming                     create socket,
+                  connection request
+                                          TCP           connect to hostid, port=x
+                  connectionSocket = connection setup   clientSocket = socket()
+                  serverSocket.accept()
+
+                                                          send request using
+                  read request from                       clientSocket
+                  connectionSocket
+
+                   write reply to
+                   connectionSocket                       read reply from
+                                                          clientSocket
+                  close
+                  connectionSocket                         close
+                                                           clientSocket
+                                                                                    Application Layer: 2-13
+   Example app: TCP client
+                                              Python TCPClient
+                                              from socket import *
+                                              serverName = 'servername'
+                                              serverPort = 12000
+              create TCP socket for server,   clientSocket = socket(AF_INET, SOCK_STREAM)
+              remote port 12000
+                                              clientSocket.connect((serverName,serverPort))
+                                              sentence = input('Input lowercase sentence:')
+                                              clientSocket.send(sentence.encode())
+     No need to attach server name, port      modifiedSentence = clientSocket.recv(1024)
+                                              print ('From Server:', modifiedSentence.decode())
+                                              clientSocket.close()
+
+
+
+Note: this code update (2023) to Python 3                                                   Application Layer: 2-14
+   Example app: TCP server
+                                                    Python TCPServer
+                                                     from socket import *
+                                                    serverPort = 12000
+               create TCP welcoming socket          serverSocket = socket(AF_INET,SOCK_STREAM)
+                                                    serverSocket.bind(('',serverPort))
+                    server begins listening for
+                    incoming TCP requests
+                                                    serverSocket.listen(1)
+                                                    print('The server is ready to receive')
+                                     loop forever   while True:
+    server waits on accept() for incoming               connectionSocket, addr = serverSocket.accept()
+    requests, new socket created on return
+
+                  read bytes from socket (but          sentence = connectionSocket.recv(1024).decode()
+                  not address as in UDP)               capitalizedSentence = sentence.upper()
+                                                       connectionSocket.send(capitalizedSentence.
+                                                                                       encode())
+     close connection to this client (but not          connectionSocket.close()
+     welcoming socket)
+Note: this code update (2023) to Python 3                                                        Application Layer: 2-15
+

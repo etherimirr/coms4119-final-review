@@ -1,0 +1,353 @@
+Quiz
+Assume you are connecting to a web server using HTTP 1.1 w/
+persistent connection.
+
+Calculate the # of RTTs needed to fetch and receive an index.html with
+5 embedded jpeg images. Assume each image can fit in one packet.
+
+Answer: 2 RTTs are needed for fetching index.html, and then 1 RTT for
+each embedded image. Thus, the total duration is 2 + 5 = 7 RTTs.
+
+
+
+                                                                  Transport Layer: 3-1
+Application layer: overview
+§ Principles of network applications
+§ Web and HTTP
+§ Video streaming and content distribution networks
+§ Socket programming with UDP and TCP
+§ The Domain Name System DNS
+§ P2P applications
+
+
+
+                                                      Application Layer: 2-2
+Recap: Two Communication Architecture
+§ Client-server
+  • Server is always on with a fixed address, services many
+    clients, do not initiate requests with clients
+  • Client is sometimes on, sends requests to the server
+
+
+
+§ Peer-to-peer
+  • No always-on server at all
+  • Hosts can come and go, change addresses, can initiate
+    communication with any others
+
+
+                                                              Application Layer: 2-3
+P2P Network #1: Napster
+§ Sharing audio (typically MP3 music) files
+  • Company founded in May 1999
+  • First lawsuit in Sept. 1999
+  • 80 million users in 2000
+  • Ran out of business due to lawsuits in mid 2001
+  • Online music store, merged with Rhapsody from BestBuy in 2011
+§ Directory service
+  • Napster server maintains the list of music files each client has
+  • When a client searches on music title or performer, server returns IP addresses
+    of online clients with the file
+  • Client requests files directly from other online clients
+
+                                                                             Application Layer: 2-4
+Napster Technology
+§ File transfer is decentralized, yet locating content is highly centralized
+  • Server keeps updating the directory
+  • Peer-to-peer file transfer, no load on the server
+
+§ No security
+  • Clear-text passwords and other vulnerability
+
+§ Rank clients by bandwidth and response time
+
+§ Limitations?
+  • Single point of failure L
+
+                                                                       Application Layer: 2-5
+P2P Network #2: Gnutella
+§ Released in 2000
+§ No central server at all                                Query
+
+§ Query by flooding your requests to          y
+                                                          QueryHit
+                                           er             Qu
+  your neighbors                       Q u
+                                                 y Hi
+                                                      t
+                                                             ery
+                                            u er
+                                          Q
+                                        Query
+                                       QueryHit
+
+                                       Qu
+                                            er
+                                                 y
+
+
+
+
+                                                                     Application Layer: 2-6
+Gnutella: Pros and Cons
+§ Pros
+   • Fully decentralized, distribute search cost
+   • Processing per node allows powerful search semantics
+
+
+§ Cons
+   • Search scope can get huge
+   • Search time can get quite long
+   • High overhead as node come and go often
+
+
+                                                            Application Layer: 2-7
+P2P Network #3: KaZaA
+§ Created by Dutch company in 2001
+§ Smart query flooding
+  • Flood query within a small set of nodes (super nodes)
+  • Heterogeneous nodes: peer and super nodes
+§ Combination of Napster and Gnutella
+§ Super node tracks the content of all its children
+§ Why super node?
+  • Query consolidation: propagating query to sub-node      ordinary peer
+    can take longer than the super-node                     group-leader peer
+  • Stability: nodes with high up-time as super nodes       neighoring relationships
+                                                               in overlay network
+
+
+                                                                                Application Layer: 2-8
+Finally, BitTorrent
+§ Key motivation: popular content
+  • Popularity exhibits temporal locality (flash crowds)
+§ Focus on efficient fetching, not searching
+  • Distribute the same file to many peers
+§ Prevent free-loading
+§ Components
+   Seed: peer with the       Peer/Leecher: peer with       Tracker: allow peers
+   entire file               incomplete copy of the file   to find each other
+
+
+
+                                                                         Application Layer: 2-9
+Property #1: Simultaneous Downloading
+§ Divide a large file into many pieces (chunks)
+§ Replicate different pieces on different peers
+§ A peer can upload and download pieces at the same time
+§ A peer can retrieve different pieces of the file from different peers at
+  the same time
+
+
+
+
+                                                                      Application Layer: 2-10
+Example
+                          Web Server          Tracker
+
+            Web page
+             with link
+            to .torrent
+
+
+             t
+          .torre
+                 n
+                                                          C
+              A
+                                                        Peer
+             Peer                                       [Seed]
+                                          B
+      Downloader
+            “US”                       Peer
+                                                                 Application Layer: 2-11
+Example
+                        Web Server                          Tracker
+
+          Web page
+           with link
+          to .torrent
+                                            n   ce
+                                     n   ou
+                                an
+                        G   et-
+
+
+                                                                        C
+           A
+                                                                      Peer
+          Peer                                                        [Seed]
+                                                        B
+      Downloader
+          “US”                                       Peer
+                                                                               Application Layer: 2-12
+Example
+                         Web Server                                Tracker
+
+          Web page
+           with link
+          to .torrent
+
+
+                                                     li   st
+                                                  er
+                                         -   pe
+                                o   n se
+                           sp
+                        Re                                                     C
+           A
+                                                                             Peer
+          Peer                                                               [Seed]
+                                                               B
+      Downloader
+          “US”                                        Peer
+                                                                                      Application Layer: 2-13
+Example
+                          Web Server                    Tracker
+
+          Web page
+           with link
+          to .torrent
+
+
+
+
+                                           Shake-hand               C
+           A
+                 Sh a                                             Peer
+                        ke-
+          Peer              h   an                                [Seed]
+                                     d      B
+      Downloader
+          “US”                           Peer
+                                                                           Application Layer: 2-14
+Example
+                        Web Server                 Tracker
+
+          Web page
+           with link
+          to .torrent
+
+
+
+
+                                          pieces               C
+           A
+                          p ie                               Peer
+                                 ces
+          Peer                                               [Seed]
+                                          B
+      Downloader
+          “US”                         Peer
+                                                                      Application Layer: 2-15
+Example
+                          Web Server                     Tracker
+
+          Web page
+           with link
+          to .torrent
+
+
+
+
+                                                pieces               C
+           A
+                                p ie                               Peer
+                                       ces
+          Peer          p ie                                       [Seed]
+                               ces              B
+      Downloader
+          “US”                               Peer
+                                                                            Application Layer: 2-16
+Property #2: Anti Free-Riding
+§ Vast majority of users are free-riders
+  • Most share no files and answer no queries
+  • Other limit the # of connections or upload speed
+§ A few peers essentially act as servers
+
+§ Tit-for-Tat
+  • Peers decide which peers they upload files to at the high rate
+      • Choke other peers, i.e., do not send them chunks
+      • Re-evaluate top 4 peers every 10 seconds
+  • Occasionally let some free riders download (opportunistic unchoking)
+  • newly chosen peer may join top 4
+                                                                           Application Layer: 2-17
+File distribution: client-server vs P2P
+Q: how much time to distribute file (size F) from one server to
+   N peers?
+   • peer upload/download capacity is limited resource
+                        us: server upload
+                        capacity
+                                                              di: peer i download
+         file, size F                    u1   d1   u2         capacity
+                              us                        d2
+                    server
+                                                             di
+                         uN        network (with abundant
+                                         bandwidth)          ui
+                         dN
+                                                             ui: peer i upload
+                                                             capacity
+                                                                                    Introduction: 1-18
+ File distribution time: client-server
+§ server transmission: must sequentially
+  send (upload) N file copies:                        F
+                                                          us
+  • time to send one copy: F/us                                          di
+  • time to send N copies: NF/us                               network
+                                                                         ui
+
+§ client: each client must download file copy
+   • dmin = min client download rate
+   • min client download time: F/dmin
+
+                  time to distribute F
+                    to N clients using   Dc-s > max{NF/us , F/dmin}
+              client-server approach
+
+                            increases linearly in N
+                                                                              Introduction: 1-19
+File distribution time: P2P
+§ server transmission: must upload at
+  least one copy:
+                                                      F
+  • time to send one copy: F/us                            us
+
+§ client: each client must download                                           di
+                                                                 network
+  file copy                                                                   ui
+   • min client download time: F/dmin
+§ clients: as aggregate must download NF bits
+   • max upload rate (limiting max download rate) is us + Sui
+
+     time to distribute F
+       to N clients using    DP2P > max{F/us , F/dmin , NF/(us + Sui)}
+          P2P approach
+                                   increases linearly in N …
+                   … but so does this, as each peer brings service capacity    Application Layer: 2-20
+Client-server vs. P2P: example
+        client upload rate = u, F/u = 1 hour, us = 10u, dmin ≥ us
+                                     C"#
+                                               S%S
+
+
+
+
+         ()*)+,+-.)/MN)2,M)P*-4)+5
+                                      C
+                                               T8)5*M9:5N;5N
+                                     %"#
+
+                                      %
+
+                                     $"#
+
+                                      $
+
+                                     !"#
+
+                                      !
+                                           !    #      $!      $#       %!   %#   C!   C#
+
+                                                                    D
+                                                                                            Application Layer: 2-21
+

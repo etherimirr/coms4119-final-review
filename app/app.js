@@ -1,15 +1,31 @@
 // ============ Data registry ============
 const FILES = [
-  { id: 'lec14', label: 'lec14 · TCP 拥塞控制',  pages: 20 },
-  { id: 'lec16', label: 'lec16 · Network 数据面', pages: 45 },
-  { id: 'lec17', label: 'lec17 · 期中后续/IP',    pages: 28 },
-  { id: 'lec18', label: 'lec18 · IPv6 · 路由协议',pages: 54 },
-  { id: 'lec19', label: 'lec19 · BGP · OSPF',     pages: 25 },
-  { id: 'lec20', label: 'lec20 · SDN · OpenFlow', pages: 44 },
-  { id: 'lec21', label: 'lec21 · Data Link/MAC',  pages: 30 },
-  { id: 'lec22', label: 'lec22 · 交换机 · 无线',  pages: 31 },
-  { id: 'lec23', label: 'lec23 · 无线 MAC',       pages: 39 },
-  { id: 'final-preview', label: 'final-preview · 样题',  pages: 14 },
+  // 期中前
+  { id: 'lec1-intro',       label: 'lec1 · Intro',           pages: 29, premid: true },
+  { id: 'lec2-basics1',     label: 'lec2 · Basics 1',        pages: 36, premid: true },
+  { id: 'lec3-basics2',     label: 'lec3 · Basics 2',        pages: 26, premid: true },
+  { id: 'lec4-basics3',     label: 'lec4 · Basics 3',        pages: 34, premid: true },
+  { id: 'lec5-web',         label: 'lec5 · Web / HTTP',      pages: 32, premid: true },
+  { id: 'lec6-video',       label: 'lec6 · Video / DASH',    pages: 24, premid: true },
+  { id: 'lec7',             label: 'lec7 · Socket',          pages: 15, premid: true },
+  { id: 'lec8-dns',         label: 'lec8 · DNS',             pages: 28, premid: true },
+  { id: 'lec9-p2p',         label: 'lec9 · P2P / BitTorrent',pages: 21, premid: true },
+  { id: 'lec10-transport',  label: 'lec10 · Transport intro',pages: 36, premid: true },
+  { id: 'lec11-reliability',label: 'lec11 · RDT / GBN / SR', pages: 49, premid: true },
+  { id: 'lec12-tcp',        label: 'lec12 · TCP',            pages: 27, premid: true },
+  { id: 'lec13-congestion', label: 'lec13 · 拥塞控制 intro', pages: 38, premid: true },
+  { id: 'midterm-preview',  label: 'midterm-preview · 样题', pages: 9,  premid: true },
+  // 期中后
+  { id: 'lec14',            label: 'lec14 · TCP 拥塞控制',   pages: 20 },
+  { id: 'lec16',            label: 'lec16 · Network 数据面', pages: 45 },
+  { id: 'lec17',            label: 'lec17 · IP / DHCP / NAT',pages: 28 },
+  { id: 'lec18',            label: 'lec18 · IPv6 · 路由',    pages: 54 },
+  { id: 'lec19',            label: 'lec19 · BGP · OSPF',     pages: 25 },
+  { id: 'lec20',            label: 'lec20 · SDN · OpenFlow', pages: 44 },
+  { id: 'lec21',            label: 'lec21 · Data Link / MAC',pages: 30 },
+  { id: 'lec22',            label: 'lec22 · 交换机 · 无线',  pages: 31 },
+  { id: 'lec23',            label: 'lec23 · 无线 MAC',       pages: 39 },
+  { id: 'final-preview',    label: 'final-preview · 样题',   pages: 14 },
 ];
 
 const SPECIAL = [
@@ -308,14 +324,20 @@ function renderTabs() {
   };
   // overview first
   nav.appendChild(mkTab(SPECIAL[0]));
-  // section header
-  const sec1 = document.createElement('div');
-  sec1.className = 'tab section'; sec1.textContent = '讲义 (期中后)';
-  nav.appendChild(sec1);
-  FILES.forEach(f=>nav.appendChild(mkTab(f)));
-  const sec2 = document.createElement('div');
-  sec2.className = 'tab section'; sec2.textContent = '重点复习';
-  nav.appendChild(sec2);
+  // 期中前
+  const secA = document.createElement('div');
+  secA.className = 'tab section'; secA.textContent = '讲义 · 期中前';
+  nav.appendChild(secA);
+  FILES.filter(f=>f.premid).forEach(f=>nav.appendChild(mkTab(f)));
+  // 期中后
+  const secB = document.createElement('div');
+  secB.className = 'tab section'; secB.textContent = '讲义 · 期中后';
+  nav.appendChild(secB);
+  FILES.filter(f=>!f.premid).forEach(f=>nav.appendChild(mkTab(f)));
+  // 重点复习
+  const secC = document.createElement('div');
+  secC.className = 'tab section'; secC.textContent = '重点复习';
+  nav.appendChild(secC);
   SPECIAL.slice(1).forEach(s=>nav.appendChild(mkTab(s)));
 }
 

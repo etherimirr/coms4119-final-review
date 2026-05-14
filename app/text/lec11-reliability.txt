@@ -1,0 +1,866 @@
+Quiz
+Your host are sending a message of 10 packets of 0.012Mb each to a
+server. See the topology and link bandwidth numbers as below:
+                   6Mbps                6Mbps
+
+We assume a negligible latency or propagation delay. The router uses
+store-and-forward transmission. How long would it take for the server
+to receive all 10 packets?
+Answer: Each packet needs 0.012/6 = 2ms to be transmitted over a
+link. The router can send a packet to the server while your host sends
+the next. Think of the 10-th packet, it’ll take 2ms * 10 = 20ms for the
+host to send out this last packet, which will need another 2ms for the
+router to send it to the sever. Thus, in total 20ms + 2ms = 22ms.
+                                                                   Transport Layer: 3-29
+Transport layer: roadmap
+§ Transport-layer services
+§ Multiplexing and demultiplexing
+§ Connectionless transport: UDP
+§ Principles of reliable data transfer
+§ Connection-oriented transport: TCP
+§ Principles of congestion control
+§ TCP congestion control
+§ Evolution of transport-layer functionality
+
+                                               Transport Layer: 3-30
+UDP: User Datagram Protocol
+§ “no frills,” “bare bones”           Why is there a UDP?
+  Internet transport protocol
+                                     § no connection establishment
+§ “best effort” service, UDP           (which can add RTT delay)
+  segments may be:                   § simple: no connection state at
+   • lost                              sender, receiver
+   • delivered out-of-order to app   § small header size
+§ connectionless:                    § no congestion control
+                                       § UDP can blast away as fast as
+  • no handshaking between UDP           desired!
+    sender, receiver                   § can function in the face of
+  • each UDP segment handled             congestion
+    independently of others
+                                                                  Transport Layer: 3-31
+UDP: User Datagram Protocol
+§ UDP use:
+  § streaming multimedia apps (loss tolerant, rate sensitive)
+  § DNS
+  § SNMP
+  § HTTP/3
+
+§ if reliable transfer needed over UDP (e.g., HTTP/3):
+  § add needed reliability at application layer
+  § add congestion control at application layer
+
+
+                                                                Transport Layer: 3-32
+UDP: User Datagram Protocol [RFC 768]
+
+
+
+
+                                        Transport Layer: 3-33
+UDP: Transport Layer Actions
+
+    SNMP client                SNMP server
+
+     application                application
+
+      transport                  transport
+        (UDP)                      (UDP)
+
+    network (IP)               network (IP)
+
+         link                       link
+
+      physical                   physical
+
+
+
+
+                                              Transport Layer: 3-34
+UDP: Transport Layer Actions
+
+    SNMP client                                   SNMP server
+                   UDP sender actions:
+     application    § is passed an application-     application
+                                                       SNMP msg
+                      layer message
+      transport                                       transport
+                    § determines UDP segment      UDP
+                                                   UDPhh SNMP msg
+        (UDP)         header fields values             (UDP)
+
+    network (IP)    § creates UDP segment          network (IP)
+
+         link       § passes segment to IP              link
+
+      physical                                        physical
+
+
+
+
+                                                                    Transport Layer: 3-35
+UDP: Transport Layer Actions
+
+     SNMP client                                    SNMP server
+                    UDP receiver actions:
+     application     § receives segment from IP      application
+                     § checks UDP checksum
+      transport                                       transport
+         SNMP msg      header value
+        (UDP)                                           (UDP)
+                     § extracts application-layer
+     network
+    UDPh SNMP(IP)
+              msg      message                      network (IP)
+                     § demultiplexes message up
+         link                                            link
+                       to application via socket
+       physical                                       physical
+
+
+
+
+                                                                   Transport Layer: 3-36
+UDP segment header
+                       32 bits
+           source port #     dest port #
+              length             checksum
+
+
+
+                  application               length, in bytes of
+                     data                       UDP segment,
+                   (payload)                  including header
+
+
+
+                                                     data to/from
+              UDP segment format                  application layer
+
+
+
+
+                                                                      Transport Layer: 3-37
+UDP checksum
+Goal: detect errors (i.e., flipped bits) in transmitted segment
+                  1st number   2nd number        sum
+
+   Transmitted:       5           6              11
+
+
+
+
+      Received:       4            6             11
+
+                    receiver-computed
+                              checksum
+                                            =   sender-computed
+                                                checksum (as received)
+
+
+                                                                         Transport Layer: 3-38
+Internet checksum
+Goal: detect errors (i.e., flipped bits) in transmitted segment
+ sender:                            receiver:
+  § treat contents of UDP           § compute checksum of received
+    segment (including UDP header     segment
+    fields and IP addresses) as
+    sequence of 16-bit integers     § check if computed checksum equals
+  § checksum: addition (one’s         checksum field value:
+    complement sum) of segment        • not equal - error detected
+    content                           • equal - no error detected. But maybe
+  § checksum value put into             errors nonetheless? More later ….
+    UDP checksum field
+                                                                        Transport Layer: 3-39
+Internet checksum: an example
+    example: add two 16-bit integers
+                           1 1 1 0 0 1 1 0 0 1 1 0 0 1 1 0
+                           1 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1
+wraparound            1 1 0 1 1 1 0 1 1 1 0 1 1 1 0 1 1
+
+            sum            1 0 1 1 1 0 1 1 1 0 1 1 1 1 0 0
+    checksum               0 1 0 0 0 1 0 0 0 1 0 0 0 0 1 1
+
+Note: when adding numbers, a carryout from the most significant bit needs to be
+added to the result
+
+* Check out the online interactive exercises for more examples: http://gaia.cs.umass.edu/kurose_ross/interactive/
+                                                                                                                    Transport Layer: 3-40
+Internet checksum: weak protection!
+  example: add two 16-bit integers
+                                                 0 1
+              1 1 1 0 0 1 1 0 0 1 1 0 0 1 1 0    1 0
+              1 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1
+wraparound   1 1 0 1 1 1 0 1 1 1 0 1 1 1 0 1 1   Even though
+                                                 numbers have
+      sum     1 0 1 1 1 0 1 1 1 0 1 1 1 1 0 0    changed (bit
+                                                 flips), no change
+ checksum     0 1 0 0 0 1 0 0 0 1 0 0 0 0 1 1    in checksum!
+
+
+
+
+                                                           Transport Layer: 3-41
+Summary: UDP
+§ “no frills” protocol:
+  • segments may be lost, delivered out of order
+  • best effort service: “send and hope for the best”
+§ UDP has its plusses:
+  • no setup/handshaking needed (no RTT incurred)
+  • can function when network service is compromised
+  • helps with reliability (checksum)
+§ build additional functionality on top of UDP in application layer
+  (e.g., HTTP/3)
+Transport layer: roadmap
+§ Transport-layer services
+§ Multiplexing and demultiplexing              Basics and UDP
+§ Connectionless transport: UDP
+§ Principles of reliable data transfer
+                                               Reliability
+§ Connection-oriented transport: TCP
+§ Principles of congestion control
+                                               Congestion Control
+§ TCP congestion control
+§ Evolution of transport-layer functionality
+
+                                                             Transport Layer: 3-44
+       Principles of reliable data transfer
+
+              sending                       receiving
+              process                        process
+application       data                      data
+ transport
+                         reliable channel
+
+               reliable service abstraction
+
+
+
+
+                                                        Transport Layer: 3-45
+       Principles of reliable data transfer
+
+              sending                       receiving                 sending                          receiving
+              process                        process                  process                           process
+application       data                      data        application       data                         data
+ transport                                               transport
+                         reliable channel
+                                                                sender-side of                       receiver-side
+               reliable service abstraction                      reliable data                      of reliable data
+                                                              transfer protocol                    transfer protocol
+
+
+                                                         transport
+                                                          network
+                                                                                  unreliable channel
+
+                                                                      reliable service implementation
+
+                                                                                                          Transport Layer: 3-46
+Principles of reliable data transfer
+
+                                                   sending                          receiving
+                                                   process                           process
+                                     application       data                         data
+                                      transport
+
+
+                                             sender-side of                       receiver-side
+      Complexity of reliable data             reliable data
+                                           transfer protocol
+                                                                                 of reliable data
+                                                                                transfer protocol
+   transfer protocol will depend
+  (strongly) on characteristics of    transport
+                                       network
+        unreliable channel (lose,                              unreliable channel
+         corrupt, reorder data?)
+                                                   reliable service implementation
+
+                                                                                       Transport Layer: 3-47
+Principles of reliable data transfer
+
+                                                  sending                          receiving
+                                                  process                           process
+                                    application       data                         data
+                                     transport
+
+
+                                            sender-side of                       receiver-side
+                                             reliable data                      of reliable data
+ Sender, receiver do not know             transfer protocol                    transfer protocol
+ the “state” of each other, e.g.,
+ was a message received?             transport
+                                      network
+ § unless communicated via a                                  unreliable channel
+
+    message
+                                                  reliable service implementation
+
+                                                                                      Transport Layer: 3-48
+   Reliable data transfer protocol (rdt): interfaces
+rdt_send(): called from above,                                                                    deliver_data(): called by rdt
+(e.g., by app.). Passed data to                                                                   to deliver data to upper layer
+deliver to receiver upper layer
+                                       sending                               receiving
+                                       process                                process
+                       rdt_send()           data                             data
+                                                                                    deliver_data()
+
+                                      sender-side             data          receiver-side
+                                  implementation of                      implementation of
+                                   rdt reliable data         packet      rdt reliable data
+                                   transfer protocol                      transfer protocol
+                          udt_send()         Header data              Header data   rdt_rcv()
+
+                                                       unreliable channel
+  udt_send(): called by rdt                                                                   rdt_rcv(): called when packet
+  to transfer packet over                     Bi-directional communication over               arrives on receiver side of
+  unreliable channel to receiver                      unreliable channel                      channel
+                                                                                                                    Transport Layer: 3-49
+Reliable data transfer: getting started
+We will:
+§ incrementally develop sender, receiver sides of reliable data transfer
+  protocol (rdt)
+§ consider only unidirectional data transfer
+   • but control info will flow in both directions!
+§ use finite state machines (FSM) to specify sender, receiver
+
+                                        event causing state transition
+                                       actions taken on state transition
+ state: when in this “state”
+         next state uniquely   state                                       state
+        determined by next       1          event
+                       event                                                 2
+                                            actions
+
+
+                                                                                   Transport Layer: 3-50
+What can go wrong in a data transmission?
+§ Bit errors
+
+§ Duplicated packets
+
+§ Packet losses
+
+§ Packet delay
+                                        ?
+§ Packets arriving out of order
+
+                                            Transport Layer: 3-51
+rdt1.0: reliable transfer over a reliable channel
+ § underlying channel perfectly reliable
+   • no bit errors
+   • no loss of packets
+
+ § separate FSMs for sender, receiver:
+   • sender sends data into underlying channel
+   • receiver reads data from underlying channel
+
+
+         Wait for    rdt_send(data)                                   rdt_rcv(packet)
+                                                          Wait for
+sender   call from   packet = make_pkt(data)   receiver   call from   extract (packet,data)
+          above      udt_send(packet)                      below      deliver_data(data)
+
+
+
+
+                                                                                 Transport Layer: 3-52
+rdt2.0: channel with bit errors
+§ underlying channel may flip bits in packet
+  • checksum (e.g., Internet checksum) to detect bit errors
+§ the question: how to recover from errors?
+
+
+   How do humans recover from “errors” during conversation?
+
+
+
+
+                                                              Transport Layer: 3-53
+rdt2.0: channel with bit errors
+§ underlying channel may flip bits in packet
+  • checksum to detect bit errors
+§ the question: how to recover from errors?
+  • acknowledgements (ACKs): receiver explicitly tells sender that pkt
+    received OK
+  • negative acknowledgements (NAKs): receiver explicitly tells sender
+    that pkt had errors
+  • sender retransmits pkt on receipt of NAK
+
+     stop and wait
+    sender sends one packet, then waits for receiver response
+                                                                   Transport Layer: 3-54
+rdt2.0: FSM specifications
+                rdt_send(data)
+                snkpkt = make_pkt(data, checksum)
+                udt_send(sndpkt)
+                                          rdt_rcv(rcvpkt) &&
+            Wait for           Wait for     isNAK(rcvpkt)
+ sender     call from          ACK or      udt_send(sndpkt)       rdt_rcv(rcvpkt) && corrupt(rcvpkt)
+             above              NAK
+                                                                  udt_send(NAK)
+
+          rdt_rcv(rcvpkt) && isACK(rcvpkt)
+                                                                    Wait for
+                         L                                          call from    receiver
+                                                                     below
+
+
+                                                               rdt_rcv(rcvpkt) && notcorrupt(rcvpkt)
+                                                               extract(rcvpkt,data)
+                                                               deliver_data(data)
+                                                               udt_send(ACK)
+
+                                                                                           Transport Layer: 3-55
+rdt2.0: FSM specification
+                rdt_send(data)
+                snkpkt = make_pkt(data, checksum)
+                udt_send(sndpkt)
+                                          rdt_rcv(rcvpkt) &&
+            Wait for           Wait for     isNAK(rcvpkt)
+ sender     call from          ACK or      udt_send(sndpkt)       rdt_rcv(rcvpkt) && corrupt(rcvpkt)
+             above              NAK
+                                                                  udt_send(NAK)
+
+          rdt_rcv(rcvpkt) && isACK(rcvpkt)
+                                                                    Wait for
+                         L                                          call from    receiver
+                                                                     below
+
+Note: “state” of receiver (did the receiver get my
+message correctly?) isn’t known to sender unless               rdt_rcv(rcvpkt) && notcorrupt(rcvpkt)
+                                                               extract(rcvpkt,data)
+somehow communicated from receiver to sender                   deliver_data(data)
+ § that’s why we need a protocol!                              udt_send(ACK)
+
+                                                                                           Transport Layer: 3-56
+rdt2.0: operation with no errors
+                rdt_send(data)
+                snkpkt = make_pkt(data, checksum)
+                udt_send(sndpkt)
+                                          rdt_rcv(rcvpkt) &&
+            Wait for           Wait for     isNAK(rcvpkt)
+ sender     call from          ACK or      udt_send(sndpkt)       rdt_rcv(rcvpkt) && corrupt(rcvpkt)
+             above              NAK
+                                                                  udt_send(NAK)
+
+          rdt_rcv(rcvpkt) && isACK(rcvpkt)
+                                                                    Wait for
+                         L                                          call from    receiver
+                                                                     below
+
+
+                                                               rdt_rcv(rcvpkt) && notcorrupt(rcvpkt)
+                                                               extract(rcvpkt,data)
+                                                               deliver_data(data)
+                                                               udt_send(ACK)
+
+                                                                                           Transport Layer: 3-57
+rdt2.0: corrupted packet scenario
+                rdt_send(data)
+                snkpkt = make_pkt(data, checksum)
+                udt_send(sndpkt)
+                                          rdt_rcv(rcvpkt) &&
+            Wait for           Wait for     isNAK(rcvpkt)
+ sender     call from          ACK or      udt_send(sndpkt)       rdt_rcv(rcvpkt) && corrupt(rcvpkt)
+             above              NAK
+                                                                  udt_send(NAK)
+
+          rdt_rcv(rcvpkt) && isACK(rcvpkt)
+                                                                    Wait for
+                         L                                          call from    receiver
+                                                                     below
+
+
+                                                               rdt_rcv(rcvpkt) && notcorrupt(rcvpkt)
+                                                               extract(rcvpkt,data)
+                                                               deliver_data(data)
+                                                               udt_send(ACK)
+
+                                                                                           Transport Layer: 3-58
+rdt2.0 has a fatal flaw!
+what happens if ACK/NAK             handling duplicates:
+ corrupted?                         § sender retransmits current pkt
+§ sender doesn’t know what            if ACK/NAK corrupted
+  happened at receiver!             § sender adds sequence number
+§ can’t just retransmit: possible     to each pkt
+  duplicate                         § receiver discards (doesn’t
+                                      deliver up) duplicate pkt
+
+                 stop and wait
+   sender sends one packet, then waits for receiver response
+
+                                                                Transport Layer: 3-59
+rdt2.1: sender, handling garbled ACK/NAKs
+                                    rdt_send(data)
+                                  sndpkt = make_pkt(0, data, checksum)
+                                  udt_send(sndpkt)              rdt_rcv(rcvpkt) &&
+                                                                (corrupt(rcvpkt) ||
+                                 Wait for          Wait for     isNAK(rcvpkt) )
+                                call 0 from                 ACK or
+                                                            NAK 0         udt_send(sndpkt)
+                                  above
+              rdt_rcv(rcvpkt)
+                                                                      rdt_rcv(rcvpkt)
+    && notcorrupt(rcvpkt) &&
+                                                                      && notcorrupt(rcvpkt)
+               isACK(rcvpkt)
+                                                                      && isACK(rcvpkt)
+                 L
+                                                                            L
+                                Wait for                     Wait for
+                                ACK or                      call 1 from
+            rdt_rcv(rcvpkt)     NAK 1                         above
+      && (corrupt(rcvpkt) ||
+           isNAK(rcvpkt) )                 rdt_send(data)
+          udt_send(sndpkt)             sndpkt = make_pkt(1, data, checksum)
+                                       udt_send(sndpkt)
+
+
+                                                                                              Transport Layer: 3-60
+rdt2.1: receiver, handling garbled ACK/NAKs
+                                            rdt_rcv(rcvpkt) && notcorrupt(rcvpkt)
+                                             && has_seq0(rcvpkt)
+                                            extract(rcvpkt,data)
+                                            deliver_data(data)
+                                            sndpkt = make_pkt(ACK, chksum)
+                                            udt_send(sndpkt)
+    rdt_rcv(rcvpkt) && (corrupt(rcvpkt)                                             rdt_rcv(rcvpkt) && (corrupt(rcvpkt)
+    sndpkt = make_pkt(NAK, chksum)                                                  sndpkt = make_pkt(NAK, chksum)
+    udt_send(sndpkt)                                                                udt_send(sndpkt)
+                                           Wait for              Wait for
+    rdt_rcv(rcvpkt) &&                     0 from                1 from             rdt_rcv(rcvpkt) &&
+      not corrupt(rcvpkt) &&               below                 below                not corrupt(rcvpkt) &&
+      has_seq1(rcvpkt)                                                                has_seq0(rcvpkt)
+     sndpkt = make_pkt(ACK, chksum)                                                 sndpkt = make_pkt(ACK, chksum)
+     udt_send(sndpkt)                                                               udt_send(sndpkt)
+                                          rdt_rcv(rcvpkt) && notcorrupt(rcvpkt)
+                                           && has_seq1(rcvpkt)
+
+                                          extract(rcvpkt,data)
+   Duplicated packets                     deliver_data(data)
+                                          sndpkt = make_pkt(ACK, chksum)
+                                          udt_send(sndpkt)
+
+                                                                                                                          Transport Layer: 3-61
+rdt2.1: discussion
+sender:                                receiver:
+§ seq # added to pkt                   § must check if received packet
+§ two seq. #s (0,1) will suffice.        is duplicate
+  Why?                                   • state indicates whether 0 or 1 is
+                                           expected pkt seq #
+§ must check if received ACK/NAK
+                                       § note: receiver can not know if
+  corrupted
+                                         its last ACK/NAK received OK
+§ twice as many states                   at sender
+  • state must “remember” whether
+    “expected” pkt should have seq #
+    of 0 or 1
+
+
+                                                                      Transport Layer: 3-62
+rdt2.2: a NAK-free protocol
+
+§ same functionality as rdt2.1, using ACKs only
+§ instead of NAK, receiver sends ACK for last pkt received OK
+  • receiver must explicitly include seq # of pkt being ACKed
+§ duplicate ACK at sender results in same action as NAK:
+  retransmit current pkt
+
+As we will see, TCP uses this approach to be NAK-free
+
+
+                                                                Transport Layer: 3-63
+rdt2.2: sender, receiver fragments
+                                 rdt_send(data)
+                                 sndpkt = make_pkt(0, data, checksum)
+                                 udt_send(sndpkt)
+                                                                   rdt_rcv(rcvpkt) &&
+                                                                   ( corrupt(rcvpkt) ||
+                             Wait for                  Wait for
+                                                         ACK
+                                                                     isACK(rcvpkt,1) )
+                            call 0 from
+                              above                       0         udt_send(sndpkt)
+                                         sender FSM
+                                          fragment                 rdt_rcv(rcvpkt)
+                                                                   && notcorrupt(rcvpkt)
+  rdt_rcv(rcvpkt) &&                                               && isACK(rcvpkt,0)
+    (corrupt(rcvpkt) ||                                                    L
+     has_seq1(rcvpkt))    Wait for   receiver FSM
+                          0 from
+  udt_send(sndpkt)        below        fragment
+                                rdt_rcv(rcvpkt) && notcorrupt(rcvpkt)
+                                 && has_seq1(rcvpkt)
+                               extract(rcvpkt,data)
+                               deliver_data(data)
+                               sndpkt = make_pkt(ACK1, chksum)
+                               udt_send(sndpkt)                                            Transport Layer: 3-64
+rdt3.0: channels with errors and loss
+New channel assumption: underlying channel can also lose
+packets (data, ACKs)
+  • checksum, sequence #s, ACKs, retransmissions will be of help …
+    but not quite enough
+
+
+
+     Q: How do humans handle lost sender-to-
+          receiver words in conversation?
+
+                                                                     Transport Layer: 3-65
+rdt3.0: channels with errors and loss
+Approach: sender waits “reasonable” amount of time for ACK
+§ retransmits if no ACK received in this time
+§ if pkt (or ACK) just delayed (not lost):
+  • retransmission will be duplicate, but seq #s already handles this!
+  • receiver must specify seq # of packet being ACKed
+§ use countdown timer to interrupt after “reasonable” amount
+  of time
+                                     timeout
+
+
+                                                                    Transport Layer: 3-66
+rdt3.0 sender
+                                  rdt_send(data)
+                                 sndpkt = make_pkt(0, data, checksum)
+                                 udt_send(sndpkt)
+                                 start_timer
+
+                            Wait for                           Wait
+                           call 0 from                          for
+                             above                             ACK0
+       rdt_rcv(rcvpkt)
+       && notcorrupt(rcvpkt)                                             rdt_rcv(rcvpkt)
+       && isACK(rcvpkt,1)                                                && notcorrupt(rcvpkt)
+       stop_timer                                                        && isACK(rcvpkt,0)
+                                                                          stop_timer
+                               Wait                              Wait for
+                                for                             call 1 from
+                               ACK1                               above
+
+                                      rdt_send(data)
+                                      sndpkt = make_pkt(1, data, checksum)
+                                      udt_send(sndpkt)
+                                      start_timer
+
+
+
+                                                                                                 Transport Layer: 3-67
+rdt3.0 sender
+                                      rdt_send(data)
+                                                                                   rdt_rcv(rcvpkt) &&
+                                      sndpkt = make_pkt(0, data, checksum)         ( corrupt(rcvpkt) ||
+                                      udt_send(sndpkt)                             isACK(rcvpkt,1) )
+          rdt_rcv(rcvpkt)             start_timer                                           L
+                L              Wait for                             Wait
+                                                                                    timeout
+                              call 0 from                            for
+                                                                    ACK0            udt_send(sndpkt)
+                                above
+                                                                                    start_timer
+         rdt_rcv(rcvpkt)
+         && notcorrupt(rcvpkt)                                                rdt_rcv(rcvpkt)
+         && isACK(rcvpkt,1)                                                   && notcorrupt(rcvpkt)
+         stop_timer                                                           && isACK(rcvpkt,0)
+                                                                               stop_timer
+                                    Wait                              Wait for
+      timeout                        for                             call 1 from
+      udt_send(sndpkt)              ACK1                               above
+      start_timer                                                                     rdt_rcv(rcvpkt)
+                                           rdt_send(data)                                    L
+             rdt_rcv(rcvpkt) &&
+             ( corrupt(rcvpkt) ||          sndpkt = make_pkt(1, data, checksum)
+             isACK(rcvpkt,0) )             udt_send(sndpkt)
+                                           start_timer
+                      L
+
+                                                                                                          Transport Layer: 3-68
+rdt3.0 in action
+   sender                  receiver        sender                  receiver
+ send pkt0    pkt0
+                                        send pkt0       pkt0
+                           rcv pkt0                                rcv pkt0
+             ack0          send ack0                    ack0       send ack0
+  rcv ack0                               rcv ack0
+ send pkt1    pkt1                      send pkt1       pkt1
+                           rcv pkt1                        X
+                                                          loss
+             ack1          send ack1
+  rcv ack1
+ send pkt0    pkt0
+                           rcv pkt0       timeout
+             ack0          send ack0   resend pkt1      pkt1
+                                                                   rcv pkt1
+                                                        ack1       send ack1
+                                         rcv ack1
+                                        send pkt0       pkt0
+             (a) no loss                                           rcv pkt0
+                                                        ack0       send ack0
+
+
+                                                     (b) packet loss
+                                                                               Transport Layer: 3-69
+rdt3.0 in action
+                                                      sender                   receiver
+    sender                   receiver              send pkt0
+                                                                  pkt0
+                                                                               rcv pkt0
+ send pkt0          pkt0                                                       send ack0
+                                                    rcv ack0      ack0
+                             rcv pkt0
+                   ack0      send ack0             send pkt1       pkt1
+  rcv ack0                                                                     rcv pkt1
+ send pkt1          pkt1                                                       send ack1
+                             rcv pkt1                                   ack1
+                    ack1     send ack1
+                   X                                 timeout
+                  loss                            resend pkt1
+                                                                   pkt1        rcv pkt1
+   timeout
+resend pkt1         pkt1     rcv pkt1               rcv ack1                   (detect duplicate)
+                                                   send pkt0     pkt0          send ack1
+                             (detect duplicate)
+                    ack1     send ack1                           ack1          rcv pkt0
+  rcv ack1                                           rcv ack1                  send ack0
+ send pkt0          pkt0                              (ignore)     ack0
+                             rcv pkt0
+                   ack0      send ack0                             pkt1
+
+
+              (c) ACK loss                           (d) premature timeout/ delayed ACK
+                                                                                             Transport Layer: 3-70
+Performance of rdt3.0 (stop-and-wait)
+§ U sender: utilization – fraction of time sender busy sending
+
+§ example: 1 Gbps link, 15 ms prop. delay, 8000 bit packet
+  • time to transmit packet into channel:
+              L    8000 bits
+     Dtrans = R = 9            = 8 microsecs
+                 10 bits/sec
+
+
+
+
+                                                             Transport Layer: 3-71
+rdt3.0: stop-and-wait operation
+                                          sender   receiver
+          first packet bit transmitted, t = 0
+
+
+
+                                                         first packet bit arrives
+                                         RTT             last packet bit arrives, send ACK
+
+
+                   ACK arrives, send next
+                   packet, t = RTT + L / R
+
+
+
+
+                                                                            Transport Layer: 3-72
+rdt3.0: stop-and-wait operation
+                                  sender         receiver
+
+                      L/R         L/R
+        Usender=
+                   RTT + L / R
+                 .008             RTT
+              =
+                30.008
+              = 0.00027
+
+
+ § rdt 3.0 protocol performance stinks!
+ § Protocol limits performance of underlying infrastructure (channel)
+
+                                                                 Transport Layer: 3-73
+rdt3.0: pipelined protocols operation
+pipelining: sender allows multiple, “in-flight”, yet-to-be-acknowledged
+ packets
+  • range of sequence numbers must be increased
+  • buffering at sender and/or receiver
+
+
+
+
+                                                                    Transport Layer: 3-74
+Pipelining: increased utilization
+                                           sender               receiver
+   first packet bit transmitted, t = 0
+         last bit transmitted, t = L / R
+
+
+                                                                    first packet bit arrives
+                                    RTT                             last packet bit arrives, send ACK
+                                                                    last bit of 2nd packet arrives, send ACK
+                                                                    last bit of 3rd packet arrives, send ACK
+             ACK arrives, send next
+             packet, t = RTT + L / R
+                                                                         3-packet pipelining increases
+                                                                           utilization by a factor of 3!
+
+
+                         !"                 +L"0"1"             #(()*!
+                          #$%&$'""!                       "!               "! (,(((-.!!
+                                           122"3"L"0"1"        +(,((-"
+
+                     !
+                                                                                                               Transport Layer: 3-75
+Go-Back-N: sender
+ § sender: “window” of up to N, consecutive transmitted but unACKed pkts
+   • k-bit seq # in pkt header
+
+
+
+
+ § cumulative ACK: ACK(n): ACKs all packets up to and including seq #n
+   • on receiving ACK(n): move window forward to begin at n+1
+ § timer for oldest in-flight packet
+ § timeout(n): retransmit packet n and all higher seq # packets in window
+                                                                  Transport Layer: 3-76
+Go-Back-N: receiver
+§ ACK-only: always send ACK for correctly-received packet so far, with
+  highest in-order seq #
+   • may generate duplicate ACKs
+   • need only remember rcv_base
+
+§ on receipt of out-of-order packet:
+   • can discard (don’t buffer) or buffer: an implementation decision
+   • re-ACK pkt with highest in-order seq #
+
+ Receiver view of sequence number space:
+                                                        received and ACKed
+
+        …                          …                    Out-of-order: received but not ACKed
+
+                    rcv_base
+                                                        Not received
+                                                                                        Transport Layer: 3-77
+Go-Back-N in action
+     sender window (N=4)         sender               receiver
+     012345678                send pkt0
+     012345678                send pkt1
+                                                      receive pkt0, send ack0
+      012345678               send pkt2
+                                              Xloss   receive pkt1, send ack1
+     012345678                send pkt3
+                                  (wait)
+                                                      receive pkt3, discard,
+     012345678      rcv ack0, send pkt4                       (re)send ack1
+     012345678      rcv ack1, send pkt5               receive pkt4, discard,
+                                                              (re)send ack1
+                       ignore duplicate ACK           receive pkt5, discard,
+                                                              (re)send ack1
+                           pkt 2 timeout
+     012345678                send pkt2
+     012345678                send pkt3
+     012345678                send pkt4               rcv pkt2, deliver, send ack2
+     012345678                send pkt5               rcv pkt3, deliver, send ack3
+                                                      rcv pkt4, deliver, send ack4
+                                                      rcv pkt5, deliver, send ack5
+
+                                                                                Transport Layer: 3-78
+

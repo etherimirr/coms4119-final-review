@@ -1,0 +1,387 @@
+Quiz: Web Cache and Queuing
+Scenario:
+§ access link rate: 1.54 Mbps                                                         origin
+§ public Internet delay: 2 sec                                                      servers
+§ web object size: 100K bits                                      public
+                                                                 Internet
+§ average request rate from browsers to origin
+  servers: 15/sec
+   § avg data rate to browsers: 1.50 Mbps
+                                                                      1.54 Mbps
+                                                                      access link
+                                                 institutional
+ Q: What’s the required cache hit rate             network
+   for access link utilization to be below                                  1 Gbps LAN
+
+   0.5?
+                                                                       local web cache
+Quiz: Web Cache and Queuing
+Scenario:
+§ access link rate: 1.54 Mbps                                                         origin
+§ public Internet delay: 2 sec                                                      servers
+§ web object size: 100K bits                                      public
+                                                                 Internet
+§ average request rate from browsers to origin
+  servers: 15/sec
+   § avg data rate to browsers: 1.50 Mbps
+                                                                      1.54 Mbps
+                                                                      access link
+Q: What’s the required cache hit rate
+  for access link utilization to be below        institutional
+                                                   network
+  0.5?                                                                      1 Gbps LAN
+
+
+A: hit rate is 𝛼, then we have:
+              1 − 𝛼 ∗ 1.5
+                           ≤ 0.5                                       local web cache
+                  1.54
+   so 𝛼 ≥ 0.5
+Video Calls
+§ Is DASH a good option? NO
+
+§ Latency requirement: sub-second
+  • DASH: 1-2 second for segment-based delivery, seconds of end delay due to
+    buffering
+§ Continuous push-based content delivery
+  • DASH: client-pull
+§ Two-way communication
+  • DASH: one-to-many broadcast
+§ Interactive congestion control
+Video Calls Use WebRTC
+§ WebRTC: a collection/framework of protocols, APIs, and standards
+  for real-time communication
+
+§ Browser APIs
+§ Transport & security protocols
+§ Codecs formats
+§ Real-time congestion control
+
+§ Also used in gaming, interactive live streaming, remote desktop, AR
+  streaming, and more
+Assignment 1 Reminders
+§ Gradescope for submission
+
+§ Do NOT include files of downloaded video chunks in your submission
+
+§ TESTING document: think of representative test cases (bandwidth files,
+  alpha values)
+
+§ README: document assumptions, how to run your code, corner cases or
+  anything incomplete
+
+§ Start early, visit TA office hours, and enjoy the assignment!
+Application layer: overview
+§ Principles of network applications
+§ Web and HTTP
+§ video streaming and content distribution networks
+§ socket programming with UDP and TCP
+§ The Domain Name System DNS
+§ P2P applications
+ What is DNS for?
+people: many identifiers:
+                                            where?                      who?
+   • SSN, name, passport #
+                                           IP address                   Host name
+Internet hosts, routers:
+                                      e.g., 169.293.110.15       e.g., cs.columbia.edu
+  • IP address (32 bit) - used for
+    addressing datagrams                        Interpreted by
+                                                                 Interpreted
+  • “name”, e.g., cs.columbia.edu -             machines,
+    used by humans                                               by human
+                                                routers
+Q: how to map between IP
+ address and name, and vice
+ versa ?                                 The Domain Name System (DNS) maps
+                                                  one to the other
+Why Separating Naming and Addressing?
+§ Can hide address change from users
+  • e.g., move www.columbia.edu to a new IP address
+
+§ One name can map to multiple IP addresses
+  • Multiple replicas of CNN servers
+
+§ Map a name to a different IP address based on location
+  • e.g., return the IP of the nearest web server to reduce latency or
+    return different content
+
+§ Multiple names for an address
+  • e.g., aliases like web.cs.dartmouth.edu and cs.dartmouth.edu
+                                                            Transport Layer: 3-8
+How would
+you design
+DNS?
+Solution #1: Local File
+§Save all the host-address mappings in a local file
+
+§That’s actually what people did in the beginning!
+  • Saved as a hosts.txt file under /etc/hosts
+  • Maintained by Stanford Research Institute (SRI)
+  • Email changes to SRI, download the file regularly
+
+§Problem: does not scale
+  • SRI cannot handle the load as the Internet grew
+Solution #2: Central Server
+§All mappings are stored at a central server
+§Query the central server
+§Problems?
+  • Single point of failure
+  • High traffic volume
+     • Comcast DNS servers alone: 600B DNS queries/day
+     • Akamai DNS servers alone: 2.2T DNS queries/day
+  • Distant central database à query time can be long
+  • Single point of update
+§Need distributed solutions!
+DNS: structure, services
+
+§distributed database implemented in DNS services:
+ hierarchy of many name servers
+                                        § hostname-to-IP-address
+§application-layer protocol: hosts, DNS translation
+ servers communicate to resolve         § host aliasing
+ names (address/name translation)         • canonical, alias names
+  • core Internet function,             § mail server aliasing
+    implemented as application-layer    § load distribution
+    protocol
+  • complexity at network’s “edge”
+Thinking about the DNS
+humongous distributed database:
+ § ~ billion records, each simple
+handles many trillions of queries/day:
+ § many more reads than writes
+ § performance matters: almost every
+   Internet transaction interacts with
+   DNS - msecs count!
+organizationally, physically decentralized:
+  § millions of different organizations
+    responsible for their records
+“bulletproof”: reliability, security
+ DNS: a distributed, hierarchical database
+                              Root DNS Servers                                   Root
+                               …         …
+     .com DNS servers         .org DNS servers     .edu DNS servers          Top Level Domain
+           …                       … …                   …
+  yahoo.com     amazon.com       pbs.org         nyu.edu       umass.edu
+  DNS servers   DNS servers      DNS servers     DNS servers   DNS servers    Authoritative
+
+
+Client wants IP address for www.amazon.com; 1st approximation:
+ § client queries root server to find .com DNS server
+ § client queries .com DNS server to get amazon.com DNS server
+ § client queries amazon.com DNS server to get IP address for www.amazon.com
+DNS: root name servers
+§ official, contact-of-last-resort by
+  name servers that can not
+  resolve name
+DNS: root name servers
+§ official, contact-of-last-resort by
+  name servers that can not                   13 logical root name “servers”
+                                            worldwide each “server” replicated
+  resolve name
+                                             many times (~200 servers in US)
+§ incredibly important Internet
+  function
+ • Internet couldn’t function without it!
+ • DNSSEC – provides security
+   (authentication, message integrity)
+§ ICANN (Internet Corporation for
+  Assigned Names and Numbers)
+  manages root DNS domain
+
+                                                                         Application Layer: 2-16
+Top-Level Domain, and authoritative servers
+Top-Level Domain (TLD) servers:
+§ responsible for .com, .org, .net, .edu, .aero, .jobs, .museums, and all top-level
+  country domains, e.g.: .cn, .uk, .fr, .ca, .jp
+§ Network Solutions: authoritative registry for .com, .net TLD
+§ Educause: .edu TLD
+
+
+
+
+authoritative DNS servers:
+§ organization’s own DNS server(s), providing authoritative hostname to IP
+  mappings for organization’s named hosts
+§ can be maintained by organization or service provider
+
+                                                                                Application Layer: 2-17
+Local DNS name servers
+§ A host sends DNS queries to its local DNS server
+  • Local DNS server returns reply, answering:
+    • from its local cache of recent name-to-address translation pairs
+      (possibly out of date!)
+    • forwarding request into DNS hierarchy for resolution
+  • each ISP has local DNS name server; to find yours:
+    • MacOS: % scutil --dns
+    • Windows: >ipconfig /all
+§ local DNS server doesn’t strictly belong to hierarchy
+
+                                                                 Application Layer: 2-18
+DNS name resolution: iterated query
+                                                             root DNS server
+Example: host at engineering.nyu.edu
+wants IP address for gaia.cs.umass.edu                   2
+                                                               3
+                                                                       TLD DNS server
+Iterated query:                                 1                  4
+
+§ contacted server replies                     8                   5
+  with name of server to requesting host at local DNS server
+  contact                  engineering.nyu.edu   dns.nyu.edu
+                                                                                gaia.cs.umass.edu
+§ “I don’t know this name,                                         7      6
+  but ask this server”
+                                                                   authoritative DNS server
+                                                                     dns.cs.umass.edu
+
+
+
+                                                                                   Application Layer: 2-19
+DNS name resolution: recursive query
+                                                                        root DNS server
+Example: host at engineering.nyu.edu
+wants IP address for gaia.cs.umass.edu                              2                 3
+
+                                                                          7       6
+Recursive query:                                 1                                         TLD DNS server
+§ puts burden of name                             8
+  resolution on            requesting host at    local DNS server
+                                                                                      5   4
+                           engineering.nyu.edu        dns.nyu.edu
+  contacted name                                                                              gaia.cs.umass.edu
+
+  server
+§ heavy load at upper                                                         authoritative DNS server
+  levels of hierarchy?                                                          dns.cs.umass.edu
+
+
+
+                                                                                                  Application Layer: 2-20
+Caching DNS Information
+§ once (any) name server learns mapping, it caches mapping,
+  and immediately returns a cached mapping in response to a
+  query
+  • caching improves response time
+  • cache entries timeout (disappear) after some time (TTL)
+  • TLD servers typically cached in local name servers
+§ cached entries may be out-of-date
+  • if named host changes IP address, may not be known Internet-
+    wide until all TTLs expire!
+  • best-effort name-to-address translation!
+
+                                                              Application Layer: 2-21
+DNS records
+   DNS: distributed database storing resource records (RR)
+             RR format: (name, value, type, ttl)
+
+type=A                              type=CNAME
+ § name is hostname                 § name is alias name for some “canonical”
+ § value is IP address                (the real) name
+                                    § www.ibm.com is really servereast.backup2.ibm.com
+ type=NS                            § value is canonical name
+ § name is domain (e.g., foo.com)
+ § value is hostname of
+                                    type=MX
+   authoritative name server for       § value is name of SMTP mail
+   this domain                           server associated with name
+                                                                         Application Layer: 2-22
+DNS protocol messages
+DNS query and reply messages, both have same format:
+                                               2 bytes             2 bytes
+
+
+
+   message header:                          identification          flags
+
+   § identification: 16 bit # for query,    # questions        # answer RRs
+     reply to query uses same #            # authority RRs    # additional RRs
+   § flags:
+                                           questions (variable # of questions)
+     • query or reply
+     • recursion desired
+                                              answers (variable # of RRs)
+     • recursion available
+     • reply is authoritative
+                                               authority (variable # of RRs)
+
+
+                                           additional info (variable # of RRs)
+
+                                                                                 Application Layer: 2-23
+ DNS protocol messages
+ DNS query and reply messages, both have same format:
+                                          2 bytes             2 bytes
+
+
+                                       identification          flags
+
+                                       # questions        # answer RRs
+
+                                      # authority RRs    # additional RRs
+
+     name, type fields for a query    questions (variable # of questions)
+
+
+         RRs in response to query        answers (variable # of RRs)
+
+
+ records for authoritative servers        authority (variable # of RRs)
+
+additional “ helpful” info that may   additional info (variable # of RRs)
+                            be used
+                                                                            Application Layer: 2-24
+Getting your info into the DNS
+example: new startup “Network Utopia”
+§ register name networkuptopia.com at DNS registrar (e.g., Network
+  Solutions)
+  • provide names, IP addresses of authoritative name server (primary and
+    secondary)
+  • registrar inserts NS, A RRs into .com TLD server:
+    (networkutopia.com, dns1.networkutopia.com, NS)
+    (dns1.networkutopia.com, 212.212.212.1, A)
+§ create authoritative server locally with IP address 212.212.212.1
+  • type A record for www.networkuptopia.com
+  • type MS record for networkutopia.com
+
+                                                                            Application Layer: 2-25
+DNS security
+DDoS attacks                            Spoofing attacks
+§ bombard root servers with             § intercept DNS queries,
+  traffic                                 returning bogus replies
+ • not successful to date                  § DNS cache poisoning
+ • traffic filtering                       § RFC 4033: DNSSEC
+                                             authentication services
+ • local DNS servers cache IPs of TLD         § Each DNS zone has a pair of
+   servers, allowing root server                private/public key
+   bypass                                     § DNS data signed by the zone
+                                                owner
+§ bombard TLD servers
+ • potentially more dangerous
+
+
+                                                                              Application Layer: 2-26
+Utility of Querying DNS Servers
+§Linux: dig command
+  • dig grasshopper.cs.columbia.edu A (getting the IP address of a
+    hostname)
+  • dig cs.columbia.edu MX (getting MX record to find out mail server)
+
+§Windows: nslookup command
+
+§A webtool from Google:
+ https://toolbox.googleapps.com/apps/dig/
+
+                                                        Application Layer: 2-27
+Quiz
+Assume you are connecting to a web server using HTTP 1.1 w/
+persistent connection.
+
+Calculate the # of RRTs needed to fetch and receive an index.html with
+5 embedded jpeg images. Assume each image can fit in one packet.
+
+
+
+
+                                                        Transport Layer: 3-28
+

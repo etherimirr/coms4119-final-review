@@ -1,0 +1,643 @@
+CSEE4119: Computer Networks
+              Introduction & Basics
+                            Xia Zhou
+                 Department of Computer Science
+                       Columbia University
+                           Slides credited to J.F Kurose and K.W. Ross and their textbook “Computer Networking: A Top-Down Approach”
+Overview/Roadmap
+ § What is the Internet? What is a protocol?
+ § Network edge: hosts, access network, physical media
+ § Network core: packet/circuit switching, internet structure
+ § Performance: loss, delay, throughput
+ § Protocol layers, service models
+
+
+
+
+                                                            Introduction: 1-2
+The Internet: a “nuts and bolts” view
+          Billions of connected                      mobile network
+          computing devices:                                               national or global ISP
+           § hosts = end systems
+           § running network apps at
+             Internet’s “edge”
+
+          Packet switches: forward
+                                                                  local or
+          packets (chunks of data)                                      Internet
+                                                                  regional ISP
+           § routers, switches
+                                                 home network                       content
+          Communication links                                                       provider
+                                                                                    network     datacenter
+           § fiber, copper, radio, satellite                                                    network
+
+           § transmission rate: bandwidth
+          Networks                               enterprise
+           § collection of devices, routers,          network
+             links: managed by an organization
+                                                                                               Introduction: 1-3
+“Fun” Internet-connected devices
+                                                                                                    Tweet-a-watt:
+                                                                                                    monitor energy use
+
+                                                                                                                         bikes
+
+                                                        Pacemaker & Monitor
+
+
+Amazon Echo                                                             Web-enabled toaster +
+                                  IP picture frame
+                                                                        weather forecaster
+                Internet
+               refrigerator
+                                     Slingbox: remote                                                        cars
+                                     control cable TV
+              Security Camera
+                                                                                       AR devices
+                                                                sensorized,                                              scooters
+                                                                bed
+                                                                              Fitbit
+                                                                                                       Others?
+                                                                mattress
+
+                              Gaming devices
+  Internet phones                                                                 diapers
+                                                                                                                    Introduction: 1-4
+The Internet: a “nuts and bolts” view
+                                                               mobile network
+                                                                                4G
+§ Internet: “network of networks”                                                     national or global ISP
+
+  • Interconnected ISPs
+§ protocols are everywhere                                                           IP
+                                                                                                          Streaming
+                                            Skype                                                         video
+   • control sending, receiving of
+     messages                                                               local or
+                                                                            regional ISP
+   • e.g., HTTP (Web), streaming video,
+     Skype, TCP, IP, WiFi, 4/5G, Ethernet                home network                          content
+                                                                                               provider
+                                                            HTTP                               network
+§ Internet standards
+                                                                                                           datacenter
+                                                                                                           network
+                                                    Ethernet
+   • RFC: Request for Comments
+                                                                                                               TCP
+   • IETF: Internet Engineering Task                     enterprise
+     Force                                                    network
+
+                                                                                 WiFi
+                                                                                                          Introduction: 1-5
+The Internet: a “services” view
+§ Infrastructure that provides                        mobile network
+
+ services to applications:                                                  national or global ISP
+
+
+  • Web, streaming video, multimedia
+    teleconferencing, email, games, e-                                                          Streaming
+    commerce, social media, …             Skype                                                 video
+
+                                                                   local or
+                                                                   regional ISP
+§ provides programming interface
+ to distributed applications:                     home network                       content
+                                                                                     provider
+  • “hooks” allowing sending/receiving               HTTP                            network     datacenter
+                                                                                                 network
+    apps to “connect” to, use Internet
+    transport service
+  • provides service options, analogous           enterprise
+    to postal service                                  network
+
+
+                                                                                                Introduction: 1-6
+What’s a protocol?
+Human protocols:           Network protocols:
+§ “what’s the time?”       § computers (devices) rather than humans
+
+§ “I have a question”      § all communication activity in Internet
+
+§ introductions
+                             governed by protocols
+
+
+Rules for:                 Protocols define the format, order of
+… specific messages sent     messages sent and received among
+… specific actions taken     network entities, and actions taken
+ when message received,
+ or other events              on message transmission, receipt
+
+
+                                                                      Introduction: 1-7
+What’s a protocol?
+A human protocol and a computer network protocol:
+
+
+               Hi                           TCP connection
+                                               request
+               Hi                          TCP connection
+                                              response
+              Got the
+               time?                 GET http://gaia.cs.umass.edu/kurose_ross
+               2:00
+                                                  <file>
+                             time
+
+
+
+Q: other human protocols?
+                                                                                Introduction: 1-8
+Overview/Roadmap
+§ What is the Internet?
+§ What is a protocol?
+§ Network edge: hosts, access network, physical media
+§ Network core: packet/circuit switching, internet structure
+§ Performance: transmission rate, loss, delay, throughput
+§ Protocol layers, service models
+
+
+
+
+                                                               Introduction: 1-9
+A closer look at Internet structure
+                                      mobile network
+
+Network edge:                                               national or global ISP
+
+
+§ hosts: clients and servers
+§ servers often in data centers
+                                                   local or
+                                                   regional ISP
+
+
+                                  home network                       content
+                                                                     provider
+                                                                     network      datacenter
+                                                                                  network
+
+
+
+
+                                  enterprise
+                                       network
+
+
+                                                                                Introduction: 1-10
+A closer look at Internet structure
+                                           mobile network
+
+Network edge:                                                    national or global ISP
+
+
+§ hosts: clients and servers
+§ servers often in data centers
+                                                        local or
+Access networks, physical media:                        regional ISP
+
+
+§wired, wireless communication links   home network                       content
+                                                                          provider
+                                                                          network      datacenter
+                                                                                       network
+
+
+
+
+                                       enterprise
+                                            network
+
+
+                                                                                     Introduction: 1-11
+A closer look at Internet structure
+                                           mobile network
+
+Network edge:                                                    national or global ISP
+
+
+§ hosts: clients and servers
+§ servers often in data centers
+                                                        local or
+Access networks, physical media:                        regional ISP
+
+
+§wired, wireless communication links   home network                       content
+                                                                          provider
+                                                                          network      datacenter
+
+Network core:
+                                                                                       network
+
+
+
+
+§ interconnected routers
+§ network of networks                  enterprise
+                                            network
+
+
+                                                                                     Introduction: 1-12
+A closer look at Internet structure
+                                           mobile network
+
+Network edge:                                                    national or global ISP
+
+
+§ hosts: clients and servers
+§ servers often in data centers
+                                                        local or
+Access networks, physical media:                        regional ISP
+
+
+§wired, wireless communication links   home network                       content
+                                                                          provider
+                                                                          network      datacenter
+                                                                                       network
+
+Network core:
+§ interconnected routers
+                                       enterprise
+§ network of networks                       network
+
+
+                                                                                     Introduction: 1-13
+Links: physical media
+§ physical link: what lies           Twisted pair (TP)
+  between transmitter &              § two insulated copper wires
+  receiver                              • Category 5: 100 Mbps, 1 Gbps Ethernet
+  § Wired link (guided media)           • Category 6: 10Gbps Ethernet
+   • signals propagate in solid      § Cheaper
+     media: copper, fiber, coax
+  § Wireless link (unguided media)
+   • signals propagate freely,
+     e.g., radio
+
+
+                                                                           Introduction: 1-14
+Links: physical media
+Coaxial cable:                              Fiber optic cable:
+§ two concentric copper conductors          § glass fiber carrying light pulses, each
+                                              pulse a bit
+§ bidirectional
+                                            § high-speed operation:
+§ broadband:                                   • high-speed point-to-point
+   • multiple frequency channels on cable        transmission (10’s-100’s Gbps)
+   • 100’s Mbps per channel                 § low error rate:
+§ Better shielding from crosstalk,             • repeaters spaced far apart
+  support longer length                        • immune to electromagnetic noise
+
+
+
+
+                                                                                 Introduction: 1-15
+Links: physical media
+Wireless radio                       Radio link types:
+§ signal carried in various          § wireless LAN (Wi-Fi)
+  “bands” in electromagnetic           • 10-100’s Mbps; 10’s of meters
+  spectrum
+                                     § wide-area (e.g., 4G/5G cellular)
+§ no physical “wire”                   • 10’s Mbps (4G) over ~10 Km
+§ Broadcast or directional, “half-   § Bluetooth: cable replacement
+  duplex” (sender to receiver)         • short distances, limited rates
+§ propagation environment            § terrestrial microwave
+  effects:
+                                       • point-to-point; 45 Mbps channels
+  • reflection
+  • obstruction by objects           § satellite
+  • Interference/noise                  • up to < 100 Mbps (Starlink) downlink
+                                        • 270 msec end-end delay (geostationary)
+                                                                          Introduction: 1-16
+Wired access network #1: digital subscriber line (DSL)
+                                                    central office   telephone
+                                                                     network
+
+
+                          DSL splitter
+                         modem                      DSLAM
+
+
+                   voice, data transmitted                                  ISP
+            at different frequencies over     DSL access
+           dedicated line to central office    multiplexer
+
+
+
+     § use existing telephone line to central office DSLAM
+        • data over DSL phone line goes to Internet
+        • voice over DSL phone line goes to telephone net
+     § 24-52 Mbps dedicated downstream transmission rate
+     § 3.5-16 Mbps dedicated upstream transmission rate
+                                                                                  Introduction: 1-17
+Wired access network #2: cable-based access
+                                                             cable headend
+
+                                             …
+
+            cable splitter
+           modem
+
+
+
+
+                                                             C
+                                                             O
+                             V   V   V   V   V   V           N
+                             I   I   I   I   I   I   D   D   T
+                             D   D   D   D   D   D   A   A   R
+                             E   E   E   E   E   E   T   T   O
+                             O   O   O   O   O   O   A   A   L
+
+                             1   2   3   4   5   6   7   8    9
+
+                                     Channels
+
+
+   frequency division multiplexing (FDM): different channels transmitted in
+   different frequency bands
+                                                                              Introduction: 1-18
+Wired access #2: cable-based access
+                                              cable headend
+
+                                          …
+
+               cable splitter                                      cable modem
+              modem                             CMTS          termination system
+      data, TV transmitted at different
+       frequencies over shared cable                          ISP
+                   distribution network
+
+
+
+§ network of cable, fiber attaches homes to ISP router
+   • homes share access network to cable headend
+§ HFC: hybrid fiber-coaxial
+   • Combines optical fiber and coaxial cable
+   • asymmetric: up to 40 Mbps – 1.2 Gbps downlink rate, 30-100 Mbps uplink rate
+                                                                                   Introduction: 1-19
+Wireless access networks
+Shared wireless access network connects end system to router
+ § via base station aka “access point”
+
+Wireless local area networks             Wide-area cellular access networks
+  (WLANs)                                 § provided by mobile, cellular network
+§ typically within or around building       operator (10’s km)
+  (~100 ft)                               § 10’s Mbps
+§ 802.11b/g/n/ac (WiFi): 11, 54, 450      § 4G/5G cellular networks
+  Mbps, 1Gbps transmission rate
+
+
+
+
+                                                             to Internet
+                       to Internet
+                                                                           Introduction: 1-20
+Residential/Home networks
+       Wireless and wired
+            devices
+
+
+
+
+                                                        to/from headend or
+                                                            central office
+   often combined
+       in single box
+
+
+                                            cable or DSL modem
+
+   Wi-Fi wireless access        router, firewall, NAT
+   point (54, 450 Mbps)
+                            wired Ethernet (1 Gbps)
+                                                                       Introduction: 1-21
+Enterprise networks
+
+                                               Enterprise link to
+                                                 ISP (Internet)
+                                              institutional router
+                         Ethernet      institutional mail,
+                          switch          web servers
+
+
+
+§ companies, universities, etc.
+§ mix of wired, wireless link technologies, connecting a mix of switches
+  and routers (we’ll cover differences shortly)
+   § Ethernet: wired access at 100Mbps, 1Gbps, 10Gbps
+   § Wi-Fi: wireless access points at 11, 54, 450 Mbps
+                                                                     Introduction: 1-22
+Data center networks
+                                                                mobile network
+§ high-bandwidth links (10s to 100s                                                   national or global ISP
+  Gbps) connect hundreds to thousands
+  of servers together, and to Internet
+
+                                                                             local or
+                                                                             regional ISP
+
+
+                                                            home network                       content
+                                                                                               provider
+                                                                                               network      datacenter
+                                                                                                            network
+
+
+
+
+ Courtesy: Massachusetts Green High Performance Computing   enterprise
+ Center (mghpcc.org)                                             network
+
+
+                                                                                                          Introduction: 1-23
+Overview/Roadmap
+§ What is the Internet?
+§ What is a protocol?
+§ Network edge: hosts, access network, physical media
+§ Network core: packet/circuit switching, internet structure
+§ Performance: transmission rate, loss, delay, throughput
+§ Protocol layers, service models
+
+
+
+
+                                                               Introduction: 1-24
+The network core
+§ mesh of interconnected routers          mobile network
+                                                                national or global ISP
+§ Q: How do routers forward packets
+  from source to destination?
+
+                                                       local or
+                                                       regional ISP
+
+
+                                      home network                       content
+                                                                         provider
+                                                                         network      datacenter
+                                                                                      network
+
+
+
+
+                                      enterprise
+                                           network
+
+
+                                                                                    Introduction: 1-25
+Circuit Switching
+                     Source                          Destination
+
+
+
+
+§ Source establishes connection to destination
+  • Nodes along the path store connection info
+  • Nodes may reserve resources for the connection
+§ Source sends data over the connection
+  • No destination address, since nodes know path
+§ Source tears down connection when done
+                                                                   Introduction: 1-26
+Phone Network Uses Circuit Switching
+
+
+
+
+                                       Introduction: 1-27
+Circuit Switching: Multiplexing a Link
+
+§ Time division               § Frequency division
+  • Each circuit allocated     • Each circuit allocated
+    with certain time slots      with certain frequencies
+
+
+
+                                 frequency
+           time                              time
+
+
+                                                        Introduction: 1-28
+Advantages of Circuit Switching
+§ Guaranteed bandwidth
+  • Predictable communication performance
+§ Simple abstraction
+  • Reliable communication channel between hosts
+  • No worries about lost or out-of-order packets
+§ Simple forwarding
+  • Forwarding based on time slot or frequency
+  • No need to inspect a packet header
+§ Low per-packet overhead
+  • No IP (and TCP/UDP) header on each packet
+
+                                                    Introduction: 1-29
+Disadvantages of Circuit Switching
+§ Wasted bandwidth
+  • Bursty traffic leads to idle connection during silent period
+  • Unable to achieve gains from statistical multiplexing
+§ Blocked connections
+  • Connection refused when resources are not sufficient
+  • Unable to offer “okay” service to everybody
+§ Connection set-up delay
+  • No communication until the connection is set up
+  • Unable to avoid extra latency for small data transfers
+§ Network state
+  • Network nodes must store per-connection information
+  • Unable to avoid per-connection storage and state
+
+                                                                   Introduction: 1-30
+Packet Switching
+
+
+
+§ Traffic divided into packets
+  • Each packet contains a header (with address)
+§ Packets travel separately in the network
+  • Packet forwarding based on the header
+  • Network nodes may store packets temporarily
+§ Destination reconstructs the message
+
+                                                   Introduction: 1-31
+The network core
+§ mesh of interconnected routers                   mobile network
+                                                                         national or global ISP
+§ The Internet uses packet-switching:
+  hosts break application-layer messages
+  into packets
+  • network forwards packets from one router                    local or
+    to the next, across links on path from                      regional ISP
+
+    source to destination                      home network                       content
+§ Best-effort delivery                                                            provider
+                                                                                  network      datacenter
+
+  • Packets may be lost
+                                                                                               network
+
+
+
+  • Maybe corrupted
+  • May arrive out of order….                  enterprise
+                                                    network
+
+
+                                                                                             Introduction: 1-32
+  Two key network-core functions
+
+                               routing algorithm        Routing:
+Forwarding:                   local
+                               local forwarding
+                                     forwarding table
+                                                table
+                                                        § global action:
+                             header value output link     determine source-
+§ aka “switching”                     0100
+                                      0101
+                                             3
+                                             2            destination paths
+§ local action:                       0111   2
+                                                          taken by packets
+  move arriving                       1001   1
+
+  packets from                                          § routing algorithms
+  router’s input link                               1
+  to appropriate
+  router output link                             3 2
+                                        11
+                                      01
+
+
+
+                  destination address in arriving
+                  packet’s header
+                                                                      Introduction: 1-33
+routing
+
+
+
+
+          Introduction: 1-34
+             forwarding
+forwarding
+
+
+
+
+                     Introduction: 1-35
+Packet switching versus circuit switching
+Is packet switching a “slam dunk winner”?
+§ great for “bursty” data – sometimes has data to send, but at other times not
+   • resource sharing
+   • simpler, no call setup
+§ excessive congestion possible: packet delay and loss due to buffer overflow
+   • protocols needed for reliable data transfer, congestion control
+§ Q: How to provide circuit-like behavior with packet-switching?
+   • “It’s complicated.” We’ll study various techniques that try to make packet
+     switching as “circuit-like” as possible.
+
+Q: human analogies of reserved resources (circuit switching) versus
+on-demand allocation (packet switching)?
+                                                                                  Introduction: 1-36
+

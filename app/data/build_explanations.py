@@ -11,7 +11,16 @@ import subprocess
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]   # /Users/jyj/Desktop/4119
-PDFS = ["lec14","lec16","lec17","lec18","lec19","lec20","lec21","lec22","lec23","final-preview"]
+PDFS = [
+    # pre-mid
+    "lec1-intro","lec2-basics1","lec3-basics2","lec4-basics3",
+    "lec5-web","lec6-video","lec7","lec8-dns","lec9-p2p",
+    "lec10-transport","lec11-reliability","lec12-tcp","lec13-congestion",
+    "midterm-preview",
+    # post-mid
+    "lec14","lec16","lec17","lec18","lec19","lec20","lec21","lec22","lec23",
+    "final-preview",
+]
 OUT = ROOT / "app" / "data" / "explanations.json"
 DETAIL = ROOT / "app" / "data" / "explanations_detail.json"
 
@@ -49,6 +58,20 @@ def topic_guess(name):
         "lec22": ["switch","self learning","VLAN","router vs switch","wireless physical","pathloss"],
         "lec23": ["radio propagation","SNR","multipath","fading","wireless MAC","hidden terminal","RTS/CTS","CSMA/CA","backoff","802.11"],
         "final-preview": ["recap","example questions","TCP/IP/BGP/wireless 综合"],
+        "lec1-intro":        ["intro","internet","layering","ISP","what is the Internet"],
+        "lec2-basics1":      ["protocol","packet vs circuit","performance","delays","throughput"],
+        "lec3-basics2":      ["layering","encapsulation","headers"],
+        "lec4-basics3":      ["RTT","BDP","performance metrics"],
+        "lec5-web":          ["HTTP","persistent","non-persistent","RTT counting","cookie","web cache","conditional GET"],
+        "lec6-video":        ["video","DASH","streaming","CDN"],
+        "lec7":              ["socket","UDP socket","TCP socket","welcome socket"],
+        "lec8-dns":          ["DNS","hierarchy","recursive","iterative","RR","root","TLD","authoritative"],
+        "lec9-p2p":          ["P2P","BitTorrent","file distribution time","tit-for-tat","DHT"],
+        "lec10-transport":   ["transport","UDP","TCP intro","multiplexing","demultiplexing","port"],
+        "lec11-reliability": ["RDT","Stop-and-Wait","GBN","Selective Repeat","sequence number","ACK","checksum","sliding window"],
+        "lec12-tcp":          ["TCP","3WHS","seq/ACK","flow control","rwnd","timeout","fast retransmit","close"],
+        "lec13-congestion":  ["congestion control","slow start","AIMD","ssthresh","fairness","intro"],
+        "midterm-preview":   ["midterm review","example questions"],
     }.get(name, [])
 
 def main():

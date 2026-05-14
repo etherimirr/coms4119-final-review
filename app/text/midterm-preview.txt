@@ -1,0 +1,110 @@
+CSEE4119: Computer Networks
+                Midterm Preview
+                            Xia Zhou
+                 Department of Computer Science
+                       Columbia University
+                           Slides credited to J.F Kurose and K.W. Ross and their textbook “Computer Networking: A Top-Down Approach”
+Recap
+§ Basics
+ • Protocol
+
+ • Circuit switching vs packet switching
+
+ • Performance metrics: transmission rate/time, packet delay,
+   throughput, packet loss rate
+
+ • Layers: modular functionality, headers
+
+                                                                Application Layer: 2-2
+Recap
+§ Application layer
+  • Client-server, peer-to-peer
+  • Sockets
+  • Web: persistent, non-persistent HTTP connection; web cache
+  • DNS
+  • Video streaming
+  • P2P: BitTorrent, file distribution time analysis, DHT
+
+
+                                                                 Application Layer: 2-3
+Recap
+§ Transport layer
+  • UDP: connection-less, minimalist
+  • TCP: Reliable data transfer
+    • Mechanisms to deal with bit errors, packet delay, packet losses, out-of-
+      order arrivals, duplicated packets
+    • GBN vs selective repeat
+  • TCP: Congestion control
+    •   End-host based vs network-assisted congestion control
+    •   TCP main mechanisms: slow start, AIMD
+    •   Packet-loss based vs packet-delay based
+    •   Mainstream: CUBIC, BBR
+                                                                            Application Layer: 2-4
+Example Question
+#1: Consider host A trying to send a 14.6MB photo to host B using TCP.
+If the TCP header is 20 bytes, IP header is 20 bytes, how many packets
+would host A needs to send out to transmit the whole photo? What is
+the overall packet header overhead? (The maximal IP packet is 1500
+bytes)
+
+A: The maximal data each IP packet can contain is (1500 – 20 – 20) =
+1460 bytes. Hence the photo will be segmented into 14.6MB/1.46KB =
+104 packets.
+Total header overhead is 104 x (20+20) = 400 KB.
+
+                                                                 Application Layer: 2-5
+Example Question
+#2: Your host are sending a message of 10 packets of 0.012Mb each to a server,
+and the server immediately processes your request once it arrives in full. It replies
+with negligible latency by sending 1 packet of 0.012 Mb.
+Your network card connects to a router, which then connects to the server. Both
+links have 6 Mbps bandwidth, with a negligible latency or propagation delay. The
+router uses store-and-forward transmission. What is the time between you
+sending out the first bit and receiving the last?
+
+A: Each packet needs 0.012/6 = 2ms to be transmitted over a link. Because the
+router uses store-and-forward transmission, after you finish sending 10 packets, 9
+of them already arrived at the server. the 10th packet will need additional 2ms to
+travel from the router to the server. After receiving all packets, server's reply
+(0.012Mb) will need 2ms to travel to the router, and another 2ms to reach your
+computer. Thus, the total time span is 20 + 2 + 2 + 2 = 26ms.
+                                                                                Application Layer: 2-6
+Example Question
+#3: Calculate the # of RRT needed to fetch and receive an index.html
+with 5 embedded jpeg images. Assume each image can fit in one
+packet.
+(1) HTTP 1.0 with no parallel TCP connection.
+(2) HTTP 1.1 w/ persistent connections and no pipelining.
+(3) HTTP 1.1 w/ persistent connections and pipelining.
+
+A: (1) 6 * 2RTT = 12 RTT
+   (2) 2 + 5*1 = 7 RTT
+   (3) 2 + 1 = 3 RTT
+                                                                  Application Layer: 2-7
+Example Question
+#4: We learned TCP’s estimation of RTT using EWMA. Sender updates
+its estimated RTT based on each segment transmission SampleRTT.
+TCP avoids measuring SampleRTT for retransmitted segments. What
+do you think is the rationale behind this?
+
+A: If the original segment did arrive and it just took longer, then the
+ACK arriving next will be an ACK for the original segment transmission.
+The sender will mistake this as the ACK for retransmission and hence
+mess up the running average of RTT.
+
+
+                                                                   Application Layer: 2-8
+Example Question
+#5: Suppose you'd like to register a new domain named
+columbia.fun.edu, and you wish to set up
+grasshopper.cs.columbia.edu (129.170.214.115) as a server. What DNS
+records should you register?
+
+A: Register NS and A records with the authority for the .edu TLD:
+         (columbia.fun.edu, grasshopper.cs.columbia.edu, NS)
+          (grasshopper.cs.columbia.edu,129.170.214.115, A)
+
+
+
+                                                                    Application Layer: 2-9
+

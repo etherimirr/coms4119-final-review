@@ -1,0 +1,541 @@
+What Gets Implemented on the End-host?
+§ All the layers!
+                                                required to   What layers are
+§ Application                                            be   implemented
+  • User space: mail, game, browser…                          on routers and
+§ Transport and network                                         switches?
+  • Typically part of the operating system
+§ Data link
+  • Often written by the network interface vendor
+§ Physical
+  • Hardware: network interface card and link
+
+
+                                                                      Introduction: 1-1
+How about these answers?
+Candidate answer #1
+§ Router: Network layer
+§ Switch: Data link layer                   We can’t implement a layer
+                                             without having ALL its
+Candidate answer #2                          lower layers provided.
+§ Router: Network layer, physical layer
+§ Switch: Data link layer, physical layer
+
+
+
+                                                                  Application Layer: 2-2
+     message      M
+                         source
+                        application
+                                                     Encapsulation: an
+  segment   Ht    M      transport                   end-end view
+ datagram Hn Ht   M       network
+frame Hl Hn Ht    M         link
+                          physical
+                                                        link
+                                                      physical
+
+                                                                         switch
+
+
+
+               destination              Hn Ht    M   network
+           M   application            Hl Hn Ht   M     link      Hn Ht   M
+      Ht   M    transport                            physical
+  Hn Ht    M     network
+Hl Hn Ht   M       link                                                  router
+                 physical
+                                                                                  Introduction: 1-3
+Application layer: overview
+§ Principles of network applications
+§ Web and HTTP
+§ video streaming and content distribution networks
+§ socket programming with UDP and TCP
+§ The Domain Name System DNS
+§ P2P applications
+
+
+
+                                                      Application Layer: 2-4
+Web and HTTP
+First, a quick review…
+§ web page consists of objects, each of which can be stored on
+  different Web servers
+§ object can be HTML file, JPEG image, Java applet, audio file,…
+§ web page consists of base HTML-file which includes several
+  referenced objects, each addressable by a URL, e.g.,
+          www.someschool.edu/someDept/pic.gif
+
+                host name           path name
+
+                                                           Application Layer: 2-5
+HTTP overview
+HTTP: hypertext transfer protocol
+§ Web’s application-layer protocol                        HT
+                                                            TP
+§ client/server model:                       PC running H
+                                                               req
+                                                                  ues
+                                                                      t
+                                                           TTP
+  • client: browser that requests,        Firefox browser      res
+                                                                   pon
+                                                                       se
+    receives, (using HTTP protocol) and
+    “displays” Web objects                                        que
+                                                                      st
+                                                                e
+                                                              Pr         ns server running
+                                                                           e
+  • server: Web server sends (using                       HTT
+                                                                    es
+                                                                      p o
+                                                                             Apache Web
+                                                                   r
+    HTTP protocol) objects in response                       HT
+                                                               T P              server
+    to requests
+                                              iPhone running
+                                               Safari browser
+
+                                                                               Application Layer: 2-6
+HTTP overview (continued)
+HTTP uses TCP:                          HTTP is “stateless”
+§ client initiates TCP connection       § server maintains no
+  (creates socket) to server, port 80     information about past client
+§ server accepts TCP connection           requests
+  from client                                              aside
+                                         protocols that maintain
+§ HTTP messages exchanged                   “state” are complex!
+  between browser (HTTP client)          § past history (state) must be
+  and Web server (HTTP server)             maintained
+§ TCP connection closed                  § if server/client crashes, their
+                                           views of “state” may be
+                                           inconsistent, must be reconciled
+                                                                    Application Layer: 2-7
+HTTP connections: two types
+Non-persistent HTTP           Persistent HTTP
+1. TCP connection opened      §TCP connection opened to
+2. at most one object sent     a server
+   over this TCP connection   §multiple objects can be
+3. TCP connection closed       sent over this single TCP
+                               connection
+downloading multiple          §TCP connection closed
+objects required multiple
+connections
+
+                                                  Application Layer: 2-8
+  Non-persistent HTTP: example
+   User enters URL: www.someSchool.edu/someDepartment/home.index
+                                      (containing text, references to 10 jpeg images)
+
+
+    1a. HTTP client initiates TCP
+     connection to HTTP server                     1b. HTTP server at host
+     (process) at www.someSchool.edu on              www.someSchool.edu waiting for TCP
+     port 80                                         connection at port 80 “accepts”
+                                                     connection, notifying client
+     2. HTTP client sends HTTP
+        request message (containing
+        URL) into TCP connection                    3. HTTP server receives request message,
+        socket. Message indicates                      forms response message containing
+time    that client wants object                       requested object, and sends message
+       someDepartment/home.index                       into its socket
+                                                                                        Application Layer: 2-9
+  Non-persistent HTTP: example (cont.)
+   User enters URL: www.someSchool.edu/someDepartment/home.index
+                                           (containing text, references to 10 jpeg images)
+
+
+
+                                                       4. HTTP server closes TCP
+   5. HTTP client receives response                       connection.
+       message containing html file,
+       displays html. Parsing html file,
+       finds 10 referenced jpeg objects
+
+   6. Steps 1-5 repeated for
+      each of 10 jpeg objects
+time
+
+
+                                                                                             Application Layer: 2-10
+Non-persistent HTTP: response time
+Round trip time (RTT): time for a small packet to travel from client
+ to server and back
+
+Q: What is the response time of using                 initiate TCP
+ non-persistent HTTP to receive one                   connection
+ object?                                                        RTT
+                                                      request file
+ § one RTT to initiate TCP connection
+                                                                RTT             time to
+ § one RTT for HTTP request and first few bytes of                              transmit
+   HTTP response to return                                                      file
+ § object/file transmission time                     file received
+                                                                      time   time
+
+ Non-persistent HTTP response time = 2RTT+ file transmission time for one object
+                                                                                    Application Layer: 2-11
+Persistent HTTP (HTTP 1.1)
+Non-persistent HTTP issues:      Persistent HTTP (HTTP1.1):
+§ requires 2 RTTs per object     § server leaves connection open after
+§ OS overhead for each TCP         sending response
+  connection                     § subsequent HTTP messages
+§ browsers often open multiple     between same client/server sent
+  parallel TCP connections to      over open connection
+  fetch referenced objects in    § client sends requests as soon as it
+  parallel                         encounters a referenced object
+                                 § as little as one RTT for all the
+                                   referenced objects (cutting
+                                   response time in half)
+                                                              Application Layer: 2-12
+    HTTP request message
+ § two types of HTTP messages: request, response
+ § HTTP request message:
+     • ASCII (human-readable format)
+                                                                                   carriage return character
+                                                                                    line-feed character
+request line (GET, POST,
+                                 GET /index.html HTTP/1.1\r\n
+HEAD commands)                   Host: www-net.cs.umass.edu\r\n
+                                 User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X
+                                    10.15; rv:80.0) Gecko/20100101 Firefox/80.0 \r\n
+                       header    Accept: text/html,application/xhtml+xml\r\n
+                         lines   Accept-Language: en-us,en;q=0.5\r\n
+                                 Accept-Encoding: gzip,deflate\r\n
+                                 Connection: keep-alive\r\n
+                                 \r\n
+   carriage return, line feed
+   at start of line indicates
+   end of header lines           * Check out the online interactive exercises for more
+                                 examples: http://gaia.cs.umass.edu/kurose_ross/interactive/                   Application Layer: 2-13
+HTTP request message: general format
+           method    sp    URL      sp   version       cr   lf   request
+                                                                 line
+           header field name     value   cr   lf
+                                                                 header
+       ~
+       ~                                           ~
+                                                   ~             lines
+
+           header field name     value   cr   lf
+           cr   lf
+
+       ~
+       ~                  entity body                   ~
+                                                        ~        body
+
+
+
+
+                                                                           Application Layer: 2-14
+Other HTTP request messages
+POST method:                                   HEAD method:
+§ web page often includes form input           § requests headers (only) that
+§ user input sent from client to server          would be returned if specified
+  in entity body of HTTP POST request            URL were requested with an
+  message                                        HTTP GET method.
+
+GET method:                                    PUT method:
+                                               § uploads new file (object) to server
+§ include user data in URL field of HTTP
+                                               § completely replaces file that exists
+  GET request message (following a ‘?’):
+                                                 at specified URL with content in
+§ Has character limit                            entity body of POST HTTP request
+www.somesite.com/animalsearch?monkeys&banana     message
+
+                                                                            Application Layer: 2-15
+HTTP response message
+status line (protocol                                    HTTP/1.1 200 OK
+status code status phrase)                               Date: Tue, 08 Sep 2020 00:53:20 GMT
+                                                         Server: Apache/2.4.6 (CentOS)
+                                                            OpenSSL/1.0.2k-fips PHP/7.4.9
+                                                            mod_perl/2.0.11 Perl/v5.16.3
+                                          header         Last-Modified: Tue, 01 Mar 2016 18:57:50 GMT
+                                            lines        ETag: "a5b-52d015789ee9e"
+                                                         Accept-Ranges: bytes
+                                                         Content-Length: 2651
+                                                         Content-Type: text/html; charset=UTF-8
+                                                         \r\n
+data, e.g., requested                                    data data data data data ...
+HTML file
+
+
+* Check out the online interactive exercises for more examples: http://gaia.cs.umass.edu/kurose_ross/interactive/
+                                                                                                                    Application Layer: 2-16
+HTTP response status codes
+§ status code appears in 1st line in server-to-client response message.
+§ some sample codes:
+   200 OK
+     • request succeeded, requested object later in this message
+   301 Moved Permanently
+     • requested object moved, new location specified later in this message (in
+       Location: field)
+   400 Bad Request
+     • request msg not understood by server
+   404 Not Found
+     • requested document not found on this server
+   505 HTTP Version Not Supported
+                                                                            Application Layer: 2-17
+Trying out HTTP (client side) for yourself
+1. netcat to your favorite Web server:
+   % nc -c -v gaia.cs.umass.edu 80 (for Mac)     § opens TCP connection to port 80 (default HTTP
+                                                   server port) at gaia.cs.umass.edu.
+   >ncat –C gaia.cs.umass.edu 80 (for Windows)
+                                                 § anything typed in will be sent to port 80 at
+                                                   gaia.cs.umass.edu
+2. type in a GET HTTP request:
+   GET /kurose_ross/interactive/index.php HTTP/1.1
+   Host: gaia.cs.umass.edu         § by typing this in (hit carriage return twice), you
+                                                   send this minimal (but complete) GET request to
+                                                   HTTP server
+
+3. look at response message sent by HTTP server!
+  (or use Wireshark to look at captured HTTP request/response)
+                                                                                            Application Layer: 2-18
+Maintaining user/server state: cookies
+Web sites and client browser use                     Example:
+ cookies to maintain some state                      § Susan uses browser on laptop,
+                                                       visits specific e-commerce site
+ between transactions                                  for first time
+Cookie: An ID number server assigned to              § when initial HTTP requests
+ the user                                              arrives at site, site creates:
+                                                         • unique ID (aka “cookie”)
+four components:
+                                                         • entry in backend database
+1) cookie header line of HTTP response message
+                                                            for ID
+2) cookie header line in next HTTP request message
+                                                      • subsequent HTTP requests
+3) cookie file kept on user’s host, managed by          from Susan to this site will
+  user’s browser                                        contain cookie ID value,
+4) back-end database at Web site                        allowing site to “identify”
+                                                        Susan
+                                                                            Application Layer: 2-20
+Maintaining user/server state: cookies
+        client
+                                                           Amazon server
+    ebay 8734             usual HTTP request msg      Amazon server
+    cookie file                                         creates ID
+                         usual HTTP response           1678 for user             backend
+                                                                       create
+    ebay 8734            set-cookie: 1678                                entry   database
+    amazon 1678
+
+                           usual HTTP request msg
+                               cookie: 1678                 cookie-    access
+                                                            specific
+                         usual HTTP response msg             action
+
+   one week later:
+                                                                       access
+   ebay 8734               usual HTTP request msg
+   amazon 1678                 cookie: 1678                 cookie-
+                                                            specific
+                         usual HTTP response msg             action
+                  time                              time                              Application Layer: 2-21
+HTTP cookies: comments
+                                                                  aside
+What cookies can be used for:                cookies and privacy:
+§ authorization                              § cookies permit sites to
+§ shopping carts                               learn a lot about you on
+                                               their site.
+§ recommendations                            § third party persistent
+§ user session state (Web e-mail)              cookies (tracking cookies)
+                                               allow common identity
+                                               (cookie value) to be
+Challenge: How to keep state?                  tracked across multiple
+§ at protocol endpoints: maintain state at     web sites
+  sender/receiver over multiple
+  transactions
+§ in messages: cookies in HTTP messages
+  carry state
+                                                                    Application Layer: 2-22
+Example: displaying a NY Times web page
+1       GET base html file
+    2
+        from nytimes.com
+
+4       fetch ad from                 nytimes.com
+    5
+        AdX.com
+                                  HTTP
+                                  GET 1      2 HTTP
+ 7      display composed                       reply
+        page
+
+                                         3             4
+                                         6             5
+
+                NY times page with
+              embedded ad displayed                        AdX.com
+Cookies: tracking a user’s browsing behavior
+
+                                                          1634: sports, 2/15/22
+
+
+                              nytimes.com (sports)                          “first party” cookie –
+                                                                            from website you chose
+                                                                            to visit (provides base
+                             HTTP     HTTP
+                             GET      reply                                 html file)
+                                      Set cookie: 1634
+
+
+                                               HTTP GET
+                                               Referrer: NY Times Sports
+                                                              4
+                                                                                  7493: NY Times sports, 2/15/22
+                                                              5
+  “third party” cookie –                         HTTP reply
+  from website you did not   NY Times: 1634      Set cookie: 7493
+  choose to visit                 AdX: 7493
+                                                                       AdX.com
+Cookies: tracking a user’s browsing behavior
+
+                                                            1634: sports, 2/15/22
+
+
+                           nytimes.com                                 AdX:
+                  HTTP                                                 § tracks my web browsing
+     socks.com    reply
+                                                                         over sites with AdX ads
+                      2
+             HTTP 1                                                    § can return targeted ads
+             GET                                                         based on browsing history
+                                     HTTP GET
+                                     Referrer: socks.com, cookie: 7493
+                                                        4
+                                                                                    7493: NY Times sports, 2/15/22
+                                                        5                           7493: socks.com, 2/16/22
+                                           HTTP reply
+                          NY Times: 1634   Set cookie: 7493
+                               AdX: 7493
+                                                                         AdX.com
+Cookies: tracking a user’s browsing behavior (one day later)
+
+                                                         1634: sports, 2/15/22
+                                                         1634: arts, 2/17/22
+
+                          nytimes.com (arts)
+      socks.com           HTTP    HTTP
+                           GET    reply
+                  cookie: 1634    Set cookie: 1634
+
+
+                                  HTTP GET
+                                  Referrer: nytimes.com, cookie: 7493
+                                                     4
+                                                                                 7493: NY Times sports, 2/15/22
+                                                     5                           7493: socks.com, 2/16/22
+                                        HTTP reply                               7493: NY Times arts, 2/15/22
+                         NY Times: 1634 Set cookie: 7493
+                             AdX: 7493 Returned ad for socks!
+                                                                     AdX.com
+Cookies: tracking a user’s browsing behavior
+ Cookies can be used to:
+  § track user behavior on a given website (first party cookies)
+  § track user behavior across multiple websites (third party cookies)
+    without user ever choosing to visit tracker site (!)
+  § tracking may be invisible to user:
+     • rather than displayed ad triggering HTTP GET to tracker, could be an invisible
+       link
+
+  third party tracking via cookies:
+   § disabled by default in Firefox, Safari browsers
+   § In Chrome, user can manage cookie setting to block third-party
+      cookies
+GDPR (EU General Data Protection Regulation) and cookies
+ “Natural persons may be associated with online
+ identifiers […] such as internet protocol addresses,
+ cookie identifiers or other identifiers […].
+ This may leave traces which, in particular when
+ combined with unique identifiers and other
+ information received by the servers, may be used to
+ create profiles of the natural persons and identify
+ them.”
+                            GDPR, recital 30 (May 2018)
+
+
+
+                                                          User has explicit control over
+when cookies can identify an individual, cookies           whether or not cookies are
+are considered personal data, subject to GDPR                       allowed
+          personal data regulations
+HTTP/2
+Key goal: decreased delay in multi-object HTTP requests
+ HTTP1.1: introduced multiple, pipelined GETs over single TCP
+ connection
+ § server responds in-order (FCFS: first-come-first-served scheduling) to
+   GET requests
+ § with FCFS, small object may have to wait for transmission (head-of-
+   line (HOL) blocking) behind large object(s)
+ § loss recovery (retransmitting lost TCP segments) stalls object
+   transmission
+
+                                                                    Application Layer: 2-29
+HTTP/2
+Key goal: decreased delay in multi-object HTTP requests
+HTTP/2: [RFC 7540, 2015] increased flexibility at server in sending
+objects to client:
+ § methods, status codes, most header fields unchanged from HTTP 1.1
+ § transmission order of requested objects based on client-specified
+   object priority (not necessarily FCFS)
+ § push unrequested objects to client
+ § divide objects into frames, schedule frames to mitigate HOL blocking
+
+
+                                                                  Application Layer: 2-30
+HTTP/2: mitigating HOL blocking
+HTTP 1.1: client requests 1 large object (e.g., video file) and 3 smaller
+objects
+                                                             server
+
+                           GET O4   GET O3 GET O2
+                                                    GET O1            object data requested
+                  client
+
+
+
+                                                                                    O1
+
+                                                                                    O2
+        O1
+             O2                                                                     O3
+               O3
+                 O4
+                                                                                    O4
+
+              objects delivered in order requested: O2, O3, O4 wait behind O1                 Application Layer: 2-31
+HTTP/2: mitigating HOL blocking
+HTTP/2: objects divided into frames, frame transmission interleaved
+                                                               server
+
+                             GET O4   GET O3 GET O2
+                                                      GET O1            object data requested
+                    client
+        O2
+         O4
+              O3                                                                      O1
+
+                                                                                      O2
+                                                                                      O3
+                   O1                                                                 O4
+
+                        O2, O3, O4 delivered quickly, O1 slightly delayed
+                                                                                                Application Layer: 2-32
+HTTP/2 to HTTP/3
+HTTP/2 over single TCP connection means:
+§ recovery from packet loss still stalls all object transmissions
+  • as in HTTP 1.1, browsers have incentive to open multiple parallel
+    TCP connections to reduce stalling, increase overall throughput
+§ no security over vanilla TCP connection
+§ HTTP/3: adds security, per object error- and congestion-
+  control (more pipelining) over UDP
+  • more on HTTP/3 in transport layer
+
+
+                                                                  Application Layer: 2-33
+

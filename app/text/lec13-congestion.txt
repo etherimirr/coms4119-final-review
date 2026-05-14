@@ -1,0 +1,685 @@
+QUIZ: UDP vs TCP
+
+A server handling 10 clients simultaneously. How many
+socket connections are maintained by the server if the
+server and client use UDP?
+
+And how many socket connections maintained by the
+server if they use TCP?
+Answer: 1 socket connection when UDP is used, and 10 + 1 = 11
+socket connections when TCP is used.
+                                                                Transport Layer: 3-106
+TCP connection management
+before exchanging data, sender/receiver “handshake”:
+§ agree to establish connection (each knowing the other willing to establish connection)
+§ agree on connection parameters (e.g., starting seq #s)
+
+                       application                        application
+
+                 connection state: ESTAB            connection state: ESTAB
+                 connection variables:              connection Variables:
+                    seq # client-to-server             seq # client-to-server
+                          server-to-client                    server-to-client
+                    rcvBuffer size                     rcvBuffer size
+                      at server,client                   at server,client
+
+                       network                              network
+
+
+ Socket clientSocket =                           Socket connectionSocket =
+   newSocket("hostname","port number");            welcomeSocket.accept();
+                                                                                 Transport Layer: 3-107
+Agreeing to establish a connection
+2-way handshake:
+
+                                 Q: will 2-way handshake always
+           Let’s talk             work in network?
+                         ESTAB
+ ESTAB
+              OK                 § variable delays
+                                 § retransmitted messages (e.g.
+                                   req_conn(x)) due to message loss
+                                 § message reordering
+choose x                         § can’t “see” other side
+           req_conn(x)
+                         ESTAB
+           acc_conn(x)
+ ESTAB
+
+                                                              Transport Layer: 3-108
+   2-way handshake scenarios
+
+choose x
+             req_conn(x)
+                            ESTAB
+              acc_conn(x)
+
+ ESTAB
+             data(x+1)      accept
+              ACK(x+1)      data(x+1)
+
+             connection
+             x completes
+
+
+
+
+           No problem!
+
+
+                                        Transport Layer: 3-109
+2-way handshake scenarios
+
+             choose x
+                           req_conn(x)
+                                          ESTAB
+              retransmit    acc_conn(x)
+            req_conn(x)
+                      req_conn(x)
+
+
+
+                            connection
+                  client    x completes   server
+             terminates                   forgets x
+
+
+
+                                          ESTAB
+                           acc_conn(x)
+                   Problem: half open
+                   connection! (no client)
+                                                      Transport Layer: 3-110
+     TCP 3-way handshake
+                                                                                              Server state (B)
+                                                                                     serverSocket = socket(AF_INET,SOCK_STREAM)
+                Client state (A)                                                     serverSocket.bind((‘’,serverPort))
+                                                                                     serverSocket.listen(1)
+ clientSocket = socket(AF_INET, SOCK_STREAM)                                         connectionSocket, addr = serverSocket.accept()
+                LISTEN
+clientSocket.connect((serverName,serverPort))                                                            LISTEN
+                            choose init seq num, x
+                               send TCP SYN msg
+                SYNSENT                                   SYNbit=1, Seq=x
+                                                                              choose init seq num, y
+                                                                              send TCP SYNACK
+                                                                              msg, acking SYN        SYN RCVD
+                                                          SYNbit=1, Seq=y
+                                                       ACKbit=1; ACKnum=x+1
+                            received SYNACK(x)
+                ESTAB     indicates  server is live;
+                          send ACK for SYNACK;
+                      this segment may contain         ACKbit=1, ACKnum=y+1
+                             client-to-server data
+                                                                              received ACK(y)
+                                                                              indicates client is live
+                                                                                                         ESTAB
+
+                                                                                                                  Transport Layer: 3-112
+Step 1: A’s initial SYN packet
+
+                                          Aʼs port                         Bʼs port
+
+                                               Aʼs Initial Sequence Number
+      Flags:   SYN
+                                                     Acknowledgment
+               FIN
+               RST                    0         0      Flags     Advertised window
+               PSH
+               URG                        Checksum                 Urgent pointer
+               ACK
+                                                      Options (variable)
+
+
+
+                     A tells B it wants to open a connection…
+
+
+
+                                                                                      Transport Layer: 3-113
+Step 2: B’s SYN-ACK packet
+
+                                        Bʼs port                        Aʼs port
+
+                                             Bʼs Initial Sequence Number
+     Flags:   SYN                                  Aʼs ISN plus 1
+              FIN
+              RST                   0               Flags      Advertised window
+                                              0
+              PSH
+              URG                       Checksum                    Urgent pointer
+              ACK
+                                                   Options (variable)
+
+
+
+         B tells A it accepts, and is ready to hear the next byte…
+
+
+
+                                                                                     Transport Layer: 3-114
+Step 3: A’s ACK of the SYN-ACK
+
+                                           Aʼs port                         Bʼs port
+
+                                                      Sequence number
+      Flags:   SYN                                     Bʼs ISN plus 1
+               FIN
+               RST                     0                Flags      Advertised window
+                                                 0
+               PSH
+               URG                         Checksum                     Urgent pointer
+               ACK
+                                                       Options (variable)
+
+
+
+                     A tells B it wants is okay to start sending
+
+
+
+                                                                                         Transport Layer: 3-115
+A human 3-way handshake protocol
+
+                       1. On belay?
+
+
+                  2. Belay on.
+                                      3. Climbing.
+
+
+
+
+                                                     Transport Layer: 3-116
+Closing a TCP connection
+§ client, server each close their side of connection
+  • send TCP segment with FIN bit = 1                               A               B
+
+§ respond to received FIN with ACK
+                                                                          F IN
+  • on receiving FIN, ACK can be combined with own FIN
+§ simultaneous FIN exchanges can be handled                              AC K
+                                                                           F IN
+
+                                                                         AC K
+                                                                Closed                  Closed
+                                                         Time
+
+
+
+
+                                                                                  Transport Layer: 3-117
+What does TCP do for reliable data transfer?
+§ GBN + selective repeat + a few differences
+  • Sequence number, sliding window at TX and RX
+
+  • RX sends cumulative ACKs (GBN)
+
+  • TX maintains a single retransmission timer
+
+  • RX keeps out-of-order packets (like SR)
+
+  • Use fast retransmit: use duplicate ACKs to trigger early retransmission
+
+  • Estimate timeout: retransmit if no ACK is received after timeout
+
+
+                                                                              Transport Layer: 3-118
+What can go wrong in a data transmission?
+                               m   , AC K
+§ Bit errors      C h e c ks u
+                                                                                                 t im   eout
+                                                                               a te R T T to set
+                                                                mbers,   estim
+                                                    e nu
+§ Duplicated packets                        Sequenc
+
+
+                                                   d AC K s ,
+§ Packet losses                   uplicate
+                         Timer, d
+
+
+
+
+                                                                                                               ?
+                                        s m it
+§ Packet delay          Fast retr
+                                 an
+
+
+
+§ Packets arriving out of order                                  e rs , ke ep out-
+                                                         e num b
+                                                 Sequenc r packets, ACK
+                                                     of-orde
+                                                                                                               Transport Layer: 3-119
+Transport layer: roadmap
+§ Transport-layer services
+§ Multiplexing and demultiplexing              Basics and UDP
+§ Connectionless transport: UDP
+§ Principles of reliable data transfer
+                                               Reliability
+§ Connection-oriented transport: TCP
+§ Principles of congestion control
+                                               Congestion Control
+§ TCP congestion control
+§ Evolution of transport-layer functionality
+
+                                                             Transport Layer: 3-120
+Principles of congestion control
+Congestion:
+§ informally: “too many sources sending too much data too fast for
+  network to handle”
+§ manifestations:
+   • long delays (queueing in router buffers)
+   • packet loss (buffer overflow at routers)
+§ different from flow control!                        congestion control:
+§ a top-10 problem!                                             too many senders,
+                                                                  sending too fast
+
+                                                      flow control: one sender
+                                                      too fast for one receiver
+                                                                          Transport Layer: 3-121
+Why Does Congestion Happen?
+§ Statistical multiplexing in packet switching
+
+§ If too many packets arrive at a router in a sudden
+  • The router cannot keep up with the traffic
+  • Delay traffic, and the buffer may eventually overflow
+
+
+
+
+                                                            Transport Layer: 3-122
+Causes/costs of congestion: scenario 1
+§ one router, finite buffers
+§ sender retransmits lost, timed-out packet
+  • application-layer input = application-layer output: lin = lout
+  • transport-layer input includes retransmissions : l’in lin
+
+
+  Host A              lin : original data
+                                                         lout
+                      l'in: original data, plus
+                            retransmitted data
+
+
+
+
+                     R                    R
+
+  Host B          finite shared output
+                           link buffers
+                                                                     Transport Layer: 3-124
+Causes/costs of congestion: scenario 1
+Idealization: perfect knowledge                            R/2
+
+§ sender sends only when router buffers available
+
+
+                                                            throughput: lout
+
+
+  Host A              lin : original data                                      lin
+           copy                                     lout                              R/2
+                      l'in: original data, plus
+                            retransmitted data
+
+
+                           free buffer space!
+
+
+                     R                    R
+
+  Host B          finite shared output
+                           link buffers
+                                                                                     Transport Layer: 3-125
+Causes/costs of congestion: scenario 1
+Idealization: some perfect knowledge
+§ packets can be lost (dropped at router) due to
+  full buffers
+§ sender knows when packet has been dropped:
+  only resends if packet known to be lost
+
+  Host A               lin : original data
+           copy        l'in: original data, plus
+                             retransmitted data
+
+
+                             no buffer space!
+
+
+                      R                    R
+
+  Host B           finite shared output
+                            link buffers
+                                                   Transport Layer: 3-126
+Causes/costs of congestion: scenario 1
+Idealization: some perfect knowledge               R/2
+                                                                                   “wasted” capacity due
+§ packets can be lost (dropped at router) due to                                   to retransmissions
+
+
+
+
+                                                    throughput: lout
+  full buffers
+                                                                                   when sending at
+§ sender knows when packet has been dropped:                                       R/2, some packets
+  only resends if packet known to be lost                                          are needed
+                                                                                   retransmissions
+
+  Host A               lin : original data                             lin   R/2
+                       l'in: original data, plus
+                             retransmitted data
+
+
+                            free buffer space!
+
+
+                      R                    R
+
+  Host B           finite shared output
+                            link buffers
+                                                                                       Transport Layer: 3-127
+Causes/costs of congestion: scenario 2
+Realistic scenario: un-needed duplicates            R/2
+§ packets can be lost, dropped at router due to                                     “wasted” capacity due
+
+
+
+
+                                                     throughput: lout
+  full buffers – requiring retransmissions                                          to un-needed
+                                                                                    retransmissions
+§ but sender times can time out prematurely,
+  sending two copies, both of which are delivered                                    when sending at
+                                                                                     R/2, some packets
+                                                                                     are retransmissions,
+                                                                                     including needed
+  Host A               lin : original data                              lin
+                                                                                     and un-needed
+                                                                              R/2    duplicates, that are
+     timeout
+        copy           l'in: original data, plus                                     delivered!
+                             retransmitted data
+
+
+                            free buffer space!
+
+
+                      R                    R
+
+  Host B           finite shared output
+                            link buffers
+                                                                                        Transport Layer: 3-128
+Causes/costs of congestion: scenario 2
+Realistic scenario: un-needed duplicates            R/2
+§ packets can be lost, dropped at router due to                                     “wasted” capacity due
+
+
+
+
+                                                     throughput: lout
+  full buffers – requiring retransmissions                                          to un-needed
+                                                                                    retransmissions
+§ but sender times can time out prematurely,
+  sending two copies, both of which are delivered                                    when sending at
+                                                                                     R/2, some packets
+                                                                                     are retransmissions,
+                                                                                     including needed
+                                                                                     and un-needed
+                                                                        lin   R/2    duplicates, that are
+                                                                                     delivered!
+     “costs” of congestion:
+     § more work (retransmission) for given receiver throughput
+     § unneeded retransmissions: link carries multiple copies of a packet
+        • decreasing maximum achievable throughput
+
+
+                                                                                        Transport Layer: 3-129
+Causes/costs of congestion: scenario 3
+ § four senders                  Q: what happens as lin and lin’ increase ?
+ § multi-hop paths               A: as red lin’ increases, all arriving blue pkts at upper
+ § timeout/retransmit                queue are dropped, blue throughput g 0
+                        Host A   lin : original data
+                                                                             Host B
+                                 l'in: original data, plus
+                                     retransmitted data
+                                         finite shared
+                                       output link buffers
+
+
+        Host D
+                                                             lout
+                                                                    Host C
+
+
+
+
+                                                                                      Transport Layer: 3-130
+Causes/costs of congestion: scenario 3
+  R/2
+
+
+
+
+   lout
+
+
+          lin’   R/2
+
+
+
+
+   another “cost” of congestion:
+   § when packet dropped, any upstream transmission capacity and
+     buffering used for that packet was wasted!
+
+
+                                                            Transport Layer: 3-131
+Causes/costs of congestion: insights
+§ throughput can never exceed capacity
+
+§ delay increases as capacity approached
+
+§ loss/retransmission decreases effective
+  throughput
+
+§ un-needed duplicates further decreases
+  effective throughput
+ § upstream transmission capacity / buffering
+   wasted for packets lost downstream
+                                                Transport Layer: 3-132
+Approaches towards congestion control
+
+End-end congestion control:
+§ no explicit feedback from
+  network
+§ congestion inferred from    ACKs
+                                     data   data
+  observed loss, delay                             ACKs
+
+§ approach taken by TCP
+
+
+
+                                              Transport Layer: 3-133
+Approaches towards congestion control
+Network-assisted congestion
+ control:                                          explicit congestion info
+
+§ routers provide direct feedback
+  to sending/receiving hosts with           data                              data
+                                     ACKs
+  flows passing through congested                                                    ACKs
+
+  router
+§ may indicate congestion level or
+  explicitly set sending rate
+§ TCP ECN, ATM, DECbit protocols
+                                                                                Transport Layer: 3-134
+Transport layer: roadmap
+§ Transport-layer services
+§ Multiplexing and demultiplexing
+§ Connectionless transport: UDP
+§ Principles of reliable data transfer
+§ Connection-oriented transport: TCP
+§ Principles of congestion control
+§ TCP congestion control
+§ Evolution of transport-layer functionality
+
+                                               Transport Layer: 3-135
+How Does the Sender Know?
+§ Observe packet losses
+  • Timeout
+  • Duplicated ACKs
+
+
+
+§ Monitor packet delays
+  • RTT estimate
+
+
+
+
+                            Transport Layer: 3-136
+How Should the Sender Respond?
+§ What’s your idea?
+
+§ TCP’s idea
+  • Estimate the available capacity à know how many packets to have in fly
+    (congestion window)
+     • Remember the sliding window?
+
+  • Adapt the congestion window à decrease upon packet loss, and increase
+    upon success
+
+
+
+
+                                                                         Transport Layer: 3-137
+All These Windows…
+§ Congestion Window: CWND
+  • # of bytes sent without overflowing routers
+  • Computed by the sender using congestion control algorithm
+
+
+§ Flow control window: AdvertisedWindow (RWND)
+  • # of bytes sent without overflowing receiver’s buffers
+  • Determined by the receiver and reported to the sender
+
+
+§ TCP window = min{CWND, RWND}
+     • Assume for this lecture that RWND >> CWND
+
+
+                                                                Transport Layer: 3-138
+Estimating Bandwidth with ‘Slow Start’
+§ Essentially a “poking” idea
+
+§ Sender starts with a slow rate
+  • Initial cwnd = 1 MSS (Maximal segment size)
+
+§ Then increases exponentially until first packet loss
+  • Double cwnd for each RTT without loss
+  • done by incrementing cwnd for every ACK received
+                                                                          sta rt!
+                                                              as   l   ow
+                                                      a l l y
+                                                   re
+                                            N ot
+                                                                                    Transport Layer: 3-139
+Slow Start Example
+§ Double CWND per round-trip time
+
+            1           2             4                   8
+     Src
+
+            D          D D    A A   D D   D   D
+                  A
+                                          A   A   A   A
+
+     Dest
+
+
+
+
+                                                              Transport Layer: 3-140
+Eventually will hit the capacity…
+                                                  packet
+                            Knee   Cliff           loss
+
+
+
+               Throughput
+                                              congestion
+                                               collapse
+
+
+
+                                           Load
+§ Knee: point after which throughput increases slowly
+§ Cliff: point after which throughput starts to drop to zero (congestion
+  collapse)
+
+                                                                    Transport Layer: 3-141
+How to adapt congestion window size?
+§ Pay more penalty for over-sized window than under-sized window
+  • Over-sized window: packet loss and retransmissions
+  • Under-sized window: lower throughput
+
+
+§ Additive increase, multiplicative decrease (AIMD)
+  • Packet success: increase the congestion window linearly
+  • Packet loss: divide congestion window by half
+
+
+
+
+                                                              Transport Layer: 3-142
+TCP congestion control: AIMD
+§ approach: senders can increase sending rate until packet loss
+  (congestion) occurs, then decrease sending rate on loss event
+    Additive Increase                             Multiplicative Decrease
+   increase sending rate by 1                     cut sending rate in half at
+   maximum segment size every                     each loss event
+   RTT until loss detected
+
+
+
+
+                 TCP sender Sending rate
+                                                                    AIMD sawtooth
+                                                                   behavior: probing
+                                                                      for bandwidth
+
+                                           time                                 Transport Layer: 3-143
+TCP AIMD: more
+Multiplicative decrease detail: sending rate is
+§ Cut in half on loss detected by triple duplicate ACK (TCP Reno)
+§ Cut to 1 MSS (maximum segment size) when loss detected by
+  timeout (TCP Tahoe)
+
+Why AIMD?
+§ AIMD – a distributed, asynchronous algorithm – has been
+  shown to:
+  • optimize congested flow rates network wide!
+  • have desirable stability properties
+
+
+                                                                    Transport Layer: 3-144
+QUIZ: File distribution time
+100 clients would like to download a popular file (50MB). Each client
+has 1Mbps download capacity and 0.5Mbps upload capacity.
+
+§ How much time would it take if they are downloading from a server
+  in a client-server architecture, assuming the server supports 10
+  concurrent downloads?
+
+§ How much time would it take if they form a BitTorrent P2P system,
+  assuming perfect distribution? Approximation is fine.
+
+                                                                  Transport Layer: 3-145
+

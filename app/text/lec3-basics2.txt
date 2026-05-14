@@ -1,0 +1,653 @@
+Internet structure: a “network of networks”
+                                                   mobile network
+§ hosts connect to Internet via access                                   national or global ISP
+  Internet Service Providers (ISPs)
+§ access ISPs in turn must be
+  interconnected
+   • so that any two hosts (anywhere!)                          local or
+                                                                regional ISP
+     can send packets to each other
+§ resulting network of networks is           home network                         content
+                                                                                  provider
+  very complex                                                                    network     datacenter
+                                                                                              network
+
+   • evolution driven by economics,    enterprise
+     national policies                      network
+
+
+
+
+Let’s take a stepwise approach to describe current Internet structure
+Internet structure: a “network of networks”
+Question: given millions of access ISPs, how to connect them together?
+
+                                    …            access
+                                                   net
+                                                           access
+                                                             net      …
+                           access
+                             net
+                                                                             access
+               access                                                          net
+                 net
+                                                                                      access
+       access                                                                           net
+         net
+
+
+
+    …                                                                                          …
+      access                                                                                       access
+        net                                                                                          net
+
+
+
+         access
+           net
+                                                                                                      access
+                                                                                                        net
+
+                  access
+                    net
+                                                                                          access
+                                                                                            net
+
+                             …
+                                        access
+                                                                             …
+                                                                    access
+                                          net             access      net
+                                                            net
+
+                                                                                                               Introduction: 1-38
+Internet structure: a “network of networks”
+Question: given millions of access ISPs, how to connect them together?
+
+                                        …            access
+                                                       net
+                                                               access
+                                                                 net      …
+                           access
+                             net
+                                                                                 access
+               access
+                 net
+                                    …                            …                 net
+
+                                                                                          access
+       access                                                                               net
+         net
+
+                                     connecting each access ISP to
+    …                               each other directly doesn’t scale:
+                                                                                                   …
+      access
+          …                                O(N2) connections.                    …                     access
+                                                                                                         net
+        net
+
+
+
+         access
+           net
+                                                                                                          access
+                                                                                                            net
+
+                  access
+                    net
+                                                                                              access
+                                                                   …                            net
+
+                             …
+                                            access
+                                                                                 …
+                                                                        access
+                                              net             access      net
+                                                                net
+
+                                                                                                                   Introduction: 1-39
+Internet structure: a “network of networks”
+             Option: connect each access ISP to one global transit ISP?
+             Customer and provider ISPs have economic agreement.
+                                  …            access
+                                                 net
+                                                         access
+                                                           net      …
+                         access
+                           net
+                                                                           access
+             access                                                          net
+               net
+                                                                                    access
+     access                                                                           net
+       net
+
+
+
+   …                              global                                                     …
+    access
+      net
+                                    ISP                                                          access
+                                                                                                   net
+
+
+
+       access
+         net
+                                                                                                    access
+                                                                                                      net
+
+                access
+                  net
+                                                                                        access
+                                                                                          net
+
+                           …
+                                      access
+                                                                           …
+                                                                  access
+                                        net             access      net
+                                                          net
+
+                                                                                                             Introduction: 1-40
+Internet structure: a “network of networks”
+  But if one global ISP is viable business, there will be competitors ….
+
+                                  …            access
+                                                 net
+                                                         access
+                                                           net           …
+                         access
+                           net
+                                                                              access
+             access                                                             net
+               net
+                                                                                       access
+     access
+                         ISP A
+                                                                                         net
+       net
+
+
+
+   …                                                                                            …
+    access
+      net                                                        ISP B                              access
+                                                                                                      net
+
+
+
+       access         ISP C
+         net
+                                                                                                       access
+                                                                                                         net
+
+                access
+                  net
+                                                                                           access
+                                                                                             net
+
+                           …
+                                      access
+                                                                              …
+                                                                     access
+                                        net             access         net
+                                                          net
+
+                                                                                                                Introduction: 1-41
+Internet structure: a “network of networks”
+  But if one global ISP is viable business, there will be competitors …. who will
+  want to be connected
+                                            Internet exchange point
+                                  …            access
+                                                 net
+                                                               access
+                                                                 net           …
+                         access
+                           net
+                                                                                      access
+             access                                                                     net
+               net
+                                                                                IXP            access
+     access
+                         ISP A
+                                                                                                 net
+       net
+
+
+
+   …                                                                                                    …
+    access
+      net
+                                                        IXP            ISP B                                access
+                                                                                                              net
+
+
+
+       access         ISP C
+         net
+                                                                                                               access
+                                                                                                                 net
+
+                access
+                  net
+                                                                       peering link
+                                                                                                   access
+                                                                                                     net
+
+                           …
+                                      access
+                                                                                      …
+                                                                           access
+                                        net                   access         net
+                                                                net
+
+                                                                                                                        Introduction: 1-42
+Internet structure: a “network of networks”
+  … and regional networks may arise to connect access nets to ISPs
+
+                                  …            access
+                                                 net
+                                                               access
+                                                                 net           …
+                         access
+                           net
+                                                                                      access
+             access                                                                     net
+               net
+                                                                                IXP            access
+     access
+                         ISP A
+                                                                                                 net
+       net
+
+
+
+   …                                                                                                    …
+    access
+      net
+                                                        IXP            ISP B                                access
+                                                                                                              net
+
+
+
+       access         ISP C
+         net
+                                                                                                               access
+                                                                                                                 net
+
+                access
+                  net
+                                               regional ISP                                        access
+                                                                                                     net
+
+                           …
+                                      access
+                                                                                      …
+                                                                           access
+                                        net                   access         net
+                                                                net
+
+                                                                                                                        Introduction: 1-43
+Internet structure: a “network of networks”
+… and content provider networks (e.g., Google, Microsoft, Akamai) may
+run their own network, to bring services, content close to end users
+                    …                   …       access
+                                                  net
+                                                          access
+                                                            net
+                           access
+                             net
+                                                                              access
+               access                                                           net
+                 net
+                                                                        IXP            access
+       access
+                           ISP A
+                                                                                         net
+         net
+
+
+
+    …                                                                                           …
+                                    Content provider network
+      access
+        net
+                                              IXP   ISP B                                           access
+                                                                                                      net
+
+
+
+         access         ISP C
+           net
+                                                                                                       access
+                                                                                                         net
+
+                  access
+                    net
+                                                regional ISP                               access
+                                                                                             net
+
+                             …
+                                       access
+                                                                              …
+                                                                   access
+                                         net             access      net
+                                                           net
+
+                                                                                                                Introduction: 1-44
+  Internet structure: a “network of networks”
+                 Tier 1 ISP               Tier 1 ISP            Google
+                           IXP                         IXP                      IXP
+                            Regional ISP             Regional ISP
+
+               access   access   access     access   access   access   access    access
+                ISP      ISP      ISP        ISP      ISP      ISP      ISP       ISP
+
+
+At “center”: small # of well-connected large networks
+ § “tier-1” commercial ISPs (e.g., Level 3, Sprint, AT&T, NTT), national & international coverage
+ § content provider networks (e.g., Google, Facebook): private network that connects its
+    data centers to Internet, often bypassing tier-1, regional ISPs
+                                                                                          Introduction: 1-45
+Overview/Roadmap
+§ What is the Internet?
+§ What is a protocol?
+§ Network edge: hosts, access network, physical media
+§ Network core: packet/circuit switching, internet structure
+§ Performance: transmission rate, loss, delay, throughput
+§ Protocol layers, service models
+
+
+
+
+                                                               Introduction: 1-46
+Host: sends packets of data
+host sending function:
+ § takes application message
+ § breaks into smaller chunks,                                     two packets,
+   known as packets, of length L bits                              L bits each
+ § transmits packet into access
+   network at transmission rate R                    2 1
+
+    • link transmission rate, aka link            host
+      capacity, aka link bandwidth                          R: link transmission rate
+
+                  packet   time needed to          L (bits)
+            transmission = transmit L-bit     =
+                   delay   packet into link        R (bits/sec)
+                                                                              Introduction: 1-47
+  Packet-switching: store-and-forward
+
+          L bits
+          per packet
+                       3 2 1
+             source                                             destination
+                               R bps             R bps
+
+
+
+§ packet transmission delay: takes L/R seconds to        One-hop numerical example:
+  transmit (push out) L-bit packet into link at R bps    § L = 10 Kbits
+§ store and forward: entire packet must arrive at        § R = 100 Mbps
+  router before it can be transmitted on next link       § one-hop transmission delay
+                                                           = 0.1 msec
+
+                                                                              Introduction: 1-48
+Packet switching versus circuit switching
+       example:
+       § 1 Gb/s link
+                                    …..
+                                          N
+       § each user:                     users
+         • 100 Mb/s when “active”                             1 Gbps link
+         • active 10% of time
+
+Q: how many users can use this network under circuit-switching and packet switching?
+
+§ circuit-switching: 10 users                 Q: how did we get value 0.0004?
+                                                            %& !
+§ packet switching: with 35 users,            𝐴: 1 − ∑$#!"# ! 𝑝 (1 − 𝑝)
+                                                                         %&'!
+                                                                              ,
+ probability > 10 active at same time         where p is the probability of a
+ is less than .0004 *
+                                              single user being active
+                                                                                  Introduction: 1-49
+Packet-switching: queueing
+                     R = 100 Mb/s
+             A                                             C
+
+
+                                                           D
+                 B                        R = 1.5 Mb/s
+                                                                E
+                           queue of packets
+                        waiting for transmission
+                            over output link
+
+Queueing occurs when work arrives faster than it can be serviced:
+
+
+
+
+                                                                    Introduction: 1-50
+Packet-switching: queueing
+                    R = 100 Mb/s
+            A                                               C
+
+
+                                                           D
+                B                        R = 1.5 Mb/s
+                                                                 E
+                          queue of packets
+                       waiting for transmission
+                           over output link
+
+
+ Packet queuing and loss: if arrival rate (in bps) to link exceeds
+ transmission rate (bps) of link for some period of time:
+ § packets will queue, waiting to be transmitted on output link
+ § packets can be dropped (lost) if memory (buffer) in router fills up
+ à Packet delay and losses
+                                                                     Introduction: 1-51
+Packet delay: four sources
+            transmission
+    A                           propagation
+
+    B
+              processing
+                           queueing
+
+    dnodal = dproc + dqueue + dtrans + dprop
+
+   dproc: processing                  dqueue: queueing delay
+    § check bit errors                § time waiting at output link for
+    § determine output link             transmission
+    § typically < microsecs           § depends on congestion level of
+                                        router
+                                                                          Introduction: 1-52
+Packet delay: four sources
+               transmission
+      A                               propagation
+
+      B
+                 processing
+                               queueing
+
+     dnodal = dproc + dqueue + dtrans + dprop
+ dtrans: transmission delay:                  dprop: propagation delay:
+ § L: packet length (bits)                    § d: length of physical link
+ § R: link transmission rate (bps)            § s: propagation speed (~2x108 m/sec)
+ § dtrans = L/R                               § dprop = d/s
+                         dtrans and dprop
+                         very different
+                                                                              Introduction: 1-53
+Caravan analogy
+                                         100 km                100 km
+
+     ten-car caravan       toll booth             toll booth            toll booth
+     (aka 10-bit packet)    (aka link)
+
+§ car ~ bit; caravan ~ packet; toll               § time to “push” entire caravan
+  service ~ link transmission                       through toll booth onto
+§ toll booth takes 12 sec to service                highway = 12*10 = 120 sec
+  car (bit transmission time)                     § time for last car to propagate
+§ “propagate” at 100 km/hr                          from 1st to 2nd toll both:
+§ Q: How long for the whole                         100km/(100km/hr) = 1 hr
+  caravan to line up before 2nd toll              § A: 62 minutes
+  booth?
+                                                                                     Introduction: 1-54
+Caravan analogy
+                                            100 km                100 km
+
+           ten-car caravan        toll booth         toll booth
+           (aka 10-bit packet)   (aka router)
+
+
+§ suppose cars now “propagate” at 1000 km/hr
+§ and suppose toll booth now takes one min to service a car
+§ Q: Will any car arrive to 2nd booth before all cars serviced at first
+  booth?
+  A: Yes! after 7 min, first car arrives at second booth; three cars still at
+  first booth
+
+                                                                           Introduction: 1-55
+Packet queueing delay (revisited)
+§ a: average packet arrival rate
+
+
+
+                                                average queueing delay
+§ L: packet length (bits)
+§ R: link bandwidth (bit transmission rate)
+
+ L .a     arrival rate of bits      “traffic
+      :
+  R       service rate of bits     intensity”                            traffic intensity = La/R      1
+
+
+§ La/R ~ 0: avg. queueing delay small                                                       La/R ~ 0
+
+§ La/R -> 1: avg. queueing delay large
+§ La/R > 1: more “work” arriving is
+  more than can be serviced - average
+  delay infinite!
+                                                                                         La/R -> 1
+                                                                                                       Introduction: 1-56
+“Real” Internet delays and routes
+§ what do “real” Internet delay & loss look like?
+§ traceroute program: provides delay measurement from
+  source to router along end-end Internet path towards
+  destination. For all i:
+  • sends three packets that will reach router i on path towards
+    destination (with time-to-live field value of i)
+  • router i will return packets to sender
+  • sender measures time interval between transmission and reply
+
+            3 probes         3 probes
+
+                  3 probes
+
+
+                                                                   Introduction: 1-57
+Real Internet delays and routes
+   traceroute: gaia.cs.umass.edu to www.eurecom.fr
+                                         3 delay measurements from
+                                         gaia.cs.umass.edu to cs-gw.cs.umass.edu
+   1 cs-gw (128.119.240.254) 1 ms 1 ms 2 ms                           3 delay measurements
+   2 border1-rt-fa5-1-0.gw.umass.edu (128.119.3.145) 1 ms 1 ms 2 ms
+   3 cht-vbns.gw.umass.edu (128.119.3.130) 6 ms 5 ms 5 ms             to border1-rt-fa5-1-0.gw.umass.edu
+   4 jn1-at1-0-0-19.wor.vbns.net (204.147.132.129) 16 ms 11 ms 13 ms
+   5 jn1-so7-0-0-0.wae.vbns.net (204.147.136.136) 21 ms 18 ms 18 ms
+   6 abilene-vbns.abilene.ucaid.edu (198.32.11.9) 22 ms 18 ms 22 ms
+   7 nycm-wash.abilene.ucaid.edu (198.32.8.46) 22 ms 22 ms 22 ms trans-oceanic link
+   8 62.40.103.253 (62.40.103.253) 104 ms 109 ms 106 ms
+   9 de2-1.de1.de.geant.net (62.40.96.129) 109 ms 102 ms 104 ms
+   10 de.fr1.fr.geant.net (62.40.96.50) 113 ms 121 ms 114 ms
+   11 renater-gw.fr1.fr.geant.net (62.40.103.54) 112 ms 114 ms 112 ms      looks like delays
+   12 nio-n2.cssi.renater.fr (193.51.206.13) 111 ms 114 ms 116 ms          decrease! Why?
+   13 nice.cssi.renater.fr (195.220.98.102) 123 ms 125 ms 124 ms
+   14 r3t2-nice.cssi.renater.fr (195.220.98.110) 126 ms 126 ms 124 ms
+   15 eurecom-valbonne.r3t2.ft.net (193.48.50.54) 135 ms 128 ms 133 ms
+   16 194.214.211.25 (194.214.211.25) 126 ms 128 ms 126 ms
+   17 * * *
+   18 * * *             * means no response (probe lost, router not replying)
+   19 fantasia.eurecom.fr (193.55.113.142) 132 ms 128 ms 136 ms
+
+   * Do some traceroutes from exotic countries at www.traceroute.org
+                                                                                                Introduction: 1-58
+Packet loss
+§ queue (aka buffer) preceding link in buffer has finite capacity
+§ packet arriving to full queue dropped (aka lost)
+§ lost packet may be retransmitted by previous node, by source end
+  system, or not at all
+                                       buffer
+                                    (waiting area)     packet being transmitted
+                   A
+
+
+                       B
+                                            packet arriving to
+                                            full buffer is lost
+
+ * Check out the Java applet for an interactive animation (on publisher’s website) of queuing and loss
+                                                                                                         Introduction: 1-59
+ Throughput
+  § throughput: rate (bits/time unit) at which bits are being sent from
+    sender to receiver
+     • instantaneous: rate at given point in time
+     • average: rate over longer period of time
+
+
+
+
+                      link capacity
+                      pipe  that can carry     linkthat
+                                             pipe    capacity
+                                                         can carry
+                        Rsfluid
+                           bits/sec
+                                at rate          Rfluid
+                                                     bits/sec
+                                                    c at   rate
+serverserver,
+         sends with
+                 bits
+ (fluid)                  (Rs bits/sec)           (Rc bits/sec)
+      fileinto
+            of Fpipe
+                 bits
+  to send to client
+                                                                      Introduction: 1-60
+Throughput
+ Rs < Rc What is average end-end throughput?
+
+              Rs bits/sec            Rc bits/sec
+
+
+ Rs > Rc What is average end-end throughput?
+
+              Rs bits/sec             Rc bits/sec
+
+
+     bottleneck link
+  link on end-end path that constrains the end-end throughput
+                                                                Introduction: 1-61
+Throughput: network scenario
+                                       § per-connection end-end
+            Rs                           throughput: min(Rc , Rs ,
+     Rs                    Rs            R/10)
+                                       § in practice: Rc or Rs is often
+                     R                   bottleneck
+    Rc                      Rc
+               Rc
+                                        * Check out the online interactive exercises for more
+                                        examples: http://gaia.cs.umass.edu/kurose_ross/
+
+
+    10 connections (fairly) share
+ backbone bottleneck link R bits/sec
+                                                                                                Introduction: 1-62
+

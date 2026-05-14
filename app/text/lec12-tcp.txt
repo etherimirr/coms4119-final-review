@@ -1,0 +1,576 @@
+Selective repeat: the approach
+§pipelining: multiple packets in flight
+§receiver individually ACKs all correctly received packets
+  • buffers packets, as needed, for in-order delivery to upper layer
+§sender:
+  • maintains (conceptually) a timer for each unACKed pkt
+     • timeout: retransmits single unACKed packet associated with timeout
+  • maintains (conceptually) “window” over N consecutive seq #s
+     • limits pipelined, “in flight” packets to be within this window
+
+
+                                                                       Transport Layer: 3-78
+Selective repeat: sender, receiver windows
+
+
+
+
+                                       Transport Layer: 3-79
+Selective repeat: sender and receiver
+ sender                               receiver
+ data from above:                      packet n in [rcvbase, rcvbase+N-1]
+  § if next available seq # in          § send ACK(n)
+    window, send packet                 § out-of-order: buffer
+ timeout(n):                            § in-order: deliver (also deliver
+                                          buffered, in-order packets),
+ § resend packet n, restart timer
+                                          advance window to next not-yet-
+ ACK(n) in [sendbase,sendbase+N-1]:       received packet
+  § mark packet n as received          packet n in [rcvbase-N,rcvbase-1]
+  § if n is the smallest unACKed        § ACK(n)
+    packet, advance window base        otherwise:
+    to next unACKed seq #               § ignore
+
+                                                                   Transport Layer: 3-80
+Selective Repeat in action
+      sender window (N=4)           sender                        receiver
+      012345678                 send pkt0
+      012345678                 send pkt1
+      012345678                 send pkt2                         receive pkt0, send ack0
+      012345678                 send pkt3            Xloss        receive pkt1, send ack1
+                                    (wait)
+                                                                  receive pkt3, buffer,
+      012345678      rcv ack0, send pkt4                                  send ack3
+      012345678      rcv ack1, send pkt5
+                                                                  receive pkt4, buffer,
+                            record ack3 arrived                           send ack4
+                                                                  receive pkt5, buffer,
+                            pkt 2 timeout                                 send ack5
+      012345678                 send pkt2
+      012345678              (but not 3,4,5)
+      012345678                                                   rcv pkt2; deliver pkt2,
+      012345678                                                   pkt3, pkt4, pkt5; send ack2
+
+                             Q: what happens when ack2 arrives?
+
+                                                                                            Transport Layer: 3-81
+Selective repeat:
+                                         sender window                     receiver window
+                                         (after receipt)                   (after receipt)
+
+
+
+a dilemma!
+                                          0123012          pkt0
+                                           0123012         pkt1              0123012
+                                           0123012         pkt2              0123012
+                                                                             0123012
+example:                                   0123012          pkt3
+                                                                   X
+                                           0123012
+§ seq #s: 0, 1, 2, 3 (base 4 counting)                      pkt0             will accept packet
+                                                                             with seq number 0
+§ window size=3
+                                                                               (a) no problem
+
+
+
+                                          0123012          pkt0
+                                           0123012         pkt1              0123012
+                                           0123012         pkt2        X     0123012
+                                                                       X     0123012
+                                                                       X
+                                           timeout
+                                           retransmit pkt0
+                                           0123012        pkt0
+                                                                             will accept packet
+                                                                             with seq number 0
+                                                                                  (b) oops!
+                                                                                        Transport Layer: 3-82
+Selective repeat:
+                                         sender window                     receiver window
+                                         (after receipt)                   (after receipt)
+
+
+
+a dilemma!
+                                          0123012          pkt0
+                                           0123012         pkt1              0123012
+                                           0123012         pkt2              0123012
+                                                                             0123012
+example:                                   0123012          pkt3
+                                                                   X
+§ seq #s: 0, 1, 2, 3 (base 4 counting)   § 0receiver
+                                             123012
+                                                     can’t
+                                                        pkt0                 will accept packet
+                                            see sender side                  with seq number 0
+§ window size=3                          (a)  no problem
+                                         § receiver
+                                                                               (a) no problem
+                                            behavior
+                                            identical in both
+                                            cases!
+                                         §0something’s
+                                             123012     pkt0
+
+ Q: what relationship is needed             (very)
+                                           012 3012wrong!
+                                                        pkt1                 0123012
+
+   between sequence # size and             0123012         pkt2        X
+                                                                       X
+                                                                             0123012
+                                                                             0123012
+   window size to avoid problem                                        X
+   in scenario (b)?                        timeout
+                                           retransmit pkt0
+                                           0123012        pkt0
+                                                                             will accept packet
+                                                                             with seq number 0
+                                          (b) oops!                               (b) oops!
+                                                                                        Transport Layer: 3-83
+Transport layer: roadmap
+§ Transport-layer services
+§ Multiplexing and demultiplexing
+§ Connectionless transport: UDP
+§ Principles of reliable data transfer
+§ Connection-oriented transport: TCP
+  • segment structure
+  • reliable data transfer
+  • flow control
+  • connection management
+§ Principles of congestion control
+§ TCP congestion control
+                                         Transport Layer: 3-84
+TCP: overview RFCs: 793,1122, 2018, 5681, 7323
+§ point-to-point:                 § cumulative ACKs
+   • one sender, one receiver     § pipelining:
+§ reliable, in-order byte            • TCP congestion and flow control
+  stream:                              set window size
+   • no “message boundaries"      § connection-oriented:
+§ full duplex data:                 • handshaking (exchange of control
+  • bi-directional data flow in       messages) initializes sender,
+    same connection                   receiver state before data exchange
+                                  § flow controlled:
+                                    • sender will not overwhelm receiver
+
+                                                                Transport Layer: 3-85
+   TCP segment structure
+                                                     32 bits
+
+                                   source port #   dest port #                  segment seq #: counting
+ACK: seq # of next expected             sequence number                         bytes of data into bytestream
+   byte; A bit: this is an ACK                                                  (not segments!)
+                                      acknowledgement number
+                                 head not
+     length (of TCP header)       len used C E U A P R S F   receive window     flow control: # bytes
+       Internet checksum               checksum              Urg data pointer   receiver willing to accept
+
+                                        options (variable length)
+C, E: congestion notification
+                TCP options
+                                                  application                     data sent by
+ RST, SYN, FIN: connection                           data                         application into
+                management                     (variable length)                  TCP socket
+
+
+                                                                                                  Transport Layer: 3-86
+TCP sequence numbers, ACKs
+                                    outgoing segment from sender
+Sequence numbers:                      source port #   dest port #
+                                           sequence number
+  • byte stream “number” of            acknowledgement number
+                                                      rwnd
+    first byte in segment’s data        checksum       urg pointer
+
+                                                          window size
+Acknowledgements:                                                    N
+
+ • seq # of next byte expected
+   from other side                               sender sequence number space
+
+ • cumulative ACK                        sent            sent, not-        usable not
+                                         ACKed           yet ACKed         but not usable
+Q: how receiver handles out-of-                          (“in-flight”)     yet sent
+
+ order segments                                         outgoing segment from receiver
+
+  • A: TCP spec doesn’t say, - up
+                                                              source port #   dest port #
+                                                                  sequence number
+
+    to implementor                                            acknowledgement number
+                                                                      A      rwnd
+                                                                checksum       urg pointer
+                                                                                             Transport Layer: 3-87
+TCP sequence numbers, ACKs
+             Host A                                 Host B
+
+
+      User types‘C’
+                       Seq=42, ACK=79, data = ‘C’
+                                                    host ACKs receipt
+                                                    of‘C’, echoes back ‘C’
+                       Seq=79, ACK=43, data = ‘C’
+   host ACKs receipt
+      of echoed ‘C’
+                             Seq=43, ACK=80
+
+
+
+
+                   simple telnet scenario
+                                                                             Transport Layer: 3-88
+TCP round trip time, timeout
+Q: how to set TCP timeout            Q: how to estimate RTT?
+ value?                              § SampleRTT:measured time
+§ longer than RTT, but RTT varies!     from segment transmission until
+                                       ACK receipt
+§ too short: premature timeout,
+                                       • ignore retransmissions
+  unnecessary retransmissions
+                                     § SampleRTT will vary, want
+§ too long: slow reaction to           estimated RTT “smoother”
+  segment loss                         • average several recent
+                                         measurements, not just current
+                                         SampleRTT
+
+
+
+                                                                    Transport Layer: 3-89
+TCP round trip time, timeout
+EstimatedRTT = (1- a)*EstimatedRTT + a*SampleRTT
+§ exponential weighted moving average (EWMA)
+§ influence of past sample decreases exponentially fast
+                                                                                        RTT: gaia.cs.umass.edu to fantasia.eurecom.fr
+
+§ typical value: a = 0.125                               350
+
+                                                                   RTT: gaia.cs.umass.edu to fantasia.eurecom.fr
+
+
+
+
+                                    RTT (milliseconds)
+                                                         300
+
+
+
+
+                                                         250
+
+
+
+
+                             RTT (milliseconds)
+                                                         200
+
+
+
+
+                                                                                                                                              sampleRTT
+                                                         150
+                                                                                                                                              EstimatedRTT
+
+                                                         100
+                                                               1     8   15   22   29     36      43      50       57        64     71   78    85   92   99   106
+
+                                                                                               time (seconds)
+                                                                                                           time (seconnds)
+
+                                                                                                    SampleRTT           Estimated RTT                         Transport Layer: 3-90
+TCP round trip time, timeout
+§ timeout interval: EstimatedRTT plus “safety margin”
+   • large variation in EstimatedRTT: want a larger safety margin
+  TimeoutInterval = EstimatedRTT + 4*DevRTT
+
+                                                 estimated RTT                    “safety margin”
+
+§ DevRTT: EWMA of SampleRTT deviation from EstimatedRTT:
+     DevRTT = (1-b)*DevRTT + b*|SampleRTT-EstimatedRTT|
+                                                                                                     (typically, b = 0.25)
+
+
+* Check out the online interactive exercises for more examples: http://gaia.cs.umass.edu/kurose_ross/interactive/
+                                                                                                                             Transport Layer: 3-91
+TCP Sender (simplified)
+event: data received from           event: timeout
+application                          § retransmit segment that
+                                       caused timeout
+ § create segment with seq #
+                                     § restart timer
+§ seq # is byte-stream number
+  of first data byte in segment
+                                    event: ACK received
+§ start timer if not already
+                                     § if ACK acknowledges
+  running
+                                       previously unACKed segments
+   • think of timer as for oldest
+     unACKed segment                   • update what is known to be
+                                         ACKed
+   • expiration interval:
+     TimeOutInterval                   • start timer if there are still
+                                         unACKed segments
+                                                                    Transport Layer: 3-92
+TCP Receiver: ACK generation [RFC 5681]
+      Event at receiver                   TCP receiver action
+      arrival of in-order segment with    delayed ACK. Wait up to 500ms
+      expected seq #. All data up to      for next segment. If no next segment,
+      expected seq # already ACKed        send ACK
+
+      arrival of in-order segment with    immediately send single cumulative
+      expected seq #. One other           ACK, ACKing both in-order segments
+      segment has ACK unsent
+
+      arrival of out-of-order segment     immediately send duplicate ACK,
+      higher-than-expect seq. # .         indicating seq. # of next expected byte
+      Gap detected
+
+      arrival of segment that             immediate send ACK, provided that
+      partially or completely fills gap   segment starts at lower end of gap
+
+                                                                                    Transport Layer: 3-94
+TCP: retransmission scenarios
+   Host A                         Host B             Host A                          Host B
+
+
+
+                                           SendBase=92
+             Seq=92, 8 bytes of data                            Seq=92, 8 bytes of data
+
+                                                               Seq=100, 20 bytes of data
+   timeout                                           timeout
+                         ACK=100
+                     X
+                                                                         ACK=100
+                                                                           ACK=120
+
+             Seq=92, 8 bytes of data                                     Seq=92, 8
+                                           SendBase=100                  bytes of data     send cumulative
+                                           SendBase=120                                    ACK for 120
+                    ACK=100
+                                                                       ACK=120
+
+                                           SendBase=120
+
+             lost ACK scenario                                  premature timeout
+
+                                                                                                 Transport Layer: 3-95
+TCP: retransmission scenarios
+   Host A                    Host B
+
+
+
+
+        Seq=92, 8 bytes of data
+
+       Seq=100, 20 bytes of data
+                 ACK=100
+             X
+              ACK=120
+
+
+
+      Seq=120, 15 bytes of data
+
+
+
+
+     cumulative ACK covers
+       for earlier lost ACK
+
+                                      Transport Layer: 3-96
+TCP fast retransmit
+                                                       Host A                                      Host B
+ TCP fast retransmit
+ if sender receives 3 additional
+ ACKs for same data (“triple                               Se q = 9
+                                                           Se q = 1
+                                                                   2, 8 by
+                                                                           te s o f d
+                                                                                      a ta
+ duplicate ACKs”), resend unACKed                                   00, 20
+                                                                           b y te s
+                                                                                    of dat
+                                                                                           a
+ segment with smallest seq #                                                                   X
+  § likely that unACKed segment lost,
+                                                                =100
+    so don’t wait for timeout                             ACK
+
+                                                                =100
+                                             timeout
+                                                          ACK
+                                                              =100
+                                                          ACK
+                                                              =100
+         Receipt of three duplicate ACKs                  ACK
+
+           indicates 3 segments received                   Seq=100, 20 bytes of data
+
+           after a missing segment – lost
+         segment is likely. So retransmit!
+
+                                                                                                       Transport Layer: 3-97
+Transport layer: roadmap
+§ Transport-layer services
+§ Multiplexing and demultiplexing
+§ Connectionless transport: UDP
+§ Principles of reliable data transfer
+§ Connection-oriented transport: TCP
+  • segment structure
+  • reliable data transfer
+  • flow control
+  • connection management
+§ Principles of congestion control
+§ TCP congestion control
+                                         Transport Layer: 3-98
+TCP flow control
+                                                                     application
+Q: What happens if network         Application removing
+                                                                      process
+layer delivers data faster than    data from TCP socket
+                                                 buffers
+application layer removes                                           TCP socket
+data from socket buffers?                                         receiver buffers
+
+
+                                                                          TCP
+                                                                          code
+                                           Network layer
+                                  delivering IP datagram
+                                        payload into TCP
+                                                                           IP
+                                           socket buffers
+                                                                          code
+
+
+
+
+                                                            from sender
+
+                                                            receiver protocol stack
+
+                                                                                      Transport Layer: 3-99
+TCP flow control
+                                                                     application
+Q: What happens if network         Application removing
+                                                                      process
+layer delivers data faster than    data from TCP socket
+                                                 buffers
+application layer removes                                           TCP socket
+data from socket buffers?                                         receiver buffers
+
+
+                                                                          TCP
+                                                                          code
+                                           Network layer
+                                  delivering IP datagram
+                                        payload into TCP
+                                                                           IP
+                                           socket buffers
+                                                                          code
+
+
+
+
+                                                            from sender
+
+                                                            receiver protocol stack
+
+                                                                                      Transport Layer: 3-100
+TCP flow control
+                                                                                    application
+Q: What happens if network                         Application removing
+                                                                                     process
+layer delivers data faster than                    data from TCP socket
+                                                                 buffers
+application layer removes                                                          TCP socket
+data from socket buffers?                                                        receiver buffers
+
+
+                                                                                         TCP
+                                                                                         code
+
+            receive window
+                             flow control: # bytes
+                             receiver willing to accept                                   IP
+                                                                                         code
+
+
+
+
+                                                                           from sender
+
+                                                                           receiver protocol stack
+
+                                                                                                     Transport Layer: 3-101
+TCP flow control
+                                                                    application
+Q: What happens if network         Application removing
+                                                                     process
+layer delivers data faster than    data from TCP socket
+                                                 buffers
+application layer removes                                          TCP socket
+data from socket buffers?                                        receiver buffers
+
+
+                                                                         TCP
+ flow control                                                            code
+
+ receiver controls sender, so
+ sender won’t overflow                                                    IP
+                                                                         code
+ receiver’s buffer by
+ transmitting too much, too fast
+                                                           from sender
+
+                                                           receiver protocol stack
+
+                                                                                     Transport Layer: 3-102
+TCP flow control
+§ TCP receiver “advertises” free buffer
+  space in rwnd field in TCP header                       to application process
+  • RcvBuffer size set via socket
+    options (typical default is 4096 bytes)   RcvBuffer      buffered data
+  • many operating systems auto-adjust
+                                                 rwnd      free buffer space
+    RcvBuffer
+§ sender limits amount of unACKed
+  (“in-flight”) data to received rwnd                     TCP segment payloads
+
+§ guarantees receive buffer will not               TCP receiver-side buffering
+  overflow
+
+                                                                                   Transport Layer: 3-103
+TCP flow control
+                                              flow control: # bytes receiver willing to accept
+
+§ TCP receiver “advertises” free buffer
+  space in rwnd field in TCP header
+  • RcvBuffer size set via socket
+                                                                  receive window
+    options (typical default is 4096 bytes)
+  • many operating systems auto-adjust
+    RcvBuffer
+§ sender limits amount of unACKed
+  (“in-flight”) data to received rwnd
+§ guarantees receive buffer will not
+  overflow
+                                                       TCP segment format
+
+                                                                                    Transport Layer: 3-104
+QUIZ: UDP vs TCP
+
+A server handling 10 clients simultaneously. How many
+socket connections are maintained by the server if the
+server and client use UDP?
+
+And how many socket connections maintained by the
+server if they use TCP?
+
+
+                                                  Transport Layer: 3-105
+

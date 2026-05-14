@@ -1,4 +1,1870 @@
 {
+  "lec1-intro": [
+    {
+      "title": "CSEE4119: Computer Networks",
+      "topics": [
+        "intro",
+        "internet",
+        "layering",
+        "ISP",
+        "what is the Internet"
+      ]
+    },
+    {
+      "title": "Why Study Computer Networking?",
+      "topics": []
+    },
+    {
+      "title": "What are the",
+      "topics": []
+    },
+    {
+      "title": "Wi-Fi Networks",
+      "topics": []
+    },
+    {
+      "title": "Cellular Networks",
+      "topics": []
+    },
+    {
+      "title": "Data Center Networks",
+      "topics": []
+    },
+    {
+      "title": "Body Area Networks",
+      "topics": []
+    },
+    {
+      "title": "Computers Blended into   8",
+      "topics": []
+    },
+    {
+      "title": "The Internet",
+      "topics": []
+    },
+    {
+      "title": "Fun Fact about the Internet",
+      "topics": []
+    },
+    {
+      "title": "Tremendous Growth",
+      "topics": []
+    },
+    {
+      "title": "Tremendous Scale",
+      "topics": []
+    },
+    {
+      "title": "Why Study Computer Networking?",
+      "topics": []
+    },
+    {
+      "title": "What We Will Learn",
+      "topics": []
+    },
+    {
+      "title": "Topics",
+      "topics": []
+    },
+    {
+      "title": "How We Will Study Computer Networking",
+      "topics": []
+    },
+    {
+      "title": "Textbook",
+      "topics": []
+    },
+    {
+      "title": "Topics We Will Cover",
+      "topics": []
+    },
+    {
+      "title": "Grading",
+      "topics": []
+    },
+    {
+      "title": "Grading",
+      "topics": []
+    },
+    {
+      "title": "Submit Assignments On time",
+      "topics": []
+    },
+    {
+      "title": "Honor Code",
+      "topics": []
+    },
+    {
+      "title": "Policy of the Use of AI",
+      "topics": []
+    },
+    {
+      "title": "Uploading course materials to sites such as CourseHero, Chegg, or Github is",
+      "topics": []
+    },
+    {
+      "title": "Grading",
+      "topics": []
+    },
+    {
+      "title": "Grading",
+      "topics": []
+    },
+    {
+      "title": "Meet the TA Team!",
+      "topics": []
+    },
+    {
+      "title": "Ask for Help",
+      "topics": []
+    },
+    {
+      "title": "Get Started",
+      "topics": []
+    }
+  ],
+  "lec2-basics1": [
+    {
+      "title": "CSEE4119: Computer Networks",
+      "topics": [
+        "protocol",
+        "packet vs circuit",
+        "performance",
+        "delays",
+        "throughput"
+      ]
+    },
+    {
+      "title": "Overview/Roadmap",
+      "topics": []
+    },
+    {
+      "title": "The Internet: a “nuts and bolts” view",
+      "topics": []
+    },
+    {
+      "title": "“Fun” Internet-connected devices",
+      "topics": []
+    },
+    {
+      "title": "The Internet: a “nuts and bolts” view",
+      "topics": []
+    },
+    {
+      "title": "The Internet: a “services” view",
+      "topics": []
+    },
+    {
+      "title": "What’s a protocol?",
+      "topics": [],
+      "important": "🔥 什么是协议——格式 + 顺序 + 动作（基础概念）"
+    },
+    {
+      "title": "What’s a protocol?",
+      "topics": []
+    },
+    {
+      "title": "Overview/Roadmap",
+      "topics": []
+    },
+    {
+      "title": "A closer look at Internet structure",
+      "topics": []
+    },
+    {
+      "title": "A closer look at Internet structure",
+      "topics": []
+    },
+    {
+      "title": "A closer look at Internet structure",
+      "topics": []
+    },
+    {
+      "title": "A closer look at Internet structure",
+      "topics": []
+    },
+    {
+      "title": "Links: physical media",
+      "topics": []
+    },
+    {
+      "title": "Links: physical media",
+      "topics": []
+    },
+    {
+      "title": "Links: physical media",
+      "topics": []
+    },
+    {
+      "title": "Wired access network #1: digital subscriber line (DSL)",
+      "topics": []
+    },
+    {
+      "title": "Wired access network #2: cable-based access",
+      "topics": []
+    },
+    {
+      "title": "Wired access #2: cable-based access",
+      "topics": []
+    },
+    {
+      "title": "Wireless access networks",
+      "topics": []
+    },
+    {
+      "title": "Residential/Home networks",
+      "topics": []
+    },
+    {
+      "title": "Enterprise networks",
+      "topics": []
+    },
+    {
+      "title": "Data center networks",
+      "topics": []
+    },
+    {
+      "title": "Overview/Roadmap",
+      "topics": []
+    },
+    {
+      "title": "The network core",
+      "topics": []
+    },
+    {
+      "title": "Circuit Switching",
+      "topics": [],
+      "important": "Circuit Switching 基础"
+    },
+    {
+      "title": "Phone Network Uses Circuit Switching",
+      "topics": []
+    },
+    {
+      "title": "Circuit Switching: Multiplexing a Link",
+      "topics": []
+    },
+    {
+      "title": "Advantages of Circuit Switching",
+      "topics": []
+    },
+    {
+      "title": "Disadvantages of Circuit Switching",
+      "topics": []
+    },
+    {
+      "title": "Packet Switching",
+      "topics": [],
+      "important": "🔥 Packet Switching——Internet 选这个的根本原因"
+    },
+    {
+      "title": "The network core",
+      "topics": []
+    },
+    {
+      "title": "Two key network-core functions",
+      "topics": [],
+      "important": "Network core 两功能：forwarding + routing"
+    },
+    {
+      "title": "routing",
+      "topics": []
+    },
+    {
+      "title": "forwarding",
+      "topics": []
+    },
+    {
+      "title": "Packet switching versus circuit switching",
+      "topics": [],
+      "important": "🔥 Packet vs Circuit 对比表——必考题型"
+    }
+  ],
+  "lec3-basics2": [
+    {
+      "title": "Internet structure: a “network of networks”",
+      "topics": [
+        "layering",
+        "encapsulation",
+        "headers"
+      ]
+    },
+    {
+      "title": "Internet structure: a “network of networks”",
+      "topics": []
+    },
+    {
+      "title": "Internet structure: a “network of networks”",
+      "topics": []
+    },
+    {
+      "title": "Internet structure: a “network of networks”",
+      "topics": []
+    },
+    {
+      "title": "Internet structure: a “network of networks”",
+      "topics": []
+    },
+    {
+      "title": "Internet structure: a “network of networks”",
+      "topics": []
+    },
+    {
+      "title": "Internet structure: a “network of networks”",
+      "topics": []
+    },
+    {
+      "title": "Internet structure: a “network of networks”",
+      "topics": []
+    },
+    {
+      "title": "Internet structure: a “network of networks”",
+      "topics": []
+    },
+    {
+      "title": "Overview/Roadmap",
+      "topics": []
+    },
+    {
+      "title": "Host: sends packets of data",
+      "topics": []
+    },
+    {
+      "title": "Packet-switching: store-and-forward",
+      "topics": [],
+      "important": "🔥🔥 Store-and-forward——mid Q2 直接考"
+    },
+    {
+      "title": "Packet switching versus circuit switching",
+      "topics": []
+    },
+    {
+      "title": "Packet-switching: queueing",
+      "topics": [],
+      "important": "队列延迟——网络拥塞的根"
+    },
+    {
+      "title": "Packet-switching: queueing",
+      "topics": []
+    },
+    {
+      "title": "Packet delay: four sources",
+      "topics": [],
+      "important": "🔥🔥 Packet delay 4 类来源——transmission/propagation/queuing/processing 必背"
+    },
+    {
+      "title": "Packet delay: four sources",
+      "topics": [],
+      "important": "Packet delay 4 类来源（续）"
+    },
+    {
+      "title": "Caravan analogy",
+      "topics": [],
+      "important": "Caravan analogy——理解 store-and-forward 的直觉"
+    },
+    {
+      "title": "Caravan analogy",
+      "topics": []
+    },
+    {
+      "title": "Packet queueing delay (revisited)",
+      "topics": []
+    },
+    {
+      "title": "“Real” Internet delays and routes",
+      "topics": []
+    },
+    {
+      "title": "Real Internet delays and routes",
+      "topics": []
+    },
+    {
+      "title": "Packet loss",
+      "topics": [],
+      "important": "Packet loss——队列溢出导致"
+    },
+    {
+      "title": "Throughput",
+      "topics": [],
+      "important": "🔥🔥 Throughput——min(per-link R) 必考"
+    },
+    {
+      "title": "Throughput",
+      "topics": [],
+      "important": "Throughput 续"
+    },
+    {
+      "title": "Throughput: network scenario",
+      "topics": [],
+      "important": "🔥 Throughput 多场景——end-to-end vs per-link"
+    }
+  ],
+  "lec4-basics3": [
+    {
+      "title": "Overview/Roadmap",
+      "topics": [
+        "RTT",
+        "BDP",
+        "performance metrics"
+      ]
+    },
+    {
+      "title": "A simple daily-life example",
+      "topics": []
+    },
+    {
+      "title": "Layering: A Modular Approach",
+      "topics": [],
+      "important": "Layering 模块化思想"
+    },
+    {
+      "title": "In the Context of Internet",
+      "topics": []
+    },
+    {
+      "title": "In the Context of Internet",
+      "topics": []
+    },
+    {
+      "title": "Protocols and Layers",
+      "topics": []
+    },
+    {
+      "title": "Layered Internet protocol stack",
+      "topics": [],
+      "important": "🔥 5 层协议栈——必背 L1-L7 + 各层例"
+    },
+    {
+      "title": "Protocols at Different Layers",
+      "topics": []
+    },
+    {
+      "title": "Services, Layering and Encapsulation",
+      "topics": [],
+      "important": "🔥 Services / Layering / Encapsulation"
+    },
+    {
+      "title": "Services, Layering and Encapsulation",
+      "topics": []
+    },
+    {
+      "title": "Services, Layering and Encapsulation",
+      "topics": []
+    },
+    {
+      "title": "Encapsulation",
+      "topics": [],
+      "important": "🔥 Encapsulation 流程——每层加自己 header"
+    },
+    {
+      "title": "Services, Layering and Encapsulation",
+      "topics": []
+    },
+    {
+      "title": "What Gets Implemented on the End-host?",
+      "topics": []
+    },
+    {
+      "title": "• Interoperability",
+      "topics": []
+    },
+    {
+      "title": "• High-level layers may duplicate low-",
+      "topics": []
+    },
+    {
+      "title": "How to place network functionality",
+      "topics": []
+    },
+    {
+      "title": "End-to-End Principle",
+      "topics": [],
+      "important": "🔥 End-to-end principle——把复杂放在端"
+    },
+    {
+      "title": "CSEE4119: Computer Networks",
+      "topics": []
+    },
+    {
+      "title": "Application layer: overview",
+      "topics": []
+    },
+    {
+      "title": "Network apps",
+      "topics": []
+    },
+    {
+      "title": "Creating a network app",
+      "topics": []
+    },
+    {
+      "title": "Client-server paradigm",
+      "topics": [],
+      "important": "Client-server 模型"
+    },
+    {
+      "title": "Peer-peer architecture",
+      "topics": []
+    },
+    {
+      "title": "Processes communicating",
+      "topics": [],
+      "important": "🔥 Processes communicating 概念"
+    },
+    {
+      "title": "Sockets",
+      "topics": [],
+      "important": "🔥 Sockets 抽象"
+    },
+    {
+      "title": "Identifying Receiving Process",
+      "topics": []
+    },
+    {
+      "title": "An application-layer protocol defines:",
+      "topics": []
+    },
+    {
+      "title": "What transport service does an app need?",
+      "topics": [],
+      "important": "Transport service 需求——可靠/带宽/timing"
+    },
+    {
+      "title": "Transport service requirements: common apps",
+      "topics": []
+    },
+    {
+      "title": "Internet transport protocols services",
+      "topics": [],
+      "important": "🔥 Internet transport：TCP vs UDP 对比"
+    },
+    {
+      "title": "Internet applications, and transport protocols",
+      "topics": []
+    },
+    {
+      "title": "Securing TCP",
+      "topics": []
+    },
+    {
+      "title": "Quiz Time",
+      "topics": []
+    }
+  ],
+  "lec5-web": [
+    {
+      "title": "What Gets Implemented on the End-host?",
+      "topics": [
+        "HTTP",
+        "persistent",
+        "non-persistent",
+        "RTT counting",
+        "cookie",
+        "web cache",
+        "conditional GET"
+      ]
+    },
+    {
+      "title": "How about these answers?",
+      "topics": []
+    },
+    {
+      "title": "message      M",
+      "topics": []
+    },
+    {
+      "title": "Application layer: overview",
+      "topics": []
+    },
+    {
+      "title": "Web and HTTP",
+      "topics": []
+    },
+    {
+      "title": "HTTP overview",
+      "topics": [],
+      "important": "🔥 HTTP overview——request/response model"
+    },
+    {
+      "title": "HTTP overview (continued)",
+      "topics": []
+    },
+    {
+      "title": "HTTP connections: two types",
+      "topics": [],
+      "important": "🔥🔥 HTTP 两种连接类型——非持久 vs 持久"
+    },
+    {
+      "title": "Non-persistent HTTP: example",
+      "topics": [],
+      "important": "🔥🔥 Non-persistent HTTP 例——RTT 计数基础（mid Q1）"
+    },
+    {
+      "title": "Non-persistent HTTP: example (cont.)",
+      "topics": [],
+      "important": "🔥🔥 Non-persistent 续——多对象时 RTT × 2"
+    },
+    {
+      "title": "Non-persistent HTTP: response time",
+      "topics": [],
+      "important": "🔥🔥🔥 Non-persistent response time = 2 RTT/obj——mid Q1 公式来源"
+    },
+    {
+      "title": "Persistent HTTP (HTTP 1.1)",
+      "topics": [],
+      "important": "🔥🔥 Persistent HTTP 1.1——pipelining 思想"
+    },
+    {
+      "title": "HTTP request message",
+      "topics": [],
+      "important": "HTTP request message 格式"
+    },
+    {
+      "title": "HTTP request message: general format",
+      "topics": []
+    },
+    {
+      "title": "Other HTTP request messages",
+      "topics": []
+    },
+    {
+      "title": "HTTP response message",
+      "topics": [],
+      "important": "HTTP response message 格式"
+    },
+    {
+      "title": "HTTP response status codes",
+      "topics": [],
+      "important": "🔥 HTTP 状态码——200/301/404/505"
+    },
+    {
+      "title": "Trying out HTTP (client side) for yourself",
+      "topics": []
+    },
+    {
+      "title": "Maintaining user/server state: cookies",
+      "topics": [],
+      "important": "🔥 Cookies——HTTP 无状态 + 服务端状态"
+    },
+    {
+      "title": "Maintaining user/server state: cookies",
+      "topics": []
+    },
+    {
+      "title": "HTTP cookies: comments",
+      "topics": []
+    },
+    {
+      "title": "Example: displaying a NY Times web page",
+      "topics": []
+    },
+    {
+      "title": "Cookies: tracking a user’s browsing behavior",
+      "topics": []
+    },
+    {
+      "title": "Cookies: tracking a user’s browsing behavior",
+      "topics": []
+    },
+    {
+      "title": "Cookies: tracking a user’s browsing behavior (one day later)",
+      "topics": []
+    },
+    {
+      "title": "Cookies: tracking a user’s browsing behavior",
+      "topics": []
+    },
+    {
+      "title": "GDPR (EU General Data Protection Regulation) and cookies",
+      "topics": []
+    },
+    {
+      "title": "HTTP/2",
+      "topics": [],
+      "important": "HTTP/2 改进"
+    },
+    {
+      "title": "HTTP/2",
+      "topics": []
+    },
+    {
+      "title": "HTTP/2: mitigating HOL blocking",
+      "topics": [],
+      "important": "🔥 HTTP/2 HOL blocking 缓解"
+    },
+    {
+      "title": "HTTP/2: mitigating HOL blocking",
+      "topics": []
+    },
+    {
+      "title": "HTTP/2 to HTTP/3",
+      "topics": []
+    }
+  ],
+  "lec6-video": [
+    {
+      "title": "HTTP/2 to HTTP/3",
+      "topics": [
+        "video",
+        "DASH",
+        "streaming",
+        "CDN"
+      ],
+      "important": "Video streaming 占带宽 80%"
+    },
+    {
+      "title": "Web caches",
+      "topics": []
+    },
+    {
+      "title": "Web caches (aka proxy servers)",
+      "topics": []
+    },
+    {
+      "title": "Caching example",
+      "topics": []
+    },
+    {
+      "title": "Option 1: buy a faster access link",
+      "topics": []
+    },
+    {
+      "title": "Option 2: install a web cache",
+      "topics": []
+    },
+    {
+      "title": "Calculating access link utilization, end-end delay",
+      "topics": []
+    },
+    {
+      "title": "Browser caching: Conditional GET",
+      "topics": []
+    },
+    {
+      "title": "Application layer: overview",
+      "topics": []
+    },
+    {
+      "title": "Video Streaming and CDNs: context",
+      "topics": [],
+      "important": "🔥 DASH——可变 bitrate adapter"
+    },
+    {
+      "title": "Multimedia: video",
+      "topics": [],
+      "important": "🔥 CDN——把内容放近用户"
+    },
+    {
+      "title": "Multimedia: video",
+      "topics": []
+    },
+    {
+      "title": "Streaming stored video",
+      "topics": []
+    },
+    {
+      "title": "Streaming stored video",
+      "topics": []
+    },
+    {
+      "title": "Streaming stored video: challenges",
+      "topics": []
+    },
+    {
+      "title": "Streaming stored video: playout buffering",
+      "topics": []
+    },
+    {
+      "title": "Dynamic, Adaptive",
+      "topics": []
+    },
+    {
+      "title": "Streaming multimedia: DASH",
+      "topics": []
+    },
+    {
+      "title": "Content distribution networks (CDNs)",
+      "topics": []
+    },
+    {
+      "title": "Content distribution networks (CDNs)",
+      "topics": []
+    },
+    {
+      "title": "Akamai today:",
+      "topics": []
+    },
+    {
+      "title": "How does Netflix work?",
+      "topics": []
+    },
+    {
+      "title": "Content distribution networks (CDNs)",
+      "topics": []
+    },
+    {
+      "title": "Quiz: Web Cache and Queuing",
+      "topics": []
+    }
+  ],
+  "lec7": [
+    {
+      "title": "Review",
+      "topics": [
+        "socket",
+        "UDP socket",
+        "TCP socket",
+        "welcome socket"
+      ]
+    },
+    {
+      "title": "Review",
+      "topics": []
+    },
+    {
+      "title": "Application layer: overview",
+      "topics": []
+    },
+    {
+      "title": "Lecture goals",
+      "topics": []
+    },
+    {
+      "title": "Socket programming",
+      "topics": [],
+      "important": "🔥 Socket programming 概念"
+    },
+    {
+      "title": "Socket programming",
+      "topics": []
+    },
+    {
+      "title": "Socket programming with UDP",
+      "topics": [],
+      "important": "🔥🔥 UDP socket——server 端 1 个 socket（mid Q1）"
+    },
+    {
+      "title": "Client/server socket interaction: UDP",
+      "topics": [],
+      "important": "🔥🔥 UDP client/server 交互——sendto/recvfrom"
+    },
+    {
+      "title": "Example Application",
+      "topics": []
+    },
+    {
+      "title": "Example app: UDP client",
+      "topics": []
+    },
+    {
+      "title": "Example app: UDP server",
+      "topics": []
+    },
+    {
+      "title": "Socket programming with TCP",
+      "topics": [],
+      "important": "🔥🔥 TCP socket——server N+1 sockets（mid Q1）"
+    },
+    {
+      "title": "Client/server socket interaction: TCP",
+      "topics": [],
+      "important": "🔥🔥 TCP socket 交互——bind/listen/accept"
+    },
+    {
+      "title": "Example app: TCP client",
+      "topics": []
+    },
+    {
+      "title": "Example app: TCP server",
+      "topics": []
+    }
+  ],
+  "lec8-dns": [
+    {
+      "title": "Quiz: Web Cache and Queuing",
+      "topics": [
+        "DNS",
+        "hierarchy",
+        "recursive",
+        "iterative",
+        "RR",
+        "root",
+        "TLD",
+        "authoritative"
+      ]
+    },
+    {
+      "title": "Quiz: Web Cache and Queuing",
+      "topics": []
+    },
+    {
+      "title": "Video Calls",
+      "topics": []
+    },
+    {
+      "title": "Video Calls Use WebRTC",
+      "topics": []
+    },
+    {
+      "title": "Assignment 1 Reminders",
+      "topics": []
+    },
+    {
+      "title": "Application layer: overview",
+      "topics": []
+    },
+    {
+      "title": "What is DNS for?",
+      "topics": [],
+      "important": "🔥 DNS 是什么——name ↔ address 映射"
+    },
+    {
+      "title": "Why Separating Naming and Addressing?",
+      "topics": []
+    },
+    {
+      "title": "How would",
+      "topics": []
+    },
+    {
+      "title": "Solution #1: Local File",
+      "topics": []
+    },
+    {
+      "title": "Solution #2: Central Server",
+      "topics": []
+    },
+    {
+      "title": "DNS: structure, services",
+      "topics": [],
+      "important": "🔥 DNS 是分布式 + 层级 + 缓存"
+    },
+    {
+      "title": "Thinking about the DNS",
+      "topics": []
+    },
+    {
+      "title": "DNS: a distributed, hierarchical database",
+      "topics": [],
+      "important": "🔥🔥 DNS 4 层层级——root → TLD → authoritative"
+    },
+    {
+      "title": "DNS: root name servers",
+      "topics": []
+    },
+    {
+      "title": "DNS: root name servers",
+      "topics": []
+    },
+    {
+      "title": "Top-Level Domain, and authoritative servers",
+      "topics": []
+    },
+    {
+      "title": "Local DNS name servers",
+      "topics": [],
+      "important": "🔥 Local DNS name server——客户端入口"
+    },
+    {
+      "title": "DNS name resolution: iterated query",
+      "topics": [],
+      "important": "🔥🔥 Iterative query——本地 server 一跳一跳问"
+    },
+    {
+      "title": "DNS name resolution: recursive query",
+      "topics": [],
+      "important": "🔥🔥 Recursive query——server 帮你递归到底"
+    },
+    {
+      "title": "Caching DNS Information",
+      "topics": [],
+      "important": "🔥 DNS Caching——TTL 软状态"
+    },
+    {
+      "title": "DNS records",
+      "topics": [],
+      "important": "🔥 DNS records 类型——A, NS, CNAME, MX"
+    },
+    {
+      "title": "DNS protocol messages",
+      "topics": []
+    },
+    {
+      "title": "DNS protocol messages",
+      "topics": []
+    },
+    {
+      "title": "Getting your info into the DNS",
+      "topics": []
+    },
+    {
+      "title": "DNS security",
+      "topics": []
+    },
+    {
+      "title": "Utility of Querying DNS Servers",
+      "topics": []
+    },
+    {
+      "title": "Quiz",
+      "topics": [],
+      "important": "DNS Quiz"
+    }
+  ],
+  "lec9-p2p": [
+    {
+      "title": "Quiz",
+      "topics": [
+        "P2P",
+        "BitTorrent",
+        "file distribution time",
+        "tit-for-tat",
+        "DHT"
+      ]
+    },
+    {
+      "title": "Application layer: overview",
+      "topics": []
+    },
+    {
+      "title": "Recap: Two Communication Architecture",
+      "topics": []
+    },
+    {
+      "title": "P2P Network #1: Napster",
+      "topics": []
+    },
+    {
+      "title": "Napster Technology",
+      "topics": []
+    },
+    {
+      "title": "P2P Network #2: Gnutella",
+      "topics": []
+    },
+    {
+      "title": "Gnutella: Pros and Cons",
+      "topics": []
+    },
+    {
+      "title": "P2P Network #3: KaZaA",
+      "topics": []
+    },
+    {
+      "title": "Finally, BitTorrent",
+      "topics": [],
+      "important": "🔥 BitTorrent 基本架构"
+    },
+    {
+      "title": "Property #1: Simultaneous Downloading",
+      "topics": [],
+      "important": "🔥 Simultaneous downloading——P2P 核心优势"
+    },
+    {
+      "title": "Example",
+      "topics": []
+    },
+    {
+      "title": "Example",
+      "topics": []
+    },
+    {
+      "title": "Example",
+      "topics": []
+    },
+    {
+      "title": "Example",
+      "topics": []
+    },
+    {
+      "title": "Example",
+      "topics": []
+    },
+    {
+      "title": "Example",
+      "topics": []
+    },
+    {
+      "title": "Property #2: Anti Free-Riding",
+      "topics": [],
+      "important": "🔥 Anti free-riding——tit-for-tat"
+    },
+    {
+      "title": "File distribution: client-server vs P2P",
+      "topics": [],
+      "important": "🔥🔥🔥 File distribution: CS vs P2P——mid Q7 直接"
+    },
+    {
+      "title": "File distribution time: client-server",
+      "topics": [],
+      "important": "🔥🔥🔥 CS time = max(NF/U_s, F/d_min)——必背"
+    },
+    {
+      "title": "File distribution time: P2P",
+      "topics": [],
+      "important": "🔥🔥🔥 P2P time = max(F/U_s, F/d_min, NF/(U_s + ΣU_i))——必背"
+    },
+    {
+      "title": "Client-server vs. P2P: example",
+      "topics": [],
+      "important": "🔥 Numerical example——CS 大 N 输给 P2P"
+    }
+  ],
+  "lec10-transport": [
+    {
+      "title": "Distribute Hash Table (DHT)",
+      "topics": [
+        "transport",
+        "UDP",
+        "TCP intro",
+        "multiplexing",
+        "demultiplexing",
+        "port"
+      ]
+    },
+    {
+      "title": "What is DHT?",
+      "topics": [],
+      "important": "DHT 概念"
+    },
+    {
+      "title": "What is DHT?",
+      "topics": []
+    },
+    {
+      "title": "A Toy Example",
+      "topics": []
+    },
+    {
+      "title": "Consistent Hashing",
+      "topics": []
+    },
+    {
+      "title": "Basic Idea",
+      "topics": []
+    },
+    {
+      "title": "Basic Components of DHT",
+      "topics": []
+    },
+    {
+      "title": "Comments",
+      "topics": []
+    },
+    {
+      "title": "CSEE4119: Computer Networks",
+      "topics": []
+    },
+    {
+      "title": "L7   Application   HTTP            FTP          DASH     DNS",
+      "topics": []
+    },
+    {
+      "title": "Transport layer: roadmap",
+      "topics": []
+    },
+    {
+      "title": "Transport services and protocols",
+      "topics": [],
+      "important": "🔥 Transport services 概览"
+    },
+    {
+      "title": "Transport vs. network layer services and protocols",
+      "topics": [],
+      "important": "🔥 Transport vs Network layer——端到端 vs 跳到跳"
+    },
+    {
+      "title": "Transport vs. network layer services and protocols",
+      "topics": []
+    },
+    {
+      "title": "Transport Layer Actions",
+      "topics": []
+    },
+    {
+      "title": "Transport Layer Actions",
+      "topics": []
+    },
+    {
+      "title": "Two principal Internet transport protocols",
+      "topics": [],
+      "important": "🔥🔥 TCP/UDP 双协议"
+    },
+    {
+      "title": "Transport layer: roadmap",
+      "topics": []
+    },
+    {
+      "title": "Multiplexing/demultiplexing",
+      "topics": [],
+      "important": "🔥🔥 Multiplexing/Demultiplexing——核心概念"
+    },
+    {
+      "title": "HTTP server",
+      "topics": []
+    },
+    {
+      "title": "Q: how did transport layer know to deliver message to Firefox",
+      "topics": []
+    },
+    {
+      "title": "?",
+      "topics": []
+    },
+    {
+      "title": "application",
+      "topics": []
+    },
+    {
+      "title": "Demultiplexing",
+      "topics": []
+    },
+    {
+      "title": "(无标题)",
+      "topics": []
+    },
+    {
+      "title": "(无标题)",
+      "topics": []
+    },
+    {
+      "title": "multiplexing",
+      "topics": []
+    },
+    {
+      "title": "application",
+      "topics": []
+    },
+    {
+      "title": "Multiplexing",
+      "topics": []
+    },
+    {
+      "title": "How demultiplexing works",
+      "topics": [],
+      "important": "🔥 Demux 流程——按 (src/dst IP, port) 分发"
+    },
+    {
+      "title": "Connectionless demultiplexing",
+      "topics": [],
+      "important": "🔥🔥 Connectionless (UDP) demux——dst port 即可"
+    },
+    {
+      "title": "Connectionless demultiplexing: an example",
+      "topics": []
+    },
+    {
+      "title": "Connection-oriented demultiplexing",
+      "topics": [],
+      "important": "🔥🔥 Connection-oriented (TCP) demux——按 4-tuple"
+    },
+    {
+      "title": "Connection-oriented demultiplexing: example",
+      "topics": []
+    },
+    {
+      "title": "Summary",
+      "topics": [],
+      "important": "🔥 Mux/Demux 总结"
+    },
+    {
+      "title": "Quiz",
+      "topics": []
+    }
+  ],
+  "lec11-reliability": [
+    {
+      "title": "Quiz",
+      "topics": [
+        "RDT",
+        "Stop-and-Wait",
+        "GBN",
+        "Selective Repeat",
+        "sequence number",
+        "ACK",
+        "checksum",
+        "sliding window"
+      ]
+    },
+    {
+      "title": "Transport layer: roadmap",
+      "topics": []
+    },
+    {
+      "title": "UDP: User Datagram Protocol",
+      "topics": [],
+      "important": "UDP 协议结构"
+    },
+    {
+      "title": "UDP: User Datagram Protocol",
+      "topics": []
+    },
+    {
+      "title": "UDP: User Datagram Protocol [RFC 768]",
+      "topics": []
+    },
+    {
+      "title": "UDP: Transport Layer Actions",
+      "topics": [],
+      "important": "🔥 UDP transport actions——封装/解封"
+    },
+    {
+      "title": "UDP: Transport Layer Actions",
+      "topics": []
+    },
+    {
+      "title": "UDP: Transport Layer Actions",
+      "topics": []
+    },
+    {
+      "title": "UDP segment header",
+      "topics": [],
+      "important": "🔥 UDP segment header——8 字节"
+    },
+    {
+      "title": "UDP checksum",
+      "topics": [],
+      "important": "🔥 UDP checksum——错检"
+    },
+    {
+      "title": "Internet checksum",
+      "topics": [],
+      "important": "🔥 Internet checksum——16 bit 字累加"
+    },
+    {
+      "title": "Internet checksum: an example",
+      "topics": [],
+      "important": "🔥 Checksum 例——具体计算"
+    },
+    {
+      "title": "Internet checksum: weak protection!",
+      "topics": []
+    },
+    {
+      "title": "Summary: UDP",
+      "topics": []
+    },
+    {
+      "title": "Transport layer: roadmap",
+      "topics": []
+    },
+    {
+      "title": "Principles of reliable data transfer",
+      "topics": [],
+      "important": "🔥🔥 RDT 原理——5 个机制"
+    },
+    {
+      "title": "Principles of reliable data transfer",
+      "topics": [],
+      "important": "RDT 原理续"
+    },
+    {
+      "title": "Principles of reliable data transfer",
+      "topics": []
+    },
+    {
+      "title": "Principles of reliable data transfer",
+      "topics": []
+    },
+    {
+      "title": "Reliable data transfer protocol (rdt): interfaces",
+      "topics": []
+    },
+    {
+      "title": "Reliable data transfer: getting started",
+      "topics": []
+    },
+    {
+      "title": "What can go wrong in a data transmission?",
+      "topics": [],
+      "important": "🔥 数据传输可能出错的 5 种情况"
+    },
+    {
+      "title": "rdt1.0: reliable transfer over a reliable channel",
+      "topics": [],
+      "important": "🔥 rdt 1.0——完美信道"
+    },
+    {
+      "title": "rdt2.0: channel with bit errors",
+      "topics": [],
+      "important": "🔥 rdt 2.0——加 ACK + checksum 处理 bit error"
+    },
+    {
+      "title": "rdt2.0: channel with bit errors",
+      "topics": []
+    },
+    {
+      "title": "rdt2.0: FSM specifications",
+      "topics": [],
+      "important": "🔥 rdt 2.0 FSM——sender + receiver"
+    },
+    {
+      "title": "rdt2.0: FSM specification",
+      "topics": []
+    },
+    {
+      "title": "rdt2.0: operation with no errors",
+      "topics": []
+    },
+    {
+      "title": "rdt2.0: corrupted packet scenario",
+      "topics": []
+    },
+    {
+      "title": "rdt2.0 has a fatal flaw!",
+      "topics": [],
+      "important": "🔥 rdt 2.0 fatal flaw——ACK 损坏怎么办？"
+    },
+    {
+      "title": "rdt2.1: sender, handling garbled ACK/NAKs",
+      "topics": [],
+      "important": "🔥 rdt 2.1——加 seq #"
+    },
+    {
+      "title": "rdt2.1: receiver, handling garbled ACK/NAKs",
+      "topics": []
+    },
+    {
+      "title": "rdt2.1: discussion",
+      "topics": []
+    },
+    {
+      "title": "rdt2.2: a NAK-free protocol",
+      "topics": [],
+      "important": "🔥 rdt 2.2——NAK-free 协议"
+    },
+    {
+      "title": "rdt2.2: sender, receiver fragments",
+      "topics": []
+    },
+    {
+      "title": "rdt3.0: channels with errors and loss",
+      "topics": [],
+      "important": "🔥 rdt 3.0——加 timer 处理丢失"
+    },
+    {
+      "title": "rdt3.0: channels with errors and loss",
+      "topics": []
+    },
+    {
+      "title": "rdt3.0 sender",
+      "topics": []
+    },
+    {
+      "title": "rdt3.0 sender",
+      "topics": []
+    },
+    {
+      "title": "rdt3.0 in action",
+      "topics": [],
+      "important": "🔥 rdt 3.0 in action——timeline"
+    },
+    {
+      "title": "rdt3.0 in action",
+      "topics": []
+    },
+    {
+      "title": "Performance of rdt3.0 (stop-and-wait)",
+      "topics": [],
+      "important": "🔥🔥🔥 Performance of stop-and-wait——mid Q5 公式来源"
+    },
+    {
+      "title": "rdt3.0: stop-and-wait operation",
+      "topics": [],
+      "important": "🔥🔥 Stop-and-wait operation——U 公式推导"
+    },
+    {
+      "title": "rdt3.0: stop-and-wait operation",
+      "topics": []
+    },
+    {
+      "title": "rdt3.0: pipelined protocols operation",
+      "topics": [],
+      "important": "🔥 Pipelined protocols——overcome stop-and-wait limit"
+    },
+    {
+      "title": "Pipelining: increased utilization",
+      "topics": [],
+      "important": "🔥🔥 Pipelining 提升 U——填满管道"
+    },
+    {
+      "title": "Go-Back-N: sender",
+      "topics": [],
+      "important": "🔥🔥🔥 GBN sender——mid Q3 直接"
+    },
+    {
+      "title": "Go-Back-N: receiver",
+      "topics": [],
+      "important": "🔥🔥🔥 GBN receiver——累积 ACK"
+    },
+    {
+      "title": "Go-Back-N in action",
+      "topics": [],
+      "important": "🔥🔥 GBN in action——timeline"
+    }
+  ],
+  "lec12-tcp": [
+    {
+      "title": "Selective repeat: the approach",
+      "topics": [
+        "TCP",
+        "3WHS",
+        "seq/ACK",
+        "flow control",
+        "rwnd",
+        "timeout",
+        "fast retransmit",
+        "close"
+      ],
+      "important": "🔥🔥🔥 Selective Repeat 思想——mid Q3 直接"
+    },
+    {
+      "title": "Selective repeat: sender, receiver windows",
+      "topics": [],
+      "important": "🔥🔥 SR sender/receiver windows——窗口大小约束"
+    },
+    {
+      "title": "Selective repeat: sender and receiver",
+      "topics": [],
+      "important": "🔥🔥 SR sender + receiver 详细"
+    },
+    {
+      "title": "Selective Repeat in action",
+      "topics": [],
+      "important": "🔥 SR in action——timeline"
+    },
+    {
+      "title": "Selective repeat:",
+      "topics": [],
+      "important": "🔥 SR 序号歧义——窗口 ≤ N/2"
+    },
+    {
+      "title": "Selective repeat:",
+      "topics": []
+    },
+    {
+      "title": "Transport layer: roadmap",
+      "topics": []
+    },
+    {
+      "title": "TCP: overview RFCs: 793,1122, 2018, 5681, 7323",
+      "topics": [],
+      "important": "🔥 TCP overview——面向连接 + 可靠 + 流控 + 拥控"
+    },
+    {
+      "title": "TCP segment structure",
+      "topics": [],
+      "important": "🔥🔥 TCP segment structure——必背字段"
+    },
+    {
+      "title": "TCP sequence numbers, ACKs",
+      "topics": [],
+      "important": "🔥🔥 TCP seq# 和 ACK#——首字节序号语义"
+    },
+    {
+      "title": "TCP sequence numbers, ACKs",
+      "topics": [],
+      "important": "TCP seq# 例"
+    },
+    {
+      "title": "TCP round trip time, timeout",
+      "topics": [],
+      "important": "🔥 TCP RTT estimation——EWMA α=0.125"
+    },
+    {
+      "title": "TCP round trip time, timeout",
+      "topics": [],
+      "important": "🔥 TCP timeout 计算——EstRTT + 4·DevRTT"
+    },
+    {
+      "title": "TCP round trip time, timeout",
+      "topics": []
+    },
+    {
+      "title": "TCP Sender (simplified)",
+      "topics": [],
+      "important": "🔥 TCP Sender 行为简化版"
+    },
+    {
+      "title": "TCP Receiver: ACK generation [RFC 5681]",
+      "topics": [],
+      "important": "🔥 TCP Receiver ACK 生成规则"
+    },
+    {
+      "title": "TCP: retransmission scenarios",
+      "topics": [],
+      "important": "🔥 TCP retransmission 场景"
+    },
+    {
+      "title": "TCP: retransmission scenarios",
+      "topics": []
+    },
+    {
+      "title": "TCP fast retransmit",
+      "topics": [],
+      "important": "🔥🔥 TCP fast retransmit——3 dup ACK"
+    },
+    {
+      "title": "Transport layer: roadmap",
+      "topics": []
+    },
+    {
+      "title": "TCP flow control",
+      "topics": [],
+      "important": "🔥🔥🔥 TCP flow control——mid Q6 直接（rwnd）"
+    },
+    {
+      "title": "TCP flow control",
+      "topics": [],
+      "important": "🔥🔥 Flow control 细节"
+    },
+    {
+      "title": "TCP flow control",
+      "topics": [],
+      "important": "🔥🔥 Flow control 续"
+    },
+    {
+      "title": "TCP flow control",
+      "topics": [],
+      "important": "🔥🔥 Flow control 总结"
+    },
+    {
+      "title": "TCP flow control",
+      "topics": []
+    },
+    {
+      "title": "TCP flow control",
+      "topics": []
+    },
+    {
+      "title": "QUIZ: UDP vs TCP",
+      "topics": []
+    }
+  ],
+  "lec13-congestion": [
+    {
+      "title": "QUIZ: UDP vs TCP",
+      "topics": [
+        "congestion control",
+        "slow start",
+        "AIMD",
+        "ssthresh",
+        "fairness",
+        "intro"
+      ]
+    },
+    {
+      "title": "TCP connection management",
+      "topics": [],
+      "important": "🔥 TCP connection management"
+    },
+    {
+      "title": "Agreeing to establish a connection",
+      "topics": []
+    },
+    {
+      "title": "2-way handshake scenarios",
+      "topics": [],
+      "important": "🔥 2-way handshake 为什么不够"
+    },
+    {
+      "title": "2-way handshake scenarios",
+      "topics": []
+    },
+    {
+      "title": "TCP 3-way handshake",
+      "topics": [],
+      "important": "🔥🔥 TCP 3-way handshake——必背"
+    },
+    {
+      "title": "Step 1: A’s initial SYN packet",
+      "topics": [],
+      "important": "3WHS Step 1: SYN"
+    },
+    {
+      "title": "Step 2: B’s SYN-ACK packet",
+      "topics": [],
+      "important": "3WHS Step 2: SYN-ACK"
+    },
+    {
+      "title": "Step 3: A’s ACK of the SYN-ACK",
+      "topics": [],
+      "important": "3WHS Step 3: ACK"
+    },
+    {
+      "title": "A human 3-way handshake protocol",
+      "topics": []
+    },
+    {
+      "title": "Closing a TCP connection",
+      "topics": [],
+      "important": "🔥 TCP 4-way close + TIME_WAIT"
+    },
+    {
+      "title": "What does TCP do for reliable data transfer?",
+      "topics": []
+    },
+    {
+      "title": "What can go wrong in a data transmission?",
+      "topics": []
+    },
+    {
+      "title": "Transport layer: roadmap",
+      "topics": []
+    },
+    {
+      "title": "Principles of congestion control",
+      "topics": [],
+      "important": "🔥 Principles of congestion control"
+    },
+    {
+      "title": "Why Does Congestion Happen?",
+      "topics": []
+    },
+    {
+      "title": "Causes/costs of congestion: scenario 1",
+      "topics": [],
+      "important": "🔥 Congestion scenario 1——无 loss"
+    },
+    {
+      "title": "Causes/costs of congestion: scenario 1",
+      "topics": []
+    },
+    {
+      "title": "Causes/costs of congestion: scenario 1",
+      "topics": []
+    },
+    {
+      "title": "Causes/costs of congestion: scenario 1",
+      "topics": []
+    },
+    {
+      "title": "Causes/costs of congestion: scenario 2",
+      "topics": [],
+      "important": "🔥 Congestion scenario 2——有 loss"
+    },
+    {
+      "title": "Causes/costs of congestion: scenario 2",
+      "topics": []
+    },
+    {
+      "title": "Causes/costs of congestion: scenario 3",
+      "topics": [],
+      "important": "🔥 Congestion scenario 3——多跳"
+    },
+    {
+      "title": "Causes/costs of congestion: scenario 3",
+      "topics": []
+    },
+    {
+      "title": "Causes/costs of congestion: insights",
+      "topics": [],
+      "important": "🔥🔥 Congestion insights——3 个结论"
+    },
+    {
+      "title": "Approaches towards congestion control",
+      "topics": [],
+      "important": "🔥 End-host vs Network-assisted CC"
+    },
+    {
+      "title": "Approaches towards congestion control",
+      "topics": []
+    },
+    {
+      "title": "Transport layer: roadmap",
+      "topics": []
+    },
+    {
+      "title": "How Does the Sender Know?",
+      "topics": []
+    },
+    {
+      "title": "How Should the Sender Respond?",
+      "topics": []
+    },
+    {
+      "title": "All These Windows…",
+      "topics": []
+    },
+    {
+      "title": "Estimating Bandwidth with ‘Slow Start’",
+      "topics": [],
+      "important": "🔥🔥 Slow Start——指数增到 ssthresh"
+    },
+    {
+      "title": "Slow Start Example",
+      "topics": [],
+      "important": "🔥🔥 Slow Start example——timeline"
+    },
+    {
+      "title": "Eventually will hit the capacity…",
+      "topics": []
+    },
+    {
+      "title": "How to adapt congestion window size?",
+      "topics": [],
+      "important": "🔥🔥 How to adapt cwnd——四种增减策略"
+    },
+    {
+      "title": "TCP congestion control: AIMD",
+      "topics": [],
+      "important": "🔥🔥🔥 TCP AIMD——必考核心"
+    },
+    {
+      "title": "TCP AIMD: more",
+      "topics": [],
+      "important": "🔥 TCP AIMD more details"
+    },
+    {
+      "title": "QUIZ: File distribution time",
+      "topics": []
+    }
+  ],
+  "midterm-preview": [
+    {
+      "title": "CSEE4119: Computer Networks",
+      "topics": [
+        "midterm review",
+        "example questions"
+      ],
+      "important": "Midterm review 封面"
+    },
+    {
+      "title": "Recap",
+      "topics": [],
+      "important": "🔥 Recap content — performance metrics"
+    },
+    {
+      "title": "Recap",
+      "topics": [],
+      "important": "🔥 Recap content — application"
+    },
+    {
+      "title": "Recap",
+      "topics": [],
+      "important": "🔥 Recap content — transport"
+    },
+    {
+      "title": "Example Question",
+      "topics": []
+    },
+    {
+      "title": "Example Question",
+      "topics": []
+    },
+    {
+      "title": "Example Question",
+      "topics": []
+    },
+    {
+      "title": "Example Question",
+      "topics": []
+    },
+    {
+      "title": "Example Question",
+      "topics": []
+    }
+  ],
   "lec14": [
     {
       "title": "QUIZ — 文件分发时间 (Client-Server vs P2P) ⭐",

@@ -1,0 +1,492 @@
+Distribute Hash Table (DHT)
+
+
+
+                              Application Layer: 2-22
+What is DHT?
+§ All about locating content
+§ How to speed up? à Assign particular nodes to hold particular
+  content
+§ A hash table stores (key, value/object) pairs
+  • Fast lookup: O(1)                              Key               Value
+  • Widely used in content distribution   www.google.com   Page content
+    networks                              www.cnn.com      Page content
+                                          ….               ….
+
+
+
+     What if the table is too large to be stored in a single computer?
+                                                                             Transport Layer: 3-23
+What is DHT?
+§ Distributing a hash table to a network of nodes
+  • Each node takes care of a subset of the table
+
+
+
+
+§ A virtual hash table
+  • Input: key
+  • Output: the node that stores the key
+                                                    Transport Layer: 3-24
+A Toy Example
+§ Consider 3 nodes, keys are integers
+§ Hash function: hash(key) = key % 3
+                                               Key     Value
+                                               0       Page_0
+                                               3       Page_3
+              Key   Value              0
+              1     Page_1
+                                                Key     Value
+              4     Page_4   1                     2    Page_2
+                                                   5    Page_5
+                                           2
+       Problem: if one node leaves/joins, all items need to be rehashed
+                                                                          Transport Layer: 3-25
+Consistent Hashing
+§ A special type of hashing: when the hash table is resized, the number
+  of keys that need to be remapped is bounded
+
+§ Minimize the number of objects/items that need to be moved when
+  a node leaves/joins the network
+
+§ All DHTs implement consistent hashing
+
+
+
+
+                                                                  Transport Layer: 3-26
+Basic Idea
+§ Assume the hash function’s output is a m-bit binary string à 2m
+  circular key space
+                                                     2m - 1  0
+§ Hash both node ID and the key into                            1
+                                                                  .
+  the key space                                                     .
+                                                                      .
+§ A key is stored at the node
+  that appears next on the
+  circle in clockwise order
+
+
+
+
+                                                                    Transport Layer: 3-27
+Basic Components of DHT
+§Overlapping key and node identifier space
+  • Nodes and objects are all represented by m-bit binary string
+
+§Building routing table
+  • Next hops
+  • Distance function (ID distance != network distance)
+  • Handle node joining and leaving
+
+§Lookup and store interface
+                                                                   Transport Layer: 3-28
+Comments
+§ A very popular research topic in networking and systems
+  • Representative systems: Chord, CAN, Tapestry, Pastry…
+§ Used in practical systems such as BitTorrent, emule, blockchains,
+  distributed file storage systems
+§ Nice system properties
+  • Scalability, low latency, load balancing, dynamic configuration, resilience
+
+
+§ Not really used by Google searches or Facebook newsfeed, why?
+  • Hard to handle intersection queries, sophisticated ranking, aggregation
+  • Big companies prioritize centralized control with predictable latency and fast
+    recovery, but they use DHT-like techniques internally
+                                                                                  Transport Layer: 3-29
+CSEE4119: Computer Networks
+                 Transport Layer
+                            Xia Zhou
+                 Department of Computer Science
+                       Columbia University
+                           Slides credited to J.F Kurose and K.W. Ross and their textbook “Computer Networking: A Top-Down Approach”
+L7   Application   HTTP            FTP          DASH     DNS
+
+
+
+L4   Transport               TCP                  UDP
+
+
+L3    Network                            IP
+
+
+L2     Data link          Ethernet            802.11     PPP
+
+
+L1     Physical    optical         copper        radio    PSTN
+
+
+
+
+                                                                 Transport Layer: 3-2
+Transport layer: roadmap
+§ Transport-layer services
+§ Multiplexing and demultiplexing              Basics and UDP
+§ Connectionless transport: UDP
+§ Principles of reliable data transfer
+                                               Reliability
+§ Connection-oriented transport: TCP
+§ Principles of congestion control
+                                               Congestion Control
+§ TCP congestion control
+§ Evolution of transport-layer functionality
+
+                                                             Transport Layer: 3-3
+Transport services and protocols
+                                                           application
+                                                            transport
+
+§ provide logical communication between                      network
+                                                   mobile network
+                                                            data link
+                                                             physical
+  application processes running on                                           national or global ISP
+
+  different hosts                                                        lo g
+                                                                           i ca
+                                                                            l en
+§ transport protocols in end systems:                                           d -e
+  • sender: breaks application messages into                        local or
+                                                                                   nd
+    segments, passes to network layer                               regional ISP   tra
+                                                                                       n sp
+  • receiver: reassembles segments into        home network                             o rt
+                                                                                        content
+    messages, passes to application layer                                               provider
+                                                                                        network          datacenter
+                                                                                              applicationnetwork
+
+§ two transport protocols available to
+                                                                                               transport
+                                                                                                network
+                                                                                               data link
+
+  Internet applications                                                                         physical
+
+
+                                               enterprise
+  • TCP, UDP                                        network
+
+
+                                                                                                  Transport Layer: 3-4
+Transport vs. network layer services and protocols
+                                household analogy:
+                            12 kids in Ann’s house sending
+                              letters to 12 kids in Bill’s
+                              house:
+                            § hosts = houses
+                            § processes = kids
+                            § app messages = letters in
+                              envelopes
+                            § transport protocol = Ann and Bill
+                              who demux to in-house siblings
+                            § network-layer protocol = postal
+                              service
+
+                                                           Transport Layer: 3-5
+Transport vs. network layer services and protocols
+                                       household analogy:
+§transport layer:                  12 kids in Ann’s house sending
+ communication between               letters to 12 kids in Bill’s
+ processes                           house:
+  • relies on, enhances, network   § hosts = houses
+    layer services                 § processes = kids
+                                   § app messages = letters in
+                                     envelopes
+§network layer:                    § transport protocol = Ann and Bill
+ communication between               who demux to in-house siblings
+ hosts                             § network-layer protocol = postal
+                                     service
+
+                                                                  Transport Layer: 3-6
+Transport Layer Actions
+
+                   Sender:
+     application    § is passed an application-    application
+                                                      app. msg
+                      layer message
+      transport     § determines segment          TThhtransport
+                                                         app. msg
+                      header fields values
+    network (IP)    § creates segment             network (IP)
+
+         link       § passes segment to IP              link
+
+      physical                                       physical
+
+
+
+
+                                                                    Transport Layer: 3-7
+Transport Layer Actions
+
+                       Receiver:
+     application        § receives segment from IP     application
+                        § checks header values
+         transport
+            app. msg    § extracts application-layer    transport
+                          message
+    network (IP)                                       network (IP)
+                        § demultiplexes message up
+            link          to application via socket        link
+
+         physical                                        physical
+    Th    app. msg
+
+
+
+
+                                                                      Transport Layer: 3-8
+Two principal Internet transport protocols
+                                                          application
+                                                           transport
+
+§ TCP: Transmission Control Protocol                        network
+                                                  mobile network
+                                                           data link
+                                                            physical
+  • reliable, in-order delivery                                             national or global ISP
+
+
+  • congestion control                                                  lo g
+                                                                          i ca
+  • flow control                                                           l en
+                                                                               d -e
+  • connection setup                                                              nd
+                                                                   local or
+§ UDP: User Datagram Protocol                                      regional ISP   tra
+                                                                                      n sp
+  • unreliable, unordered delivery            home network                             o rt
+                                                                                       content
+                                                                                       provider
+  • no-frills extension of “best-effort” IP                                            network          datacenter
+                                                                                             applicationnetwork
+
+§ services not available:                                                                     transport
+                                                                                               network
+                                                                                              data link
+
+  • delay guarantees                                                                           physical
+
+
+                                              enterprise
+  • bandwidth guarantees                           network
+
+
+                                                                                                 Transport Layer: 3-9
+Transport layer: roadmap
+§ Transport-layer services
+§ Multiplexing and demultiplexing
+§ Connectionless transport: UDP
+§ Principles of reliable data transfer
+§ Connection-oriented transport: TCP
+§ Principles of congestion control
+§ TCP congestion control
+§ Evolution of transport-layer functionality
+
+                                               Transport Layer: 3-10
+Multiplexing/demultiplexing
+  multiplexing as sender:                            demultiplexing as receiver:
+  handle data from multiple                          use header info to deliver
+  sockets, add transport header                      received segments to correct
+  (later used for demultiplexing)                    socket
+
+                                    application
+
+                    application     P1          P2        application
+                                                                            socket
+                       P3            transport                P4
+                                                                            process
+                    transport        network               transport
+                     network             link              network
+                       link          physical                link
+                     physical                              physical
+
+
+
+                                                                              Transport Layer: 3-11
+                          HTTP server
+   client
+ application                                  application
+                                   HTTP msg
+                             transport
+                              Ht HTTP msg
+
+  transport                   network
+                            Hn H t HTTP msg   transport
+Hn Ht
+   network
+      HTTP msg                    link        network
+     link                     physical           link
+  physical                                    physical
+
+
+                 Hn Ht HTTP msg
+
+
+                                                            Transport Layer: 3-12
+ Q: how did transport layer know to deliver message to Firefox
+ browser process rather then Netflix process or Skype process?
+
+ client
+application                                  application
+                          HTTP msg
+           HTTP msg    transport
+                        Ht HTTP msg
+
+transport              network               transport
+network                  link                 network
+   link                physical                 link
+physical                                      physical
+
+
+
+
+                                                           Transport Layer: 3-13
+       ?
+
+
+de-multiplexing
+                  application
+
+
+       ?          transport
+
+
+
+
+de-multiplexing
+Demultiplexing
+multiplexing
+               application
+
+
+               transport
+
+
+
+
+multiplexing
+Multiplexing
+How demultiplexing works
+§ host receives IP datagrams                    32 bits
+  • each datagram has source IP       source port #   dest port #
+    address, destination IP address
+  • each datagram carries one             other header fields
+    transport-layer segment
+  • each segment has source,                  application
+    destination port number                      data
+§ host uses IP addresses & port                (payload)
+
+  numbers to direct segment to
+  appropriate socket                   TCP/UDP segment format
+
+
+                                                                    Transport Layer: 3-22
+Connectionless demultiplexing
+Recall:                            when receiving host receives
+§ when creating socket, must       UDP segment:
+                                     • checks destination port # in
+  specify host-local port #:           segment
+DatagramSocket mySocket1             • directs UDP segment to
+ = new DatagramSocket(12534);
+                                       socket with that port #
+§ when creating datagram to
+  send into UDP socket, must
+                                IP/UDP datagrams with same dest.
+  specify
+                                   port #, but different source IP
+   • destination IP address        addresses and/or source port
+   • destination port #          numbers will be directed to same
+                                      socket at receiving host
+                                                              Transport Layer: 3-23
+Connectionless demultiplexing: an example
+                                 mySocket =
+                                  socket(AF_INET,SOCK_DGRAM)
+                                 mySocket.bind(myaddr,6428);
+ mySocket =                                                                       mySocket =
+  socket(AF_INET,SOCK_DGRAM)                                                       socket(AF_INET,SOCK_DGRAM)
+ mySocket.bind(myaddr,9157);                                                      mySocket.bind(myaddr,5775);
+                                                 application
+            application                                                                     application
+                                                       P1
+               P3                                                                              P4
+                                                     transport
+            transport                                                                       transport
+                                                     network
+            network                                    link                                 network
+               link                                  physical                                  link
+            physical                                                                        physical
+
+                                      B                                         D
+                                 source port: 6428                         source port: ?
+                                 dest port: 9157                             dest port: ?
+
+                          A                                            C
+             source port: 9157                                   source port: ?
+               dest port: 6428                                   dest port: ?
+Connection-oriented demultiplexing
+§ TCP socket identified by   § server may support many
+  4-tuple:                     simultaneous TCP sockets:
+  • source IP address         • each socket identified by its
+  • source port number          own 4-tuple
+  • dest IP address           • each socket associated with
+  • dest port number            a different connecting client
+§ demux: receiver uses all
+  four values (4-tuple) to
+  direct segment to
+  appropriate socket
+                                                        Transport Layer: 3-25
+Connection-oriented demultiplexing: example
+                                                          application
+                   application                       P4                                      application
+                                                             P5         P6
+                      P1                                                                   P2           P3
+                                                          transport
+                   transport                                                                 transport
+                                                          network
+                   network                                  link                              network
+                      link                                physical                               link
+                   physical                                              server: IP             physical
+                                                                         address B
+
+
+        host: IP              source IP,port: B,80                                                            host: IP
+       address A              dest IP,port: A,9157                           source IP,port: C,5775          address C
+                                                                             dest IP,port: B,80
+                               source IP,port: A,9157
+                                   dest IP, port: B,80
+                                                                             source IP,port: C,9157
+                                                                             dest IP,port: B,80
+Three segments, all destined to IP address: B,
+dest port: 80 are demultiplexed to different sockets
+                                                                                                                         Transport Layer: 3-26
+Summary
+§ Multiplexing, demultiplexing: based on segment, datagram
+  header field values
+§ UDP: demultiplexing using destination port number (only)
+§ TCP: demultiplexing using 4-tuple: source and destination IP
+  addresses, and port numbers
+§ Multiplexing/demultiplexing happen at all layers
+
+
+
+                                                         Transport Layer: 3-27
+Quiz
+
+Your host are sending a message of 10 packets of 0.012Mb each to a
+server. See the topology and link bandwidth numbers as below:
+                  6Mbps                6Mbps
+
+
+We assume a negligible latency or propagation delay. The router uses
+store-and-forward transmission. How long would it take for the server
+to receive all 10 packets?
+
+
+
+
+                                                                 Transport Layer: 3-28
+
