@@ -1,4 +1,4 @@
-<!-- CHEATSHEET_VERSION: 24 -->
+<!-- CHEATSHEET_VERSION: 25 -->
 <!--
   COMS 4119 FINAL CHEAT SHEET
   4 sheets organized by course chapter (Kurose-Ross order):
@@ -26,14 +26,14 @@
 <section data-key="layering-encapsulation">
 <h2>Layering &amp; Encapsulation</h2>
 <ul>
-<li><b>Application</b>: <b>Message</b> — HTTP / HTTPS · DNS · SMTP / IMAP / POP3 · FTP · SSH · Telnet · <b>BGP</b> (over TCP) · BitTorrent · DHCP · RTP · SNMP · QUIC (= HTTP/3, UDP)</li>
-<li><b>Transport</b>: <b>Segment</b> (TCP &amp; UDP) — port addressing. TCP = reliable, ordered. UDP = fast, connectionless, unreliable.</li>
-<li><b>Network</b>: <b>(IP) Datagram</b> — IP address. Runs <b>ICMP</b> (ping/traceroute), <b>OSPF</b> (IP protocol 89), IGMP directly over IP.</li>
-<li><b>Data Link</b>: <b>Frame</b> — MAC address (Ethernet / 802.11). Runs <b>ARP</b> (Ethertype 0x0806), STP, LLDP directly over the link.</li>
-<li><b>Physical</b>: <b>Bits</b> — signal on wire / air</li>
+<li><b>Application</b> — Message. HTTP · DNS · SMTP / IMAP · FTP · DHCP · RTP · <b>BGP</b> · BitTorrent</li>
+<li><b>Transport</b> — Segment (TCP &amp; UDP). TCP: reliable, ordered. UDP: fast, no conn, no reliability.</li>
+<li><b>Network</b> — (IP) Datagram. Direct-over-IP: <b>ICMP</b>, <b>OSPF</b>.</li>
+<li><b>Data Link</b> — Frame. MAC addr (Ethernet / 802.11). Direct-over-link: <b>ARP</b>.</li>
+<li><b>Physical</b> — Bits</li>
 </ul>
-<p class="mini">Each layer adds its own header (encapsulation). Demux upward: Ethertype → IP protocol → port → app.</p>
-<p class="mini">Common gotchas: SMTP / IMAP / POP3 all run on TCP. DNS defaults to UDP, falls back to TCP for large responses. OSPF runs over raw IP; BGP runs over TCP.</p>
+<p class="mini">Encapsulation: lower layer wraps upper PDU. Demux up: Ethertype → IP proto → port → app.</p>
+<p class="mini">Transport map: HTTP / SMTP / IMAP / FTP / BGP / BitTorrent → TCP · DNS (default) / DHCP / RTP → UDP · OSPF / ICMP → raw IP · ARP → link</p>
 <div class="my-note" data-note-key="qa:final-preview:5:0"><span class="my-note-tag">💬</span> <b>Q:</b> ecn怎么工作<br><b>A:</b> ECN（Explicit Congestion Notification）是一种网络拥塞控制机制，旨在通过提前通知端点来避免数据包丢失。 **工作原理**： 1. **标记**：当网络设备（如路由器）检测到拥塞时，它不会丢弃数据包，而是将数据包的头部中的ECN字段标记为“标记”状态（通常是“ECN-Echo”）。 2. **反馈**：接收方在收到带有ECN标记的数据包后，会在其返回的ACK中设置ECN-Echo标志，告知发送方网络出现了…</div></section>
 
 <section data-key="end-to-end-principle">
@@ -293,12 +293,8 @@
 <p class="mini"><b>Rule</b>: data-loss heavy → SR; ACK-loss heavy → GBN. <span class="red">Always write the reason</span> (otherwise lose marks). SR window ≤ N/2 (seq space).</p>
 <div class="my-note" data-note-key="mid:2:takeaway"><span class="my-note-tag">📝</span> <b>mid Q3 要诀:</b> 判断哪个协议看『哪边在丢』。Data 丢 → SR；ACK 丢 → GBN。**永远要写出原因**，老师扣的就是『没解释』的分。</div></section>
 
-<section data-key="tcp-reliable-mechanisms">
-<h2>TCP Reliable Mechanisms</h2>
-<ul>
-<li><b>Timeout retransmit</b>: TimeoutInterval = EstRTT + 4·DevRTT</li>
-<li>EstRTT = (1−α)·EstRTT + α·SampleRTT, α=0.125</li>
-<li>DevRTT = (1−β)·DevRTT + β·|SampleRTT−EstRTT|, β=0.25</li>
+<section data-key="tcp-reliable-mechanisms" data-wired="1" contenteditable="true" spellcheck="false">
+<h2>TCP Reliable Mechanisms</h2><ul>
 <li><b>Fast retransmit</b>: 3 dup ACKs → immediate resend</li>
 <li>Exponential backoff after timeout (RTO doubles)</li>
 </ul>
