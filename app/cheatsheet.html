@@ -1,4 +1,4 @@
-<!-- CHEATSHEET_VERSION: 23 -->
+<!-- CHEATSHEET_VERSION: 24 -->
 <!--
   COMS 4119 FINAL CHEAT SHEET
   4 sheets organized by course chapter (Kurose-Ross order):
@@ -26,13 +26,14 @@
 <section data-key="layering-encapsulation">
 <h2>Layering &amp; Encapsulation</h2>
 <ul>
-<li><b>Application</b>: <b>Message</b> — HTTP / DNS / SMTP</li>
-<li><b>Transport</b>: <b>Segment</b> (both TCP &amp; UDP) — port addressing</li>
-<li><b>Network</b>: <b>(IP) Datagram</b> — IP address</li>
-<li><b>Data Link</b>: <b>Frame</b> — MAC address (Eth / 802.11)</li>
+<li><b>Application</b>: <b>Message</b> — HTTP / HTTPS · DNS · SMTP / IMAP / POP3 · FTP · SSH · Telnet · <b>BGP</b> (over TCP) · BitTorrent · DHCP · RTP · SNMP · QUIC (= HTTP/3, UDP)</li>
+<li><b>Transport</b>: <b>Segment</b> (TCP &amp; UDP) — port addressing. TCP = reliable, ordered. UDP = fast, connectionless, unreliable.</li>
+<li><b>Network</b>: <b>(IP) Datagram</b> — IP address. Runs <b>ICMP</b> (ping/traceroute), <b>OSPF</b> (IP protocol 89), IGMP directly over IP.</li>
+<li><b>Data Link</b>: <b>Frame</b> — MAC address (Ethernet / 802.11). Runs <b>ARP</b> (Ethertype 0x0806), STP, LLDP directly over the link.</li>
 <li><b>Physical</b>: <b>Bits</b> — signal on wire / air</li>
 </ul>
 <p class="mini">Each layer adds its own header (encapsulation). Demux upward: Ethertype → IP protocol → port → app.</p>
+<p class="mini">Common gotchas: SMTP / IMAP / POP3 all run on TCP. DNS defaults to UDP, falls back to TCP for large responses. OSPF runs over raw IP; BGP runs over TCP.</p>
 <div class="my-note" data-note-key="qa:final-preview:5:0"><span class="my-note-tag">💬</span> <b>Q:</b> ecn怎么工作<br><b>A:</b> ECN（Explicit Congestion Notification）是一种网络拥塞控制机制，旨在通过提前通知端点来避免数据包丢失。 **工作原理**： 1. **标记**：当网络设备（如路由器）检测到拥塞时，它不会丢弃数据包，而是将数据包的头部中的ECN字段标记为“标记”状态（通常是“ECN-Echo”）。 2. **反馈**：接收方在收到带有ECN标记的数据包后，会在其返回的ACK中设置ECN-Echo标志，告知发送方网络出现了…</div></section>
 
 <section data-key="end-to-end-principle">
@@ -40,20 +41,8 @@
 <ul>
 <li>Complex functions go at <b>endpoints</b>, not in the network core</li>
 <li>e.g. reliability: TCP at hosts, not per-hop</li>
-<li>Drives many designs: best-effort IP, IPv6 (no router fragmentation), NAT controversy, RDT at L4</li>
+<li>Drives many designs: best-effort IP, IPv6 (no router fragmentation), NAT controversy, RDT at transport</li>
 </ul>
-</section>
-
-
-<section data-key="protocols-transport-mapping">
-<h2>Protocols by Transport Layer</h2>
-<ul>
-<li><b>TCP</b> (reliable, ordered): HTTP / HTTPS · SMTP · IMAP · POP3 · FTP · SSH · Telnet · <b>BGP</b> · BitTorrent · DNS (fallback for large response)</li>
-<li><b>UDP</b> (fast, connectionless, unreliable): <b>DNS</b> (default) · <b>DHCP</b> · RTP · SNMP · TFTP · QUIC (= HTTP/3) · VoIP</li>
-<li><b>Direct over IP</b> (no L4): <b>ICMP</b> (ping/traceroute) · <b>OSPF</b> (IP protocol 89) · IGMP</li>
-<li><b>Direct over L2</b> (no IP): <b>ARP</b> (Ethertype 0x0806) · STP · LLDP</li>
-</ul>
-<p class="mini">Exam traps: SMTP/IMAP/POP3 all run on TCP. DNS default UDP. OSPF runs over raw IP, BGP runs over TCP.</p>
 </section>
 
 
@@ -721,7 +710,7 @@
 <ul>
 <li>Controller computes FTs, ships to switches via <b>OpenFlow</b></li>
 <li><b>Match + Action</b> uniformly replaces router / switch / firewall / NAT / load-balancer</li>
-<li>Match: <b>11 fields</b> (L1 in-port · L2 src/dst MAC, Ethertype, VLAN id+priority · L3 src/dst IP, IP proto, IP ToS · L4 src/dst port) — all wildcardable</li>
+<li>Match: <b>11 fields</b> (in-port · src/dst MAC, Ethertype, VLAN id+priority · src/dst IP, IP proto, IP ToS · src/dst port) — all wildcardable</li>
 <li>Action: forward / drop / modify / to-controller</li>
 <li>Priority resolves overlaps; counters track stats</li>
 <li>Msgs C→S: features, configure, modify-state, packet-out</li>
@@ -857,7 +846,7 @@ Transmit: 101011 110</pre>
 <h2>MAC Address vs IP Address</h2>
 <table>
 <tr><th></th><th>MAC</th><th>IP</th></tr>
-<tr><td>Layer</td><td>L2</td><td>L3</td></tr>
+<tr><td>Layer</td><td>Data Link</td><td>Network</td></tr>
 <tr><td>Length</td><td>48 b (6 B)</td><td>32 b (v4) / 128 b (v6)</td></tr>
 <tr><td>Assignment</td><td>burned into NIC by vendor (OUI + serial)</td><td>DHCP / static</td></tr>
 <tr><td>Scope</td><td>unique within LAN</td><td>globally unique (except NAT)</td></tr>
@@ -880,9 +869,9 @@ Transmit: 101011 110</pre>
 </section>
 
 <section data-key="switch-l2">
-<h2>Switch (L2)</h2>
+<h2>Switch</h2>
 <ul>
-<li>Store-and-forward at L2</li>
+<li>Store-and-forward at the link layer</li>
 <li><b>Self-learning</b>: on frame in, record (src MAC, in-port, TTL)</li>
 <li>Dst in table → unicast; else flood</li>
 <li>Plug-and-play; no config</li>
@@ -903,7 +892,7 @@ Transmit: 101011 110</pre>
 <h2>Router vs Switch <span class="tag">exam</span></h2>
 <table>
 <tbody><tr><th></th><th>Router</th><th>Switch</th></tr>
-<tr><td>layer</td><td>L3</td><td>L2</td></tr>
+<tr><td>layer</td><td>Network</td><td>Data Link</td></tr>
 <tr><td>addr</td><td>IP</td><td>MAC</td></tr>
 <tr><td>table</td><td>routing alg</td><td>self-learn</td></tr>
 <tr><td>scope</td><td>cross-net</td><td>single LAN</td></tr>
