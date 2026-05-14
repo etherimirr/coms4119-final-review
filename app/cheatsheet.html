@@ -1,4 +1,4 @@
-<!-- CHEATSHEET_VERSION: 27 -->
+<!-- CHEATSHEET_VERSION: 28 -->
 <!--
   COMS 4119 FINAL CHEAT SHEET
   4 sheets organized by course chapter (Kurose-Ross order):
@@ -388,7 +388,7 @@
 <li>TCP misreads as congestion → halves cwnd → wireless throughput tanks</li>
 <li>Fix: ECN (see CC variants)</li>
 </ul>
-<div class="my-note" data-note-key="star:lec14:7"><span class="my-note-tag">⭐</span> <b>lec14 p7</b> TCP cwnd 工作机制</div><div class="my-note" data-note-key="star:lec14:9"><span class="my-note-tag">⭐</span> <b>lec14 p9</b> Timeout 处理</div><div class="my-note" data-note-key="star:lec14:10"><span class="my-note-tag">⭐</span> <b>lec14 p10</b> Slow Start → CA 切换 ⭐</div><div class="my-note" data-note-key="star:lec14:11"><span class="my-note-tag">⭐</span> <b>lec14 p11</b> Timeout 后重启 slow start</div><div class="my-note" data-note-key="star:lec14:12"><span class="my-note-tag">⭐</span> <b>lec14 p12</b> TCP CC FSM 总图 ⭐⭐⭐</div><div class="my-note" data-note-key="star:lec14:13"><span class="my-note-tag">⭐</span> <b>lec14 p13</b> TCP CUBIC — 直觉</div><div class="my-note" data-note-key="star:lec14:19"><span class="my-note-tag">⭐</span> <b>lec14 p19</b> Model-based (BBR) ⭐</div><div class="my-note" data-note-key="star:lec14:20"><span class="my-note-tag">⭐</span> <b>lec14 p20</b> ECN ⭐</div><div class="my-note" data-note-key="final:0:gotcha"><span class="my-note-tag">⚠️</span> <b>final Q1 易错:</b> 考试时如果题目让你举一个例子，最稳的答法就是『链路层 bit error → checksum 失败 → 丢弃』。</div></section>
+<div class="my-note" data-note-key="star:lec14:7"><span class="my-note-tag">⭐</span> <b>lec14 p7</b> TCP cwnd 工作机制</div><div class="my-note" data-note-key="star:lec14:20"><span class="my-note-tag">⭐</span> <b>lec14 p20</b> ECN ⭐</div><div class="my-note" data-note-key="final:0:gotcha"><span class="my-note-tag">⚠️</span> <b>final Q1 易错:</b> 考试时如果题目让你举一个例子，最稳的答法就是『链路层 bit error → checksum 失败 → 丢弃』。</div></section>
 
 </div></div>
 
@@ -413,7 +413,7 @@
 <tr><td>Flow table</td><td>OSPF / BGP</td></tr>
 </table>
 <p class="mini">Classic: per-router CP. <b>SDN</b>: CP centralized in controller; switches just run FTs (DP).</p>
-<div class="my-note" data-note-key="star:lec16:2"><span class="my-note-tag">⭐</span> <b>lec16 p2</b> TCP 公平性 — 目标</div></section>
+</section>
 
 <section data-key="forwarding-vs-routing">
 <h2>Forwarding vs Routing</h2>
@@ -497,7 +497,7 @@
 <li>TCAM = ternary content-addressable; O(1) lookup with wildcards</li>
 <li>Mid 4-Q: 1010.1000.0100.1000 vs 1010.xxxx/4, 10xx/2, 1010.11xx/6 → matches /4 and /2, NOT /6 (10≠11) → choose <b>/4 → port 2</b></li>
 </ul>
-<div class="my-note" data-note-key="star:lec17:12"><span class="my-note-tag">⭐</span> <b>lec17 p12</b> IP 地址获取 — 两个问题</div><div class="my-note" data-note-key="star:lec17:13"><span class="my-note-tag">⭐</span> <b>lec17 p13</b> DHCP — Dynamic Host Configuration Protocol 介绍</div></section>
+</section>
 
 <section data-key="subnet-concept">
 <h2>Subnet</h2>
@@ -631,7 +631,7 @@
 <li>Solves 2-node loops; <span class="red">not 3+ node loops</span></li>
 <li>Use small "infinity" value (e.g. 16) to cap loops</li>
 </ul>
-<div class="my-note" data-note-key="star:lec18:12"><span class="my-note-tag">⭐</span> <b>lec18 p12</b> Network 层 两功能（复习）</div><div class="my-note" data-note-key="star:lec18:19"><span class="my-note-tag">⭐</span> <b>lec18 p19</b> 两种路由方法论 — Big Mouth vs Whisper</div><div class="my-note" data-note-key="star:lec18:20"><span class="my-note-tag">⭐</span> <b>lec18 p20</b> 路由算法分类 — 4 个维度</div><div class="my-note" data-note-key="star:lec18:27"><span class="my-note-tag">⭐</span> <b>lec18 p27</b> Dijkstra 例 — Step 0 (Init)</div><div class="my-note" data-note-key="star:lec18:38"><span class="my-note-tag">⭐</span> <b>lec18 p38</b> Dijkstra — 最短路径树 + Forwarding Table</div><div class="my-note" data-note-key="star:lec18:49"><span class="my-note-tag">⭐</span> <b>lec18 p49</b> DV — 核心循环</div><div class="my-note" data-note-key="star:lec18:54"><span class="my-note-tag">⭐</span> <b>lec18 p54</b> LS vs DV — 全面对比</div></section>
+<div class="my-note" data-note-key="star:lec18:27"><span class="my-note-tag">⭐</span> <b>lec18 p27</b> Dijkstra 例 — Step 0 (Init)</div><div class="my-note" data-note-key="star:lec18:38"><span class="my-note-tag">⭐</span> <b>lec18 p38</b> Dijkstra — 最短路径树 + Forwarding Table</div></section>
 
 <section data-key="ospf-intra-as">
 <h2>OSPF (intra-AS)</h2>
@@ -667,7 +667,7 @@
 <li><b>Columbia-CERN example</b>: don't advertise CERN path to NYU → NYU can't route via Columbia</li>
 <li>Customer-of-provider always gets advertised</li>
 </ul>
-<div class="my-note" data-note-key="star:lec19:11"><span class="my-note-tag">⭐</span> <b>lec19 p11</b> Internet inter-AS routing: BGP</div><div class="my-note" data-note-key="star:lec19:17"><span class="my-note-tag">⭐</span> <b>lec19 p17</b> BGP Path Advertisement — 多路径</div><div class="my-note" data-note-key="star:lec19:21"><span class="my-note-tag">⭐</span> <b>lec19 p21</b> BGP Policy via Advertisements (1)</div><div class="my-note" data-note-key="star:lec19:25"><span class="my-note-tag">⭐</span> <b>lec19 p25</b> Quiz: TCP Throughput (preview for lec20)</div><div class="my-note" data-note-key="final:2:gotcha"><span class="my-note-tag">⚠️</span> <b>final Q3 易错:</b> 考试看到『policy』『control who can traverse my network』关键词 → 一定是 BGP advertisement policy，不是 OSPF / Dijkstra / cost。OSPF 是 intra-AS（一个 AS 内部），BGP 才管 AS 之间的策略。</div></section>
+<div class="my-note" data-note-key="star:lec19:25"><span class="my-note-tag">⭐</span> <b>lec19 p25</b> Quiz: TCP Throughput (preview for lec20)</div><div class="my-note" data-note-key="final:2:gotcha"><span class="my-note-tag">⚠️</span> <b>final Q3 易错:</b> 考试看到『policy』『control who can traverse my network』关键词 → 一定是 BGP advertisement policy，不是 OSPF / Dijkstra / cost。OSPF 是 intra-AS（一个 AS 内部），BGP 才管 AS 之间的策略。</div></section>
 
 <section data-key="hot-potato-routing">
 <h2>Hot Potato Routing</h2>
@@ -677,7 +677,7 @@
 <li>3rd tiebreaker in BGP route selection: closest NEXT-HOP</li>
 <li>Locally optimal per AS, may not be globally shortest</li>
 </ul>
-<div class="my-note" data-note-key="star:lec19:20"><span class="my-note-tag">⭐</span> <b>lec19 p20</b> Hot Potato Routing</div></section>
+</section>
 
 <section data-key="why-intra-inter-exam">
 <h2>Why Intra ≠ Inter <span class="tag">exam</span></h2>
@@ -736,7 +736,7 @@
 <li><b>MAC</b> (medium access control)</li>
 <li><b>Reliable delivery</b> (often skipped on low-BER wired; needed on wireless)</li>
 </ul>
-<div class="my-note" data-note-key="star:lec20:4"><span class="my-note-tag">⭐</span> <b>lec20 p4</b> Flow Table Abstraction</div><div class="my-note" data-note-key="star:lec20:34"><span class="my-note-tag">⭐</span> <b>lec20 p34</b> Data Link Layer — 在协议栈位置</div><div class="my-note" data-note-key="star:lec20:40"><span class="my-note-tag">⭐</span> <b>lec20 p40</b> Error Detection — 2D Parity</div><div class="my-note" data-note-key="star:lec20:42"><span class="my-note-tag">⭐</span> <b>lec20 p42</b> Error Detection — CRC 概念</div><div class="my-note" data-note-key="star:lec20:43"><span class="my-note-tag">⭐</span> <b>lec20 p43</b> Error Detection — CRC 手算例</div><div class="my-note" data-note-key="star:lec20:44"><span class="my-note-tag">⭐</span> <b>lec20 p44</b> Quiz — DV 收敛轮数 (3 节点)</div></section>
+</section>
 
 <section data-key="error-detection">
 <h2>Error Detection</h2>
@@ -771,7 +771,7 @@ Transmit: 101011 110</pre>
 <tr><td>Taking turns</td><td>polling, token</td></tr>
 <tr><td>Random access</td><td>ALOHA, CSMA, CSMA/CD, CSMA/CA</td></tr>
 </tbody></table>
-<div class="my-note" data-note-key="star:lec21:2"><span class="my-note-tag">⭐</span> <b>lec21 p2</b> Quiz Round 1 — A 的视角</div><div class="my-note" data-note-key="star:lec21:9"><span class="my-note-tag">⭐</span> <b>lec21 p9</b> #2: Taking Turns</div><div class="my-note" data-note-key="star:lec21:15"><span class="my-note-tag">⭐</span> <b>lec21 p15</b> Slotted ALOHA — 效率推导</div><div class="my-note" data-note-key="star:lec21:27"><span class="my-note-tag">⭐</span> <b>lec21 p27</b> MAC Address</div><div class="my-note" data-note-key="star:lec21:29"><span class="my-note-tag">⭐</span> <b>lec21 p29</b> Bootstrap Communication</div></section>
+<div class="my-note" data-note-key="star:lec21:2"><span class="my-note-tag">⭐</span> <b>lec21 p2</b> Quiz Round 1 — A 的视角</div></section>
 
 <section data-key="slotted-aloha-derivation">
 <h2>Slotted ALOHA derivation</h2>
@@ -884,7 +884,7 @@ Transmit: 101011 110</pre>
 <tr><td>scope</td><td>cross-net</td><td>single LAN</td></tr>
 <tr><td>TTL</td><td>−1</td><td>untouched</td></tr>
 </tbody></table>
-<div class="my-note" data-note-key="star:lec22:18"><span class="my-note-tag">⭐</span> <b>lec22 p18</b> Router vs Switch — 对比表</div></section>
+</section>
 
 <section data-key="collision-broadcast-domains">
 <h2>Collision &amp; Broadcast Domains</h2>
@@ -892,7 +892,7 @@ Transmit: 101011 110</pre>
 <li><b>Collision domain</b>: hubs join one big; switches split per port</li>
 <li><b>Broadcast domain</b>: limited by router (or VLAN boundary)</li>
 </ul>
-<div class="my-note" data-note-key="star:lec22:2"><span class="my-note-tag">⭐</span> <b>lec22 p2</b> Who Am I — DHCP 拿 IP</div></section>
+</section>
 
 
 <!-- ============ Ch 6a: Wireless — Physical ============ -->
@@ -995,7 +995,7 @@ Transmit: 101011 110</pre>
 <li>No clean CSMA/CA fix</li>
 </ul>
 <p class="mini">Mnemonic: hidden = sender-out + recv-in (should stop but doesn't). Exposed = sender-in + target-out (defers but didn't need to).</p>
-<div class="my-note" data-note-key="star:lec23:15"><span class="my-note-tag">⭐</span> <b>lec23 p15</b> All These Ranges — Transmission / Interference / Carrier Sensing</div><div class="my-note" data-note-key="star:lec23:27"><span class="my-note-tag">⭐</span> <b>lec23 p27</b> CSMA/CA — 三大机制拆解</div></section>
+<div class="my-note" data-note-key="star:lec23:27"><span class="my-note-tag">⭐</span> <b>lec23 p27</b> CSMA/CA — 三大机制拆解</div></section>
 
 <section data-key="rts-cts-nav">
 <h2>RTS / CTS / NAV</h2>
