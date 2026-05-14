@@ -1914,7 +1914,7 @@
   ],
   "lec16": [
     {
-      "title": "ECN — Explicit Congestion Notification（lec14 末尾延续）",
+      "title": "ECN — 显式拥塞通知（接 lec14 末尾）",
       "topics": [
         "TCP 公平性",
         "Network 数据面",
@@ -1928,363 +1928,349 @@
         "DHCP",
         "NAT"
       ],
-      "summary": "**ECN**: TCP 部署常用 network-assisted CC。Router 在 IP header (ToS field) 用 **2 个 bit** 标记 congestion。Congestion 信号通过 destination 携带回 sender (ACK 中 ECE=1)。涉及 IP (ECN bit marking) 和 TCP (CWR / ECE header bit) 两层协作。",
+      "summary": "TCP 部署常用『网络辅助』拥塞控制。路由器在 IP 头的 ToS 字段用 **2 个 bit** 标记拥塞。Receiver 通过 ACK 中的 ECE bit 把信号回传给 sender。这是 IP（标 ECN bit）和 TCP（CWR/ECE header bit）双层协作。",
       "key_points": [
-        "Router 在 IP ToS field 用 2 bit 标 congestion",
-        "Policy 决定 marking (by network operator)",
-        "Congestion indication 传到 destination",
-        "Receiver 在 ACK segment 中设 ECE bit (Echo)",
+        "路由器在 IP ToS 字段用 2 bit 标 congestion",
+        "策略由 network operator 决定怎么标",
+        "拥塞信号通过 receiver 经 ACK 回传",
+        "Receiver 在 ACK 中 ECE bit=1",
         "**IP + TCP 双层协作**",
-        "Sender 见 ECE=1 → 减半 cwnd 但不丢包"
+        "Sender 见 ECE=1 → cwnd 减半，但**没真丢包**"
       ],
-      "explanation": "**为什么 ECN**：loss-based TCP 必须等到 buffer 满 → 丢包 → 重传。这浪费：(1) Queue 满了延迟大；(2) 重传消耗带宽；(3) 反应晚。\n\nECN 让 router 在 queue 长度超阈值时（还没满）就标记包。Receiver 通过 ACK 把信号传回 sender。Sender 提前减速 → 队列降回稳态。\n\n**IP + TCP 协作**:\n- IP 层: ECN 字段 (ToS 低 2 bit)\n- TCP 层: ACK header ECE bit + next packet CWR bit (确认收到 ECE)\n\n**协商**: ECN 双方必须支持。建连时 SYN 的 ECE+CWR 都设 1 表示『I support ECN』。\n\n**部署**: Linux 默认开 ECN（被动响应）。\n\n**考点**：『ECN 是什么？谁参与？为什么有用？』必背 IP+TCP 双层 + 无丢包减半。"
+      "explanation": "### 为什么要 ECN\n传统 TCP 必须等到路由器 buffer 满 → 丢包 → 重传，才知道拥塞。这浪费：\n1. queue 满了延迟已经很大\n2. 重传消耗带宽\n3. 反应时机晚\n\nECN 让路由器在 queue 长度超过阈值时（还没满）就标记包。Receiver 通过 ACK 把信号回传 sender。Sender 提前减速 → 队列降回稳态。\n\n### IP + TCP 协作\n- **IP 层**：ECN 字段（ToS 低 2 bit），路由器标 `ECN=11` 表示拥塞\n- **TCP 层**：ACK header 的 ECE bit + next packet 的 CWR bit（确认收到 ECE）\n\n### 协商\nECN 双方都要支持才能用。建连时 SYN 的 ECE+CWR 都设 1 表示『我支持 ECN』。\n\n### 考点\n『ECN 是什么？谁参与？为什么有用？』必答 IP+TCP 双层 + 不靠丢包减半。"
     },
     {
-      "title": "TCP Fairness — 目标",
+      "title": "TCP 公平性 — 目标",
       "topics": [],
-      "summary": "**Fairness goal**: 如果 K 个 TCP sessions 共享同一个 bottleneck link of bandwidth R，每个 should have average rate R/K。\n\n例图：2 个 TCP connection 共享 capacity R 的 bottleneck router。",
+      "summary": "**公平性目标**：如果 K 个 TCP session 共享同一个 bottleneck link（带宽 R），每个 session 应该平均拿到 R/K。\n\n图：2 个 TCP connection 共享一个 router 的 capacity R。",
       "key_points": [
-        "K 个 TCP session 共享 bottleneck R",
-        "理想: 每个 R/K",
-        "AIMD 是否能实现这一目标？(下页)"
+        "K 个 TCP 共享 bottleneck R",
+        "理想：每个拿 R/K",
+        "AIMD 是否能实现？（下一页论证）"
+      ],
+      "explanation": "**公平性 ≠ 一定平等**。它定义为『在相同条件下平均收敛到等量份额』。下一页用几何论证 AIMD 在理想条件下能做到。"
+    },
+    {
+      "title": "TCP 公平吗？— AIMD 几何论证",
+      "topics": [],
+      "summary": "**答**：在理想假设下 yes。前提：(1) 相同 RTT；(2) session 数固定；(3) 都长期处于 congestion avoidance。\n\n**论证**：2 个 TCP 共享 R bottleneck。AIMD 在 (x1, x2) 平面上轨迹：加法增（沿 45° 同步往效率线走）+ 乘法减（沿原点缩，比例不变但差距缩 0.5）→ **螺旋收敛到 x1 = x2**。",
+      "key_points": [
+        "前提 1：相同 RTT",
+        "前提 2：session 数不变",
+        "前提 3：长期都在 CA（不反复 slow start）",
+        "几何：AI 走 45° + MD 沿原点缩 → 收敛到 x1 = x2"
+      ],
+      "explanation": "### 几何论证细节\n2 个 user，x 轴 = user 1 吞吐，y 轴 = user 2 吞吐。\n\n- **公平线**：x = y\n- **效率线**：x + y = R\n\n**AIMD 轨迹**：\n1. AI：两 user 同时 +Δ → 沿 45° 走 → 触效率线\n2. MD：两 user ×0.5 → 沿原点向下缩\n3. AI：又沿 45° 走\n4. 反复\n\n**关键观察**：\n- AI 不改变 |x − y|（同时加同量）\n- MD 让 |x − y| ×0.5（按比例缩）\n- 所以 |x − y| → 0，即收敛到 x = y\n\n### 为什么只 AIMD 行\n- **AIAD**：加法增 + 加法减都不改差距 → 不收敛公平\n- **MIMD**：乘法增 + 乘法减保持比例不变 → 也不收敛\n- **只有 AIMD**：AI 不改差距 + MD 按比例缩差距 → 唯一收敛到公平\n\n### 考点\n『为什么 AIMD 收敛公平？』必答画 (x1, x2) 坐标系 + AI/MD 轨迹 + 差距收敛。"
+    },
+    {
+      "title": "公平性现实 — UDP 和并行 TCP 破坏",
+      "topics": [],
+      "summary": "**UDP 的不公平**：多媒体 app 常用 UDP 而不是 TCP，因为不想被 CC 限速。UDP 发送 constant rate，能忍受丢包。\n\n**并行 TCP 的不公平**：浏览器可以开多条并行 TCP。例：链路速率 R，已有 9 条 TCP。新 app 只开 1 条 → 拿 R/10；新 app 开 11 条 → 拿 R/2。\n\n**没有 Internet 警察** 强制公平。",
+      "key_points": [
+        "**UDP**：不做 CC，多媒体 app 用它",
+        "**并行 TCP**：浏览器开多条抢更多",
+        "K 条并行 vs 1 条 → 自己拿 K/(K+1) 份额",
+        "**没有 Internet 警察**"
+      ],
+      "explanation": "### UDP 不公平的真实例\n- Skype、Zoom、Netflix 视频流大量用 UDP\n- 不受 TCP CC 限速，可以一直推\n- 跟旁边的 TCP 流一起跑 → UDP 占更多\n\n### 并行 TCP 不公平的真实例\n- Chrome 浏览器对同一 host 默认开 6 条并行 TCP\n- 每条独立跑 AIMD\n- 6 条 + 别人 1 条 = 别人只能拿 1/7\n- 现代 HTTP/2 把多请求 multiplex 到 1 条 TCP，减少这种 abuse\n\n### 考点\n『TCP 公平性在现实中成立吗？』答：不一定。UDP 不做 CC、并行 TCP 抢多份 都破坏公平。"
+    },
+    {
+      "title": "TCP — 仍是 active research topic（1）",
+      "topics": [],
+      "summary": "TCP CC 仍是热门研究方向。课件给参考 URL：[cpham.perso.univ-pau.fr/TCP/](http://cpham.perso.univ-pau.fr/TCP/)。",
+      "key_points": [
+        "参考资料页面"
       ]
     },
     {
-      "title": "TCP 是否 Fair？— AIMD 几何论证",
+      "title": "TCP — 仍是 active research topic（2，论文列表）",
       "topics": [],
-      "summary": "**Q: Is TCP fair？** **A: Yes, under idealized assumptions**: (a) same RTT; (b) fixed number of sessions; (c) only in congestion avoidance phase。\n\n**论证**: 2 个 TCP 共享 R bottleneck。AIMD: additive increase 给 slope 1（throughput 同步增）；multiplicative decrease 按比例缩。两步交替 → 螺旋收敛到 equal bandwidth share。",
+      "summary": "近年 TCP CC 相关论文示例：\n- TCP ex Machina: Computer-Generated CC（SIGCOMM 2013）\n- Recursively Cautious CC（NSDI 2014）\n- PCC（NSDI 2015）\n- Principles for Internet Congestion Management（SIGCOMM 2024）\n- CCAnalyzer（SIGCOMM 2024）\n- CClinguist（SIGCOMM 2025）\n- LeoCC：卫星 CC（SIGCOMM 2025）\n\n... 也许还有你未来的论文 :)",
       "key_points": [
-        "TCP fair under idealized assumptions",
-        "Assumption 1: **same RTT**",
-        "Assumption 2: fixed # sessions",
-        "Assumption 3: 长期都在 congestion avoidance",
-        "Geometric: AI 走 45° + MD 沿原点缩 → 收敛到公平线"
-      ],
-      "explanation": "**几何论证 (经典)**：\n\n2 个 user，x 轴 = user 1 throughput，y 轴 = user 2 throughput。\n\n- **Equal bandwidth share line**: x = y\n- **Loss line**: x + y = R\n\n**AIMD 动作**:\n- AI: 两 user throughput 同步 +Δ → 沿 45° 走\n- MD: 两 user throughput ×0.5 → 沿原点向下缩\n\n**轨迹**: 走 45° → 触 loss line → 缩 0.5 → 又走 45° → ...\n\n**关键观察**: MD 沿原点缩 → 比例保持，但 x-y 差距按比例缩小。AI 不改变差距。MD 反复执行 → 差距渐近 0 → **收敛到 x=y (公平线)**。\n\n**Why only AIMD**: \n- AIAD: 加法增 + 加法减都不改差距 → 不收敛\n- MIMD: 比例增 + 比例减 → 比例保持但不公平\n- **唯独 AIMD**: AI 不改差距 + MD 按比例缩差距 → 收敛\n\n**考点**: 『为什么 AIMD 收敛公平？』必答几何论证。"
-    },
-    {
-      "title": "Fairness — UDP 和 Parallel TCP 破坏公平",
-      "topics": [],
-      "summary": "**Fairness, UDP**: 多媒体 app 常用 UDP 而非 TCP（不想被 CC throttle）。UDP 发常速率，容忍包丢。**没有 Internet police** 管这事。\n\n**Fairness, Parallel TCP**: 浏览器可以开多个 parallel TCP connection 给同 host。例: link R, 9 现有 connections。新 app 1 TCP → 拿 R/10；新 app 11 TCPs → 拿 R/2。",
-      "key_points": [
-        "**UDP**: 多媒体 app 不被 CC throttle",
-        "**Parallel TCP**: 开 N 条抢 N/M 份额",
-        "**没 Internet police** 强制 fair",
-        "实际 fairness 是『最佳努力』"
-      ],
-      "explanation": "**UDP 不公平例**: \n- Skype, Zoom, Netflix 多媒体用 UDP\n- 不受 CC 限制，可以一直 push\n- 跟旁边的 TCP 一起跑，UDP 抢更多带宽\n\n**Parallel TCP**: \n- 浏览器（如 Chrome）对同一 host 默认开 6 个 parallel 连接\n- 每个连接是独立 TCP，独立 AIMD\n- 6 个一起跟 1 个对手抢，比例 6:1\n- 现代 HTTP/2 把多请求 multiplex 到 1 个 TCP（减少这种 abuse）\n\n**考点**: 『TCP fairness 是否在实际成立？』→ 不一定，UDP 和 parallel TCP 都破坏。"
-    },
-    {
-      "title": "Bottom Line — Active Research Topic",
-      "topics": [],
-      "summary": "TCP CC 是 active research topic。给出 URL: http://cpham.perso.univ-pau.fr/TCP/。",
-      "key_points": [
-        "参考资料 page"
+        "TCP CC 学术上仍在快速演进",
+        "鼓励学生看论文"
       ]
     },
     {
-      "title": "Bottom Line — 论文列表",
+      "title": "CSEE4119 — 进入 Network Layer Data Plane 章节",
       "topics": [],
-      "summary": "近期 TCP 相关论文示例:\n- TCP ex Machina: Computer-Generated CC (SIGCOMM 2013)\n- Recursively Cautious CC (NSDI 2014)\n- PCC (NSDI 2015)\n- Principles for Internet Congestion Management (SIGCOMM 2024)\n- CCAnalyzer (SIGCOMM 2024)\n- CClinguist (SIGCOMM 2025)\n- LeoCC: 卫星 CC (SIGCOMM 2025)\n\n... and maybe your future paper :)",
+      "summary": "新章节封面：**Network Layer – Data Plane**。Xia Zhou 讲，引用 Kurose-Ross 教材。\n\nNetwork Layer 是 OSI L3，提供端到端 packet 投递。本章先讲 data plane（forwarding，怎么转发），下一章（lec18-19）讲 control plane（routing，路径怎么算）。",
       "key_points": [
-        "TCP CC 仍是 active research",
-        "学术界仍在改进"
-      ]
-    },
-    {
-      "title": "CSEE4119 — Network Layer Data Plane 章节封面",
-      "topics": [],
-      "summary": "新章节: **Network Layer – Data Plane**。Xia Zhou 教，引 Kurose-Ross 教材。\n\nNetwork Layer 是 OSI L3，提供端到端 packet delivery。本章先讲 data plane (forwarding)，下一章 (lec18-19) 讲 control plane (routing)。",
-      "key_points": [
-        "新章节: Network Layer Data Plane",
-        "Data plane = forwarding (per-router, hardware ns)",
-        "Control plane = routing (network-wide, software ms)",
+        "新章节：Network Layer Data Plane",
+        "Data plane = forwarding（单 router，硬件 ns 级）",
+        "Control plane = routing（全网，软件 ms 级）",
         "本章只讲 data plane"
       ]
     },
     {
-      "title": "Move on to Network Layer",
+      "title": "Move on to Network Layer — 协议栈定位",
       "topics": [],
-      "summary": "协议栈进入 L3：\n\n- L7 App (HTTP, FTP, DASH, DNS)\n- L4 Transport (TCP, UDP)\n- **L3 Network (IP)** ← here\n- L2 Data Link (Ethernet, 802.11, PPP)\n- L1 Physical (optical, copper, radio, PSTN)",
+      "summary": "协议栈进入 L3：\n```\nL7 应用层 (HTTP, FTP, DASH, DNS)\nL4 传输层 (TCP, UDP)\nL3 网络层 (IP)              ← 这里\nL2 数据链路层 (Ethernet, 802.11, PPP)\nL1 物理层 (光纤, 铜线, 无线, PSTN)\n```",
       "key_points": [
         "Network layer = L3",
-        "Single protocol: **IP**",
-        "下面 L2: Ethernet/802.11/PPP",
-        "上面 L4: TCP/UDP"
+        "**唯一协议：IP**",
+        "下面 L2：Ethernet / 802.11 / PPP",
+        "上面 L4：TCP / UDP"
       ]
     },
     {
-      "title": "Network Layer Data Plane Roadmap",
+      "title": "Network Layer Data Plane — 子章节路线图",
       "topics": [],
-      "summary": "本章议程：\n\n(1) Network layer overview (DP + CP)\n(2) What's inside a router (input ports, switching, output ports, buffer mgmt, scheduling)\n(3) IP: Internet Protocol (datagram format, addressing, NAT, IPv6)\n(4) Generalized Forwarding, SDN\n(5) Middleboxes",
+      "summary": "本章议程：\n1. Network layer overview（DP + CP）\n2. **What's inside a router** — input ports, switching fabric, output ports, buffer management, scheduling\n3. **IP**：datagram 格式、地址、NAT、IPv6\n4. **Generalized forwarding, SDN**\n5. **Middleboxes**",
       "key_points": [
         "Network layer overview",
-        "Router internals",
-        "IP protocol",
+        "Router 内部架构",
+        "IP 协议",
         "Generalized forwarding + SDN",
         "Middleboxes"
       ]
     },
     {
-      "title": "Network-Layer Services and Protocols",
+      "title": "Network 层服务和协议",
       "topics": [],
-      "summary": "**Transport segment** 从 sender 到 receiver。\n\n- **Sender**: 把 segments **encapsulate** 进 datagrams, 传给 link layer\n- **Receiver**: deliver segments 给 transport layer protocol\n- **每 Internet 设备都有 network layer protocols** (hosts, routers)\n- **Routers**: examine header fields in all IP datagrams passing through; move datagrams from input ports to output ports along end-end path",
+      "summary": "Transport segment 从 sender 送到 receiver：\n- **Sender 端**：encapsulate segments 进 datagram，传给链路层\n- **Receiver 端**：deliver segments 给传输层\n- **每台 Internet 设备都跑 IP 层**（hosts + routers）\n- **Router**：检查所有过它的 IP datagram 的 header；把 datagram 从 input port 移到 output port 沿端到端路径前进",
       "key_points": [
-        "Sender: encapsulate segment → datagram",
-        "Receiver: deliver segment → upper layer",
-        "每 Internet 设备都跑 IP layer",
-        "Router: 看 header，input port → output port"
+        "Sender：封装 segment → datagram",
+        "Receiver：解封 datagram → 上层",
+        "每个 Internet 设备都跑 IP",
+        "Router：看 header，input port → output port"
       ]
     },
     {
-      "title": "Two Key Network-Layer Functions — Forwarding vs Routing",
+      "title": "两个核心 network 层功能 — Forwarding vs Routing ⭐",
       "topics": [],
-      "summary": "**Forwarding** (data plane): move packets from router's input link to appropriate router output link。**Routing** (control plane): determine route taken by packets from source to destination。\n\n**类比 trip**: forwarding = process of getting through single interchange; routing = process of planning trip from source to destination。",
+      "summary": "**Forwarding**（数据面）：把 packet 从 router 的 input link 移到合适的 output link。\n**Routing**（控制面）：决定 packet 从 source 到 destination 的路径。\n\n**旅行类比**：forwarding = 通过单个交叉路口；routing = 出发前规划整段路线。",
       "key_points": [
-        "**Forwarding**: single router, input → output port",
-        "**Routing**: network-wide, source → dest",
-        "Analogy: forwarding = pass intersection; routing = plan trip",
-        "Routing algorithms 决定 forwarding table 内容"
+        "**Forwarding**：单 router 内，input port → output port",
+        "**Routing**：全网，source → dest 路径决策",
+        "类比：forwarding = 过路口；routing = 规划行程",
+        "Routing 算法决定 forwarding table 的内容"
       ],
-      "explanation": "**这是 network layer 最重要的概念分离**。\n\n**Forwarding (data plane)**: \n- 速度: ns 级硬件\n- 范围: 单 router 内\n- 输入: packet header\n- 输出: 哪个 output port\n\n**Routing (control plane)**: \n- 速度: ms 级软件\n- 范围: 全网\n- 输入: 网络拓扑 + link cost\n- 输出: 每 router 的 forwarding table\n\n**两者协作**: routing 算出 table → forwarding 用 table 转发。\n\n**考点**：『Forwarding vs Routing？』必答两者层级 + 时间尺度 + 范围。"
+      "explanation": "### 这是 network layer 最核心的概念分离\n\n**Forwarding（数据面）**：\n- 时间尺度：ns 级硬件\n- 范围：单个 router 内\n- 输入：packet header\n- 输出：哪个 output port\n\n**Routing（控制面）**：\n- 时间尺度：ms 级软件\n- 范围：全网\n- 输入：网络拓扑 + 链路代价\n- 输出：每 router 的 forwarding table\n\n**两者协作**：routing 算出 table → forwarding 用 table 转发。\n\n### 考点\n『Forwarding vs Routing 区别？』必答两者层级 + 时间尺度 + 范围。"
     },
     {
-      "title": "Data Plane vs Control Plane — 两种 control plane 结构",
+      "title": "Data Plane vs Control Plane — 两种 CP 结构 ⭐",
       "topics": [],
-      "summary": "**Data plane**: local, per-router function; determines how datagram on input port forwards to output port (based on header values).\n\n**Control plane**: network-wide logic; determines how datagram routes among routers along end-end path.\n\n**Two control-plane approaches**:\n(1) Traditional routing algorithms: implemented in routers\n(2) Software-defined networking (SDN): implemented in (remote) servers",
+      "summary": "**Data plane**：本地，per-router 功能；决定 input port 到达的 datagram 怎么转到 output port（基于 header 字段值）。\n\n**Control plane**：网络级 logic；决定 datagram 怎么在 routers 间路由（source → destination 全程）。\n\n**两种 control plane 方法**：\n1. **传统 routing 算法**：跑在每个 router 里\n2. **SDN（软件定义网络）**：跑在（远程）server 上",
       "key_points": [
-        "**Data plane**: per-router, based on header values",
-        "**Control plane**: network-wide logic",
-        "**Approach 1 (传统)**: 每 router 跑 routing algorithm",
-        "**Approach 2 (SDN)**: remote server 集中算",
-        "两者都构造 FT 给 data plane 用"
+        "**Data plane**：per-router，基于 header",
+        "**Control plane**：网络级 logic",
+        "**方法 1（传统）**：每 router 自己跑路由算法",
+        "**方法 2（SDN）**：远程 server 集中算",
+        "两种方法都给 data plane 提供 FT"
       ],
-      "explanation": "**核心区别再强调一次**：\n\n| | Data Plane | Control Plane |\n|---|---|---|\n| 范围 | 单 router | 全网 |\n| 时间 | ns (硬件) | ms (软件) |\n| 内容 | 用 FT 转发 | 算 FT |\n| 谁运行 | router 硬件 | router 软件 / SDN controller |\n\n**两种 CP 模式**：\n1. **传统**: 每 router 跑自己的路由算法（OSPF/BGP），互相通信，分布式协调\n2. **SDN**: 远程 controller 集中算，下发到所有 router\n\n**SDN 优势**: 易管理 + 易编程 + 全局优化。\n**SDN 劣势**: 单点（实际分布式 controller 缓解）。\n\n**考点**: 用户特别强调的概念页 — 必答 DP vs CP 区别 + 两种 CP 结构。",
+      "explanation": "### 核心区别（再次强调）\n\n| | Data Plane | Control Plane |\n|---|---|---|\n| 范围 | 单 router | 全网 |\n| 时间 | ns（硬件） | ms（软件） |\n| 内容 | 用 FT 转发 | 算 FT |\n| 谁执行 | router 硬件 | router 软件 / SDN controller |\n\n### 两种 CP 模式\n\n**模式 1 — 传统**：每 router 跑自己的路由算法（OSPF/BGP），算法之间互相通信，分布式协调。\n\n**模式 2 — SDN**：远程 controller 集中算，下发到所有 router 执行。\n\n### SDN 的取舍\n- 优势：易管理 + 易编程 + 全局优化\n- 劣势：单点风险（实际分布式 controller 缓解）\n\n### 考点（用户特别强调的概念页）\n必答 DP vs CP 区别 + 两种 CP 结构。",
       "important": "🔥 Data Plane vs Control Plane — 概念核心"
     },
     {
-      "title": "Per-router Control Plane",
+      "title": "Per-router Control Plane（传统模式）",
       "topics": [],
-      "summary": "**传统模式**: individual routing algorithm components in each and every router interact in the control plane。Routing algorithm 在 control plane (软件)，FT lookup 在 data plane (硬件)。",
+      "summary": "**传统模式**：每个 router 里都有独立的 routing algorithm 组件，它们在 control plane 互相通信、协调。\n\n图示：每个 router 里 control plane（routing algorithm，软件）和 data plane（local forwarding table，硬件）。",
       "key_points": [
-        "传统 router 内部: routing algorithm + FT",
-        "Algorithms 间互相通信",
-        "Software 算法 (CP) + hardware 转发 (DP)",
-        "经典模式"
+        "传统 router 内部：routing algorithm + local FT",
+        "Algorithms 之间互相通信",
+        "Software (CP) + hardware (DP)",
+        "经典分布式模式"
       ]
     },
     {
-      "title": "Software-Defined Networking (SDN) Control Plane",
+      "title": "Software-Defined Networking（SDN）Control Plane（新模式）",
       "topics": [],
-      "summary": "**SDN 模式**: remote controller computes, installs forwarding tables in routers。Routers 只执行 FT，不自己算。\n\n图: Remote Controller → 控制每 router 的 CA (Control Agent)。",
+      "summary": "**SDN 模式**：远程 controller 计算并安装所有 router 的 forwarding table。Routers/switches 只执行 FT，不自己算路由。\n\n图：Remote Controller → 控制所有 router 的 CA（Control Agent）。",
       "key_points": [
-        "Remote controller 算 FT",
-        "下发到每 router",
-        "Routers 退化为 'dumb pipe' (DP only)",
+        "Remote controller 全局视图",
+        "Controller 算 FT 然后下发",
+        "Routers 退化为 'dumb pipe'（只跑 DP）",
         "详见 lec20"
       ]
     },
     {
-      "title": "Network-Layer Service Model — 表",
+      "title": "Network 层服务模型 — 表",
       "topics": [],
-      "summary": "**比较网络架构的 QoS 保证**:\n\n| Architecture | Service Model | BW | Loss | Order | Timing |\n|---|---|---|---|---|---|\n| **Internet** | best effort | none | no | no | no |\n| **ATM** | Constant Bit Rate | Const rate | yes | yes | yes |\n| **ATM** | Available Bit Rate | Guaranteed min | no | yes | no |\n| **Internet** | Intserv Guaranteed (RFC 1633) | yes | yes | yes | yes |\n| **Internet** | Diffserv (RFC 2475) | possible | possibly | possibly | no |",
+      "summary": "**对比不同网络架构的 QoS 保证**：\n\n| 架构 | 服务模型 | 带宽 | 丢包 | 顺序 | 时序 |\n|---|---|---|---|---|---|\n| **Internet** | best effort | 无 | 不保 | 不保 | 不保 |\n| **ATM** | Constant Bit Rate | 恒定 | 保 | 保 | 保 |\n| **ATM** | Available Bit Rate | 保证最小 | 不保 | 保 | 不保 |\n| **Internet** | IntServ Guaranteed (RFC 1633) | 保 | 保 | 保 | 保 |\n| **Internet** | DiffServ (RFC 2475) | 可能 | 可能 | 可能 | 不保 |",
       "key_points": [
-        "**Internet best-effort**: 无任何保证",
-        "**ATM CBR**: 固定速率",
-        "**ATM ABR**: 保证最小",
-        "**IntServ**: QoS 保证",
-        "**DiffServ**: 可能保证（marking）"
+        "**Internet best-effort**：什么都不保证",
+        "**ATM CBR**：固定速率",
+        "**ATM ABR**：保证最小带宽",
+        "**IntServ**：完整 QoS 保证",
+        "**DiffServ**：分类 QoS（标记 packet）"
       ],
-      "explanation": "**Internet best-effort 的含义**：\n- 不保证 packet 一定到达\n- 不保证带宽\n- 不保证顺序\n- 不保证延迟\n\n**ATM (Asynchronous Transfer Mode)**: 1990s 替代方案，提供 QoS。复杂，最终没赢过 IP+best-effort。\n\n**IntServ**: per-flow QoS reservation。Scalability 问题 (router 要为每 flow 记状态)。\n\n**DiffServ**: 类别化 QoS（packet 打 tag），更可扩展，部分采用。"
+      "explanation": "### Internet best-effort 的含义\n- 不保证 packet 一定到达\n- 不保证带宽\n- 不保证顺序\n- 不保证延迟\n\n**这就是 Internet 的本质 service model**。\n\n### ATM（Asynchronous Transfer Mode）\n1990 年代的替代方案，提供 QoS 保证。复杂，最终没赢过 IP + best-effort。\n\n### IntServ vs DiffServ\n- **IntServ**：per-flow 资源预留。复杂，每 router 要维护每 flow 的状态，难扩展。\n- **DiffServ**：类别化 QoS（packet 打 tag），扩展性好，部分采用。"
     },
     {
-      "title": "Service Model — 完整表 (复习)",
+      "title": "Network 层服务模型 — 完整表（复习）",
       "topics": [],
-      "summary": "(同上表，完整列出 5 个 service model 的 QoS 保证)。",
+      "summary": "同上一页，把 5 种服务模型的 QoS 保证完整列出。",
       "key_points": [
-        "重复表 — 5 个 service model 对比"
+        "重复表 — 5 种 service model 对比"
       ]
     },
     {
-      "title": "Reflections on Best-Effort Service",
+      "title": "Best-Effort 服务的反思",
       "topics": [],
-      "summary": "**为什么 Internet 选 best-effort**:\n\n(1) **Simplicity of mechanism** allowed Internet to be widely deployed adopted。\n\n(2) **Why packet-switching?** 无 BW waste upon bursty traffic; allow multiplexing over same set of links。\n\n(3) **Why best-effort?** Simpler (no BW reservation); easier to survive failures。\n\n**结论**: It's hard to argue with success of best-effort service model。",
+      "summary": "**为什么 Internet 选 best-effort**：\n\n1. **Simplicity of mechanism**：简单 → 广泛部署、广泛采用\n2. **为什么 packet-switching**：bursty 流量不浪费 + 同链路多路复用\n3. **为什么 best-effort**：简单（无需 BW 预留）+ 容易在故障下生存\n\n**结论**：It's hard to argue with success of best-effort service model.",
       "key_points": [
-        "Simplicity → widespread deployment",
-        "Packet-switching: bursty 不浪费 + multiplex",
-        "Best-effort: 简单 + 容错",
-        "事实证明: 'success' argument"
+        "Simplicity → 广泛部署",
+        "Packet-switching：bursty 高效 + 多路复用",
+        "Best-effort：简单 + 容错",
+        "事实证明它成功了"
       ],
-      "explanation": "**核心 wisdom**: 不要为 99% 用例不存在的功能（如 strict QoS）增加复杂度。Internet 赢就赢在『差不多够用，但极简、极开放、极可扩展』。\n\n**对比**: ATM 当年承诺更好的 QoS，但复杂度高，最终被 IP+best-effort 打败。"
+      "explanation": "### 核心 wisdom\n不要为 99% 用例不存在的功能（如严格 QoS）增加复杂度。Internet 的成功在于『差不多够用，但极简、极开放、极可扩展』。\n\n### 对比 ATM\nATM 当年承诺更好的 QoS，但复杂度高，最终败给 IP + best-effort。\n\n### End-to-end argument 应用\n复杂功能（如可靠传输 = TCP）放到端，不放进网络中间。这就让网络中间能保持简单。"
     },
     {
       "title": "Network Layer Data Plane Roadmap — 进入 router 内部",
       "topics": [],
-      "summary": "目录: 接下来讲 'What's inside a router' — input ports, switching, output ports, buffer mgmt, scheduling。",
+      "summary": "目录回顾：接下来讲 'What's inside a router' — input ports, switching fabric, output ports, buffer management, scheduling。",
       "key_points": [
         "进入 router 架构详讲"
       ]
     },
     {
-      "title": "Router Architecture Overview — High-Level",
+      "title": "Router 架构概览（high-level）",
       "topics": [],
-      "summary": "**High-level view of generic router**:\n\n- **Routing processor**: routing, management — control plane (软件), ms 级\n- **Forwarding data plane** (硬件), ns 级\n- **High-speed switching fabric**: 连 input + output ports\n- **Input ports** ← packets in\n- **Output ports** ← packets out",
+      "summary": "**Generic router 高层视图**：\n\n- **Routing processor**：routing + management，**控制面**（软件，ms 时间尺度）\n- **High-speed switching fabric**：连 input ports 和 output ports\n- **Forwarding data plane**：硬件，**ns 时间尺度**\n- **Router input ports** ← packet 进\n- **Router output ports** → packet 出",
       "key_points": [
-        "Routing processor (软件, ms): CP",
-        "Switching fabric + ports (硬件, ns): DP",
+        "Routing processor（软件，ms）：CP",
+        "Switching fabric + ports（硬件，ns）：DP",
         "Input ports + Output ports",
-        "两个时间尺度: ms vs ns"
+        "两个时间尺度：ms vs ns"
       ]
     },
     {
-      "title": "Router Architecture — 类比 (火车站)",
+      "title": "Router 架构类比（火车站）",
       "topics": [],
-      "summary": "Analogy view: \n- **Station manager**: routing & management (control plane)\n- **Roundabout**: forwarding data plane\n- **Entry stations** → **roundabout** → **exit roads**",
+      "summary": "Analogy 视图：\n- **Station manager** = routing & management（控制面）\n- **Roundabout（转盘）** = forwarding data plane\n- **Entry stations** → **roundabout** → **exit roads**",
       "key_points": [
-        "Manager (CP) = 火车站长 (规划调度)",
-        "Roundabout (DP) = 转盘 (实际通过)",
+        "Manager（CP）= 火车站长（规划调度）",
+        "Roundabout（DP）= 转盘（实际通过）",
         "类比帮助理解 CP/DP 分离"
       ]
     },
     {
-      "title": "Input Port Functions (1) — Lookup + Forwarding",
+      "title": "Input Port 功能（1）— Lookup + Forwarding",
       "topics": [],
-      "summary": "**Input port** 三阶段:\n\n1. **Line termination** + physical layer: bit-level reception\n2. **Link layer protocol** (receive): e.g. Ethernet\n3. **Lookup, forwarding, queueing**: decentralized switching\n   - **Match plus action** (FT 在 input port memory)\n   - 用 header field values lookup output port\n   - **目标**: complete input port processing at 'line speed'\n   - Input port queueing: if datagrams arrive faster than fabric rate",
+      "summary": "**Input port 三阶段**：\n\n1. **Line termination + 物理层**：bit-level 接收\n2. **链路层协议**（receive）：例如 Ethernet\n3. **Lookup / forwarding / queueing**：去中心化 switching\n   - **Match + action**：FT 存在 input port memory 里\n   - 用 header 字段值 lookup output port\n   - **目标**：line-speed 处理\n   - Input port queueing：如果 datagram 到达比 fabric 转发快",
       "key_points": [
-        "Input port 三阶段: physical → link → lookup",
-        "Lookup 在 input port memory (FT cache)",
-        "Goal: line speed processing",
-        "Decentralized switching (每 port 自己查表)",
-        "**Match plus action** abstraction"
+        "Input port 三阶段：物理 → 链路 → lookup",
+        "Lookup 在 input port memory（FT cache）",
+        "目标：line speed",
+        "Decentralized switching（每 port 自己查表）",
+        "**Match + action** 抽象"
       ],
-      "explanation": "**Decentralized switching**: 每 input port 有自己的 FT 复本，独立查表。避免单点瓶颈。\n\n**Line speed**: 10 Gbps Ethernet 上 packet 间隔几十 ns，input port 必须在这个时间内完成 lookup → output port 决策。所以硬件实现（ASIC/TCAM）。"
+      "explanation": "### Decentralized switching\n每个 input port 有自己的 FT 副本，独立查表。避免单点瓶颈。\n\n### Line speed 要求\n10 Gbps Ethernet 上 packet 间隔几十 ns，input port 必须在这个时间内完成 lookup → output port 决策。所以硬件实现（ASIC/TCAM）。"
     },
     {
-      "title": "Input Port Functions (2) — Destination vs Generalized Forwarding",
+      "title": "Input Port 功能（2）— Destination vs Generalized Forwarding",
       "topics": [],
-      "summary": "两种 forwarding 模式:\n\n(1) **Destination-based forwarding** (传统): forward based only on **destination IP address**。\n\n(2) **Generalized forwarding**: forward based on **any set of header field values** (L2/L3/L4 多字段)。",
+      "summary": "两种 forwarding 模式：\n\n1. **Destination-based forwarding**（传统）：仅基于 **destination IP address** 转发\n2. **Generalized forwarding**：基于 **任意 header 字段集合**（L2/L3/L4 多字段）转发",
       "key_points": [
-        "Destination-based: 只看 dst IP",
-        "Generalized: 看任意 header 字段 (SDN/OpenFlow)",
+        "Destination-based：只看 dst IP",
+        "Generalized：任意 header 字段（SDN / OpenFlow）",
         "两种都是 'match + action'"
       ],
-      "explanation": "**Destination-based 是历史**: 古典 router 只按 dst IP 转发。\n\n**Generalized 是现代**: SDN/OpenFlow 让一台设备能做 router + firewall + NAT + load balancer 等多种 box 的事（用同一个 flow table）。详见 lec20。"
+      "explanation": "### Destination-based 是历史\n古典 router 只按 dst IP 转发。\n\n### Generalized 是现代\nSDN/OpenFlow 让一台设备能做 router + firewall + NAT + load balancer 等多种事（用同一个 flow table）。详见 lec20。"
     },
     {
       "title": "Destination-Based Forwarding",
       "topics": [],
-      "summary": "传统 router: forwarding table 按 dst IP 范围分。例: 3 个 link interface (0, 1, 2, 3)，每个负责一段 dst IP 范围。\n\n**Q: 但 ranges 不整齐怎么办？** → 下页 Longest Prefix Matching。",
+      "summary": "传统 router 按 dst IP 范围分。例：3 个 link interface (0, 1, 2, 3)，每个负责一段 dst IP 范围。\n\n**Q**：但如果 ranges 不整齐（不连续，不对齐 2 的幂）怎么办？\n**A**：下一页讲 Longest Prefix Matching。",
       "key_points": [
-        "Forwarding table: dst IP range → interface",
-        "Ranges 可能不整齐 (CIDR)",
-        "→ Longest Prefix Matching (LPM)"
+        "FT: dst IP range → interface",
+        "Ranges 可能不整齐（CIDR）",
+        "→ Longest Prefix Matching"
       ]
     },
     {
-      "title": "Longest Prefix Matching — 概念",
+      "title": "Longest Prefix Matching — 概念 ⭐",
       "topics": [],
-      "summary": "**Longest prefix match**: when looking for forwarding table entry for given dst address, **use longest address prefix that matches dst address**。\n\nTable 例:\n- 11001000 00010111 00010*** ********  → Link 0\n- 11001000 00010111 00011000 ********  → Link 1\n- 11001000 00010111 00011*** ********  → Link 2\n- otherwise → Link 3",
+      "summary": "**LPM**：查 forwarding table 时，**选匹配前缀位数最长的那条 entry**。\n\n表例（来自课件）：\n- `11001000 00010111 00010***` ******** → Link 0\n- `11001000 00010111 00011000` ******** → Link 1\n- `11001000 00010111 00011***` ******** → Link 2\n- otherwise → Link 3",
       "key_points": [
-        "Multiple matching rules → 选 longest",
-        "通配符 * 在 rule 中",
-        "Examples: 11001000.00010111.00010110.10100001 → which interface?",
-        "11001000.00010111.00011000.10101010 → ?"
+        "多条 rule 匹配时 → 选最长前缀的",
+        "通配符 `*` 在 rule 里",
+        "Examples 在后面几页"
       ]
     },
     {
-      "title": "LPM 例 1 — match!",
+      "title": "LPM 例 1 — match 第一条规则",
       "topics": [],
-      "summary": "Packet dst = 11001000.00010111.00010110.10100001\n\nCompare with rules:\n- 11001000.00010111.00010***.******** (Link 0) → **位 25-27 = 011, rule 是 010 → 不匹配**\n\n等等，再看：实际匹配标识：第一条规则 (Link 0) 的前缀是 `11001000 00010111 00010***`，packet 前 27 位是 `11001000 00010111 00010110` (高 27 位的最后 3 位 = 110)。Rule 的最后 3 个 * 是通配，所以前 24 位 + 接下来 3 位 = 110 不约束。**匹配**！\n\n→ **Link 0**.",
+      "summary": "Packet dst = `11001000 00010111 00010110 10100001`。\n\n比较：第一条规则前缀 `11001000 00010111 00010***`（高 27 位的 24 位 + 3 位）。packet 前 24 位匹配，位 25-27 = `010`（packet 第三段 00010110 的前 3 位）== `010` ✓ → **匹配 Rule 0**。\n\n→ **Link 0**。",
       "key_points": [
         "Packet: 11001000.00010111.00010110.10100001",
-        "Rule 0 (Link 0): 11001000.00010111.00010*** (/27)",
-        "前 24 位匹配 + 高 3 位（位 25-27）= 010 == 010 ✓",
-        "**Match!**",
-        "→ Link 0"
+        "Rule 0 前缀 `00010***` 第 25-27 位 = 010",
+        "Packet 第 25-27 位也是 010 → match!",
+        "**→ Link 0**"
       ]
     },
     {
       "title": "LPM 例 1 — 详细匹配标注",
       "topics": [],
-      "summary": "把匹配过程画出来:\n- 11001000 00010111 **00010***  ******** = rule 0\n- 11001000 00010111 **00010110** 10100001 = packet\n\n前 24 位 11001000 00010111 一致，位 25-27 = 010 一致。后 5 位（包含 4 位通配 + 后 1 位）不约束。\n\n所以 packet 匹配 rule 0，去 **Link 0**.",
+      "summary": "标记『match!』在表上：Rule 0（00010***）的前 24 位 + 3 位 010 都跟 packet 一致 → 匹配。\n\n这是 5 张 LPM 例图中的第 2 张。",
       "key_points": [
-        "前 24 位 = 11001000.00010111 一致",
-        "位 25-27 = 010 == 010 ✓",
-        "Rule /27 prefix 完全匹配",
+        "图示『match!』在表的 Rule 0 旁",
+        "前 24 位 + 3 位通配前 = 完全匹配",
         "→ Link 0"
       ]
     },
     {
       "title": "LPM 例 2 — 第二个 packet",
       "topics": [],
-      "summary": "Packet dst = 11001000.00010111.00011000.10101010\n\n比较多个 rules:\n- Rule 0 (00010***): 前 24 位匹配，位 25-27 = 011，rule 是 010 → 不匹配\n- Rule 1 (00011000): 前 24 位匹配，位 25-32 = 00011000 == 00011000 ✓ **匹配** (/32)\n- Rule 2 (00011***): 前 24 位匹配，位 25-27 = 011 == 011 ✓ **匹配** (/27)\n\n**多个 matching → 选 longest prefix**: Rule 1 (/32) > Rule 2 (/27) > otherwise (/0)\n\n→ **Link 1**.",
+      "summary": "Packet dst = `11001000 00010111 00011000 10101010`。\n\n比较多条规则：\n- Rule 0（00010***）：位 25-27 应为 010，packet 是 110 → **不匹配**\n- Rule 1（00011000）：位 25-32 = 00011000，packet 是 00011000 → **匹配**（/32）\n- Rule 2（00011***）：位 25-27 = 011，packet 是 110，**第 4 位**？位 25-27 = 110 != 011，实际：packet 第三段是 00011000，位 25-27 = 000，rule 2 是 011，**应该不匹配**。\n\n等等，让我重看：packet 第三段是 `00011000`，前 3 位 = `000`。Rule 2 `00011***` 前 5 位 = `00011`，packet 前 5 位是 `00011` → **匹配** /27。\n\n所以 **Rule 1 (/32) > Rule 2 (/27)** → Link 1。",
       "key_points": [
-        "Packet: ...00011000.10101010",
-        "Rule 1 (/32) 匹配",
-        "Rule 2 (/27) 也匹配",
-        "**Choose longest**: /32 > /27",
-        "→ Link 1"
+        "Packet 第三段 = 00011000",
+        "Rule 1 完全匹配 packet (/32)",
+        "Rule 2 (/27) 也匹配前 27 位",
+        "**选最长 → Rule 1 → Link 1**"
       ]
     },
     {
       "title": "LPM 例 2 — 详细匹配标注",
       "topics": [],
-      "summary": "Packet 11001000.00010111.**00011000**.10101010 完全匹配 Rule 1 (11001000.00010111.00011000.********), Rule 1 是 /32 但实际 /24 (注意 *)。等价于 /24 完全匹配。\n\n实际课件细节: Rule 1 是 'first 24 bits = 11001000.00010111.00011000'，第二个 8 位段是 `00011000`，所以是 /24。Packet 满足。",
+      "summary": "标记『match!』在表上：Rule 1 完全匹配（/32）；Rule 2 也匹配（/27）；选 **最长前缀** Rule 1 → **Link 1**。",
       "key_points": [
-        "Rule 1 完全匹配 packet (/24)",
-        "选 longest prefix → Link 1"
-      ]
-    },
-    {
-      "title": "Longest Prefix Matching — TCAM + 实际意义",
-      "topics": [],
-      "summary": "**Why LPM**: 后面学 addressing 时会发现 LPM 是 IP 寻址自然结构。\n\n**Often performed using ternary content addressable memories (TCAMs)**:\n- Content addressable: present address to TCAM → retrieve address in **one clock cycle**, regardless of table size\n- Cisco Catalyst: ~1M routing table entries in TCAM",
-      "key_points": [
-        "LPM 在 IP 层级寻址下自然",
-        "**TCAM**: ternary content addressable memory",
-        "支持 0/1/* 三种值",
-        "O(1) lookup with wildcards",
-        "Cisco: ~1M entries"
+        "Rule 1 (/32) 完全匹配 → 最长",
+        "→ Link 1",
+        "这是 LPM 的核心选择规则"
       ],
-      "explanation": "**为什么 TCAM**:\n- 普通 RAM 只存 0/1，要查 LPM 必须串行扫描多 entries\n- TCAM 支持通配符 *，并行匹配所有 entries\n- 一个时钟周期完成 lookup, regardless of table size\n\n**缺点**: 贵 + 耗电 + 容量有限。\n\n**容量**: Cisco 高端路由器 ~1M TCAM entries，刚好覆盖 BGP 全表 (~100 万)。\n\n**考点**: 『LPM 为什么 TCAM？』答: 并行匹配带通配符的 entries，O(1)。"
+      "explanation": "### LPM 选择规则（必背）\n1. 列出所有匹配的 rule\n2. 选**有效前缀位数最多**的那条\n3. 这就是 'longest prefix match'\n\n**易错**：很多人误以为 rule 顺序决定（first match），其实是 longest match。"
     },
     {
       "title": "Switching Fabrics — 概念",
       "topics": [],
-      "summary": "**Switching fabric**: transfer packet from input link to appropriate output link。\n\n**Switching rate**: rate at which packets transfer from inputs to outputs。常 measured as multiple of input/output line rate。**N inputs: switching rate N times line rate desirable**。",
+      "summary": "**Switching fabric**：把 packet 从 input link 转到合适的 output link。\n\n**Switching rate**：fabric 每秒能转的 packet 数。常用 input/output line rate 的倍数衡量。**N 个 input port：需要 fabric rate 是 line rate 的 N 倍才不会堵**。\n\n图：N 个 input → high-speed switching fabric → N 个 output。",
       "key_points": [
-        "Fabric 把 input 转给 output",
+        "Fabric 把 input → output",
         "Switching rate ≥ N × line rate 才不堵",
-        "三类: memory / bus / interconnection (下页)"
+        "三类 fabric（下一页）"
+      ],
+      "explanation": "**为什么要 N 倍 line rate**：所有 N 个 input port 满速进来，fabric 必须能同时处理 N × R 的总速率。否则 input port 会排队（HOL blocking 也跟这有关）。"
+    },
+    {
+      "title": "Switching Fabrics — 三大类",
+      "topics": [],
+      "summary": "Switching fabric 三大类：\n\n1. **Memory**（第一代 router）：CPU 控制，包过 memory 两次\n2. **Bus**：共享 bus 连所有 ports\n3. **Interconnection network**（Crossbar / Clos）：多级开关网，现代高端",
+      "key_points": [
+        "**Memory**：1980s-90s 第一代",
+        "**Bus**：共享总线",
+        "**Interconnection**：现代（Crossbar, Clos）"
       ]
     },
     {
-      "title": "Switching Fabrics — 三类",
+      "title": "Switching via Memory — 第一代 router",
       "topics": [],
-      "summary": "**Three major types of switching fabrics**:\n\n1. **Memory** (1st gen routers)\n2. **Bus** (shared bus)\n3. **Interconnection network** (Crossbar, Clos)",
+      "summary": "**First generation routers**：传统计算机，switching 由 CPU 直接控制。Packet 复制到系统 memory。\n\n**速度受限于 memory bandwidth**：每个 datagram 需要 **2 次 bus crossing**（input → memory，memory → output）。",
       "key_points": [
-        "**Memory**: 早期 routers",
-        "**Bus**: 共享 bus",
-        "**Interconnection**: 现代高端 (Crossbar, Clos)"
-      ]
-    },
-    {
-      "title": "Switching via Memory",
-      "topics": [],
-      "summary": "**First generation routers**: traditional computers with switching under direct control of CPU. Packet copied to system's memory. Speed limited by memory bandwidth (**2 bus crossings per datagram**).",
-      "key_points": [
-        "1st gen routers (1980s-90s)",
-        "Switching by CPU 控制",
+        "1980s-90s 第一代 router",
+        "CPU 控制 switching",
         "Packet 过 memory 两次",
-        "速度 limited by memory BW",
+        "速度限于 memory bandwidth",
         "现已淘汰"
       ],
-      "explanation": "**为什么 2 次 bus crossings**:\n1. Input port → memory (write)\n2. Memory → output port (read)\n\n每个 packet 进出 memory 都消耗 bus 带宽 → 总带宽减半。\n\n**慢**: 早期 routers throughput 不高，主要瓶颈是 memory bus。"
+      "explanation": "### 为什么 2 次 bus crossing\n1. Input port → memory（写入）\n2. Memory → output port（读出）\n\n每个 packet 进出 memory 都消耗 bus 带宽 → 总带宽减半。\n\n### 慢的原因\n早期 router throughput 不高，主要瓶颈是 memory bus。"
     },
     {
-      "title": "Switching via a Bus",
+      "title": "Switching via a Bus — 共享总线",
       "topics": [],
-      "summary": "**Datagram from input port memory to output port memory via shared bus**. \n\n**Bus contention**: switching speed limited by bus bandwidth. **32 Gbps bus, Cisco 5600**: sufficient for access routers。",
+      "summary": "**Datagram 通过共享 bus 从 input port memory 直接到 output port memory**。\n\n**Bus contention**：switching 速度限于 bus 带宽。\n\n**例**：32 Gbps bus, Cisco 5600 — 足够 access router 使用。",
       "key_points": [
         "共享 bus 连所有 input/output ports",
         "Bus contention 是瓶颈",
@@ -2295,54 +2281,53 @@
     {
       "title": "Switching via Interconnection Network",
       "topics": [],
-      "summary": "**Crossbar, Clos networks, other interconnection nets** initially developed to connect processors in multiprocessor。\n\n**Multistage switch**: n×n switch from multiple stages of smaller switches。\n\n**Exploiting parallelism**:\n(a) Fragment datagram into fixed length cells on entry\n(b) Switch cells through fabric\n(c) Reassemble datagram at exit\n\n例: 3×3 crossbar; 8×8 multistage switch built from smaller switches。",
+      "summary": "**Crossbar、Clos networks** 等互联网络最初为连接多处理器中的处理器而开发。\n\n**Multistage switch**：n×n 大 switch 由多级小 switch 组成。\n\n**利用并行**：\n- 入口处把 datagram 切成定长 cell\n- Cells 经 fabric 传输\n- 出口处把 datagram 重组\n\n例：3×3 crossbar；8×8 multistage switch 由小 switch 组成。",
       "key_points": [
         "Crossbar / Clos networks",
-        "Multistage: 大 switch 由小 switch 组成",
-        "Fragment datagram → cells → switch → reassemble",
+        "Multistage：大 switch 由小 switch 组成",
+        "Datagram → cells → switch → reassemble",
         "高度并行",
         "现代高端 router 用这种"
       ]
     },
     {
-      "title": "Switching via Interconnection — 多 fabric planes",
+      "title": "Switching via Interconnection — 多 fabric plane 并行",
       "topics": [],
-      "summary": "**Scaling**: 多个 switching planes 并行。**Speedup, scaleup via parallelism**。\n\n**Cisco CRS router**:\n- 基本单位: **8 switching planes**\n- 每 plane: 3-stage interconnection network\n- **Up to 100s Tbps switching capacity**",
+      "summary": "**Scaling**：多个 switching planes 并行。**Speedup, scaleup via parallelism**。\n\n**Cisco CRS router**：\n- 基本单元：8 个 switching planes\n- 每 plane：3 级互联网络\n- **总 switching capacity 可达 100s Tbps**",
       "key_points": [
         "多个 fabric planes 并行",
-        "Cisco CRS: 8 planes × 3-stage",
+        "Cisco CRS：8 planes × 3-stage",
         "**100s Tbps switching capacity**",
         "顶级 ISP backbone router"
       ]
     },
     {
-      "title": "Input Port Queuing — HOL Blocking",
+      "title": "Input Port Queuing — HOL Blocking ⭐",
       "topics": [],
-      "summary": "**If switch fabric slower than input ports combined → queueing may occur at input queues**. Queueing delay + loss due to input buffer overflow!\n\n**Head-of-the-Line (HOL) blocking**: queued datagram at front of queue prevents others in queue from moving forward。\n\n例: output port contention. 队头 red datagram 等输出，绿和蓝包卡在后面动不了。",
+      "summary": "**如果 switch fabric 比 input port 加起来慢 → input 排队**。**Queueing delay 和 input buffer overflow loss**。\n\n**Head-of-the-Line (HOL) blocking**：队头的 datagram 阻碍后面的人前进。\n\n例：output port 竞争 → 只有一个红色 datagram 能转过去，后面的 datagram 即使去其他 output 也卡住。",
       "key_points": [
         "Fabric 慢 → input 排队",
-        "**HOL blocking**: 队头堵后面动不了",
-        "Output port contention 导致",
-        "下页讲怎么解（VOQ）"
+        "**HOL blocking**：队头堵 → 后面动不了",
+        "Output port contention 引发",
+        "解药：VOQ（virtual output queue）"
       ],
-      "explanation": "**经典例**: input port 队列 [红→outputA, 绿→outputB, 蓝→outputC]。如果 outputA 此时 busy（另一个 input 也想发到 A），红色队头被堵 → 绿和蓝（其实可以同时发到 B 和 C）卡在红后面 → **HOL blocking**。\n\n**解药**: VOQ (Virtual Output Queue) — input port 为每个 output port 分开维护队列。这样不同 output 不互相阻塞。"
+      "explanation": "### 经典例\nInput port 队列：[红→outputA, 绿→outputB, 蓝→outputC]。如果 outputA 此时 busy（另一个 input 也想发到 A），红色队头被堵 → 绿和蓝（其实可以同时发到 B 和 C）卡在红色后面 → **HOL blocking**。\n\n### 解药：VOQ\nInput port 为每个 output port 分开维护队列。这样不同 output 不互相阻塞。\n\n### 考点\n『HOL blocking 是什么？怎么解？』必答：队头堵后面 + VOQ。"
     },
     {
-      "title": "Output Port Queuing",
+      "title": "Output Port Queuing — 概念",
       "topics": [],
-      "summary": "**Datagram buffer at output port**: switch fabric → buffer → link layer protocol (send) → line termination → R。\n\n**Buffering required when datagrams arrive from fabric faster than link transmission rate**。Drop policy: which datagrams to drop if no free buffers? Scheduling discipline: priority among queued datagrams。",
+      "summary": "**Output port** 处理：switch fabric → datagram buffer → link layer protocol (send) → line termination → R。\n\n**Buffering 必要**：当 datagram 从 fabric 来得比 link 发送速率快。\n\n**Drop policy**：buffer 满了丢哪个？\n**Scheduling discipline**：哪个 queued datagram 先发？涉及 priority + network neutrality。",
       "key_points": [
-        "Fabric 快于 link rate → output 排队",
+        "Fabric 比 link 快 → output 排队",
         "Buffering 必要",
         "Drop policy 决定丢哪个",
-        "Scheduling 决定先发哪个",
-        "Priority scheduling 涉及 network neutrality"
+        "Scheduling 决定先发哪个"
       ]
     },
     {
       "title": "Output Port Queuing — 第二张图",
       "topics": [],
-      "summary": "图示 packets more from input to output at time t, vs one packet time later。**Buffering when arrival rate via switch exceeds output line speed**。**Queueing (delay) + loss due to output port buffer overflow!**",
+      "summary": "图示：t 时刻多个 packet 从 input 到 output；one packet time later 还有 packet 在排队。\n\n**Buffering when arrival rate via switch exceeds output line speed**。\n**Queueing delay 和 output port buffer overflow loss**。",
       "key_points": [
         "Arrival > output line speed → 排队",
         "Buffer 溢出 → 丢包",
@@ -2350,46 +2335,46 @@
       ]
     },
     {
-      "title": "Buffer Management",
+      "title": "Buffer Management — Drop + Marking",
       "topics": [],
-      "summary": "**Buffer management**:\n\n**Drop policy** — which packet to add/drop when buffers full:\n- **Tail drop**: drop arriving packet\n- **Priority**: drop/remove on priority basis\n\n**Marking** — which packets to mark to signal congestion (**ECN, RED**)",
+      "summary": "**Buffer management 两件事**：\n\n**Drop**：buffer 满时丢哪个？\n- **Tail drop**：丢新到的\n- **Priority**：按 priority 丢/挪\n\n**Marking**：哪些 packet 标记表示拥塞？**ECN, RED**",
       "key_points": [
         "Drop policy: tail drop / priority",
-        "**Marking**: ECN, RED 提前打标",
-        "缓冲区耗尽时的策略"
+        "**Marking**：ECN, RED 提前打标",
+        "缓冲耗尽时的策略"
       ],
-      "explanation": "**Tail drop**: 最简单，buffer 满了就丢新来的。\n\n**Priority drop**: 优先丢低优先级 packet (DSCP marking)。\n\n**ECN** (Explicit Congestion Notification): 不丢，给 packet 打 mark → sender 看到后减速 → 避免实际丢包。\n\n**RED** (Random Early Detection): buffer 还没满就开始随机丢，提前给 sender 信号。"
+      "explanation": "### Drop policies\n- **Tail drop**：最简单，buffer 满就丢新到的\n- **Priority drop**：优先丢低优先级 packet（DSCP marking）\n\n### Marking 策略\n- **ECN**（Explicit Congestion Notification）：不丢，给 packet 打 mark → sender 看到后减速 → 避免实际丢包\n- **RED**（Random Early Detection）：buffer 还没满就开始随机丢，提前给 sender 信号"
     },
     {
-      "title": "Packet Scheduling: FCFS",
+      "title": "Packet Scheduling — FCFS",
       "topics": [],
-      "summary": "**Packet scheduling**: deciding which packet to send next on link。\n\nVarieties:\n- **First Come First Served (FCFS)** = FIFO\n- Priority\n- Round Robin\n- Weighted Fair Queueing\n\n**FCFS**: packets transmitted in order of arrival to output port。Also known as First-in-first-out (FIFO)。",
+      "summary": "**Packet scheduling**：决定下一个发哪个 packet 出 link。\n\n选项：\n- **First Come First Served (FCFS)** = FIFO\n- Priority\n- Round Robin\n- Weighted Fair Queueing\n\n**FCFS**：packet 按到达 output port 的顺序发。也叫 First-in-first-out。",
       "key_points": [
         "FCFS = FIFO",
-        "Packets 按到达顺序发",
+        "按到达顺序发",
         "最简单",
-        "Real world: 银行排队"
+        "Real world：银行排队"
       ]
     },
     {
       "title": "Scheduling — Priority",
       "topics": [],
-      "summary": "**Priority scheduling**:\n- Arriving traffic classified (by any header field), queued by class\n- Send packet from **highest priority** queue that has buffered packets\n- **FCFS within priority class**",
+      "summary": "**Priority scheduling**：\n- Arriving traffic 按字段（如 header）分类\n- 优先级队列各自排\n- **从最高优先级队列**发（如果有 packet）\n- **同优先级内 FCFS**",
       "key_points": [
-        "Classify by header fields (e.g. DSCP)",
-        "**Highest priority first**",
-        "FCFS within same priority",
-        "Risk: low-priority starve"
+        "按 header 字段分类（如 DSCP）",
+        "**最高优先级先发**",
+        "同优先级内 FCFS",
+        "风险：低优先级饿死"
       ],
-      "explanation": "**Example**: VoIP 流量优先级高 → 总优先于 web 流量。\n\n**Risk**: 高优先级可能 starve 低优先级。需要 admission control 限制高优先级流量。"
+      "explanation": "### 例\nVoIP 流量优先级高 → 总是优先于 web 流量。\n\n### 风险\n高优先级可能 starve 低优先级。需要 admission control 限制高优先级流量。"
     },
     {
       "title": "Scheduling — Round Robin (RR)",
       "topics": [],
-      "summary": "**Round Robin (RR) scheduling**:\n- Arriving traffic classified, queued by class\n- Server **cyclically, repeatedly scans class queues**, sending one complete packet from each class (if available) in turn",
+      "summary": "**Round Robin scheduling**：\n- Arriving traffic 按 class 分类\n- Server 循环扫描每个 class queue\n- 每轮从每个 class 发一个 packet（如有的话）",
       "key_points": [
-        "Cyclic scan classes",
-        "Each round: one packet per class",
+        "循环扫描 classes",
+        "每轮：每 class 发一个 packet",
         "Classes 平等",
         "简单 + 公平"
       ]
@@ -2397,39 +2382,49 @@
     {
       "title": "Scheduling — Weighted Fair Queueing (WFQ)",
       "topics": [],
-      "summary": "**WFQ**: generalized Round Robin。Each class i has weight w_i, gets weighted amount of service in each cycle:\n\n$$\\text{Class } i \\text{ share} = \\frac{w_i}{\\sum_j w_j}$$\n\n**Minimum bandwidth guarantee** per traffic class.",
+      "summary": "**WFQ**：RR 的泛化。每 class i 有权重 w_i，每循环得到 **加权服务时间**。\n\n$$\\text{Class } i \\text{ 份额} = \\frac{w_i}{\\sum_j w_j}$$\n\n**每 traffic class 的最小带宽保证**。",
       "key_points": [
-        "WFQ = RR 的加权版",
-        "Class i share = w_i / Σw_j",
-        "Min BW guarantee per class",
-        "Used in QoS-aware routers"
+        "WFQ = 加权 RR",
+        "Class i 份额 = w_i / Σw_j",
+        "保证最小带宽 / class",
+        "QoS-aware router 用"
       ],
-      "explanation": "**直觉**: WFQ 是 RR 的泛化 — 每轮服务每个 class 但量不一样大。\n\n**例**: 3 个 class, weights = [1, 2, 3]。每循环 class 1 发 1 packet, class 2 发 2, class 3 发 3。长期 class i 占 w_i/Σ 带宽。\n\n**Min BW 保证**: 只要 class i 有流量，至少拿到 w_i/Σw_j 的带宽。\n\n**考点**: 给 weights 算 share。"
+      "explanation": "### 直觉\nWFQ 是 RR 的泛化 — 每轮服务每个 class 但量不一样大。\n\n### 例\n3 个 class，weights = [1, 2, 3]。每循环 class 1 发 1 个 packet，class 2 发 2 个，class 3 发 3 个。长期看 class i 占 w_i / Σ 的带宽。\n\n### 最小带宽保证\n只要 class i 有流量，至少拿到 w_i / Σw_j 的带宽。\n\n### 考点\n给 weights 算 share。"
     },
     {
       "title": "Sidebar — Network Neutrality 概念",
       "topics": [],
-      "summary": "**What is network neutrality?**\n\n(1) **Technical**: how ISP shares/allocates resources。Packet scheduling, buffer management are mechanisms。\n\n(2) **Social, economic principles**: 保护 free speech, encouraging innovation, competition。\n\n(3) **Enforced legal rules and policies**。\n\nDifferent countries have different 'takes' on network neutrality.",
+      "summary": "**什么是 network neutrality？**\n\n1. **技术层面**：ISP 怎么分配资源。Packet scheduling、buffer management 是机制。\n2. **社会 / 经济原则**：保护言论自由 + 鼓励创新 + 鼓励竞争。\n3. **法律：规则和政策**。\n\n不同国家对 net neutrality 有不同 'takes'。",
       "key_points": [
-        "Technical: ISP 怎么分配资源",
-        "Social: 言论自由 + 创新 + 竞争",
-        "Legal: 法规执行",
+        "技术：ISP 怎么分配资源",
+        "社会：言论自由 + 创新 + 竞争",
+        "法律：规则执行",
         "各国 'takes' 不同"
       ]
     },
     {
       "title": "Network Neutrality — 2015 FCC Order",
       "topics": [],
-      "summary": "**2015 US FCC Order on Protecting and Promoting an Open Internet**: three 'clear, bright line' rules:\n\n(1) **No blocking** — 'shall not block lawful content, applications, services, or non-harmful devices.'\n\n(2) **No throttling** — 'shall not impair or degrade lawful Internet traffic.'\n\n(3) **No paid prioritization** — 'shall not engage in paid prioritization.'\n\n**ISP: telecommunications or information service?**\n\n- **Title II** (telecommunications): 'common carrier' duties, reasonable rates, non-discrimination, **regulated**\n- **Title I** (information services): no common carrier duties, **not regulated**",
+      "summary": "**2015 年美国 FCC Order on Protecting and Promoting an Open Internet**：三条 'clear, bright line' 规则：\n\n1. **No blocking** — 『shall not block lawful content, applications, services, or non-harmful devices, subject to reasonable network management.』\n\n2. **No throttling** — 『shall not impair or degrade lawful Internet traffic on the basis of Internet content, application, or service, or use of a non-harmful device, subject to reasonable network management.』\n\n3. **No paid prioritization** — 『shall not engage in paid prioritization.』",
       "key_points": [
-        "FCC 2015 三大原则:",
-        "① No blocking",
-        "② No throttling",
-        "③ No paid prioritization",
-        "**Title II** vs **Title I** 分类决定监管",
-        "ISP 想被 Title I 不受约束"
+        "FCC 2015 三大原则：",
+        "① No blocking — 不能阻断合法内容",
+        "② No throttling — 不能限速合法流量",
+        "③ No paid prioritization — 不能付费插队",
+        "subject to 'reasonable network management'"
+      ]
+    },
+    {
+      "title": "ISP — 电信服务还是信息服务？",
+      "topics": [],
+      "summary": "**ISP 是『电信服务』还是『信息服务』提供商**？这从监管角度极重要。\n\n**美国 1934 年和 1996 年电信法**：\n- **Title II**：对电信服务施加 'common carrier duties' — 合理价格、不歧视、必须监管\n- **Title I**：信息服务：无 common carrier 义务（不监管），但 FCC 有 'authority necessary in execution of functions'",
+      "key_points": [
+        "**Title II**（电信）：受监管，必须公平不歧视",
+        "**Title I**（信息）：少监管",
+        "ISP 想被 Title I 不受约束",
+        "Title II / I 分类是 net neutrality 关键斗争点"
       ],
-      "explanation": "**Network Neutrality 的政治背景**：\n- ISP（Comcast、AT&T、Verizon）想根据流量收费（如『付钱给我才能高速访问 Netflix』）\n- 用户和内容提供商（Netflix、Google）反对\n- FCC 监管来回切换：2015 严管（Title II）→ 2017 松绑（Title I）→ 2024 再严\n\n**Title II vs Title I**:\n- **Title II 电信服务**: 像电话公司一样监管。必须『公平、无歧视』。FCC 可以严格管价格、行为。\n- **Title I 信息服务**: 像 web 公司，少监管。ISP 可以自由定价 / 限速。\n\n**考点**: 『FCC 2015 三大原则？』必背 no block / no throttle / no paid prioritization。"
+      "explanation": "### 政治背景\nISP（Comcast、AT&T、Verizon）想根据流量收费（如『付钱给我才能高速访问 Netflix』）。用户和内容提供商（Netflix、Google）反对。\n\nFCC 监管来回切换：2015 严管（Title II）→ 2017 松绑（Title I）→ 2024 再严。\n\n### Title II vs Title I\n- **Title II 电信服务**：像电话公司一样监管。必须『公平、无歧视』。FCC 可以严格管价格、行为。\n- **Title I 信息服务**：像 web 公司，少监管。ISP 可以自由定价 / 限速。\n\n### 考点\n『FCC 2015 三大原则？』必背 no block / no throttle / no paid prioritization。"
     }
   ],
   "lec17": [
