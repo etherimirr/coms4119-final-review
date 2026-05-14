@@ -277,7 +277,7 @@
 </section>
 
 <section>
-<h2>RDT: GBN vs SR <span class="tag">mid Q3</span></h2>
+<h2>RDT: GBN vs SR (Selective Repeat) <span class="tag">mid Q3</span></h2>
 <table>
 <tr><th></th><th>GBN</th><th>SR</th></tr>
 <tr><td>ACK</td><td>cumulative</td><td>per-packet</td></tr>
@@ -348,9 +348,9 @@
 </section>
 
 <section>
-<h2>End-end vs Network-assisted CC</h2>
+<h2>End-end vs Network-assisted Congestion Control</h2>
 <table>
-<tr><th></th><th>End-end CC</th><th>Network-assisted CC</th></tr>
+<tr><th></th><th>End-end congestion control</th><th>Network-assisted congestion control</th></tr>
 <tr><td>反馈</td><td>无来自网络的显式反馈</td><td>路由器直接反馈给 host</td></tr>
 <tr><td>怎么察觉拥塞</td><td>从观察到的 loss / delay 推断</td><td>路由器明确告诉（拥塞级别或速率）</td></tr>
 <tr><td>例</td><td>TCP（默认）</td><td>TCP ECN, ATM, DECbit</td></tr>
