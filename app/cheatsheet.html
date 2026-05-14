@@ -1,4 +1,4 @@
-<!-- CHEATSHEET_VERSION: 36 -->
+<!-- CHEATSHEET_VERSION: 37 -->
 <!--
   COMS 4119 FINAL CHEAT SHEET
   4 sheets organized by course chapter (Kurose-Ross order):
@@ -32,16 +32,7 @@
 <li><b>Data Link</b> — Frame. MAC addr (Ethernet / 802.11). Direct-over-link: <b>ARP</b>.</li>
 <li><b>Physical</b> — Bits</li>
 </ul>
-<table>
-<tbody><tr><th></th><th>UDP</th><th>TCP</th></tr>
-<tr><td>conn</td><td>none</td><td>3WHS</td></tr>
-<tr><td>reliable</td><td>no</td><td>yes</td></tr>
-<tr><td>order</td><td>no</td><td>yes</td></tr>
-<tr><td>flow ctrl</td><td>no</td><td>rwnd</td></tr>
-<tr><td>cong ctrl</td><td>no</td><td>AIMD</td></tr>
-<tr><td>hdr</td><td>8 B</td><td>20 B</td></tr>
-<tr><td>uses</td><td>DNS, RTP, DHCP</td><td>HTTP, SMTP, BGP</td></tr>
-</tbody></table>
+<p class="mini"><b>TCP</b>: 3WHS · reliable, ordered · rwnd flow ctrl · AIMD cong ctrl · 20 B hdr · HTTP/SMTP/BGP. <b>UDP</b>: no conn / reliable / order / flow / cong · 8 B hdr · DNS/RTP/DHCP.</p>
 <p class="mini">Encapsulation: lower layer wraps upper PDU. Demux up</p>
 </section>
 
