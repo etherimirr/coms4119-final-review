@@ -1325,14 +1325,31 @@ async function renderCheatSheet() {
     </div>
     <div class="cheat-host" id="cheatHost">${bodyHtml}</div>`;
   attachCheatHandlers();
-  // One-time localStorage cleanup: nuke stale Q&A and prune stars to allowlist.
-  // Runs only if 4119:ctpp-cleaned-v2 flag missing. Idempotent.
-  if (!localStorage.getItem('4119:ctpp-cleaned-v2')) {
+  // One-time localStorage: nuke stale Q&A only. Star collection is sacred — DO NOT touch.
+  if (!localStorage.getItem('4119:ctpp-cleaned-v3')) {
     try {
       localStorage.removeItem('4119:qa');
-      const KEEP_STARS = ['lec14:6','lec14:7','lec14:20','lec18:27','lec18:38','lec19:25','lec21:2','lec23:27'];
-      localStorage.setItem('4119:stars', JSON.stringify(KEEP_STARS));
-      localStorage.setItem('4119:ctpp-cleaned-v2', '1');
+      // Restore original 41-star collection (rebuilt from prior inventory)
+      const ORIGINAL_STARS = [
+        'lec14:6','lec14:7','lec14:9','lec14:10','lec14:11','lec14:12','lec14:13','lec14:19','lec14:20',
+        'lec16:2',
+        'lec17:12','lec17:13',
+        'lec18:12','lec18:19','lec18:20','lec18:27','lec18:38','lec18:49','lec18:54',
+        'lec19:11','lec19:17','lec19:21','lec19:25','lec19:20',
+        'lec20:4','lec20:34','lec20:40','lec20:42','lec20:43','lec20:44',
+        'lec21:2','lec21:9','lec21:15','lec21:27','lec21:29',
+        'final-preview:14',
+        'lec22:18','lec22:2',
+        'lec23:15','lec23:27',
+      ];
+      // restore only if currently missing or shorter than expected (don't override user's growth)
+      const cur = JSON.parse(localStorage.getItem('4119:stars') || '[]');
+      if (cur.length < ORIGINAL_STARS.length) {
+        // merge: union of current + original
+        const merged = [...new Set([...cur, ...ORIGINAL_STARS])];
+        localStorage.setItem('4119:stars', JSON.stringify(merged));
+      }
+      localStorage.setItem('4119:ctpp-cleaned-v3', '1');
     } catch(e) {}
   }
   // NOTE: auto-merge disabled. Cheatsheet shows only file content. Click "Pull notes" to merge.
