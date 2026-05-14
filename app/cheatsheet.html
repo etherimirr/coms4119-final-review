@@ -34,6 +34,16 @@
 </section>
 
 <section>
+<h2>End-to-End Principle</h2>
+<ul>
+<li>Complex functions go at <b>endpoints</b>, not in the network core</li>
+<li>e.g. reliability: TCP at hosts, not per-hop</li>
+<li>Drives many designs: best-effort IP, IPv6 (no router fragmentation), NAT controversy, RDT at L4</li>
+<li>Cite: Saltzer et al. "End-to-End Arguments in System Design" (1984)</li>
+</ul>
+</section>
+
+<section>
 <h2>Packet vs Circuit Switching</h2>
 <table>
 <tr><th></th><th>Packet</th><th>Circuit</th></tr>
@@ -108,12 +118,32 @@
 <section>
 <h2>HTTP Persistence &amp; Cache</h2>
 <ul>
-<li>Non-persistent (HTTP/1.0): new TCP per object</li>
+<li>Non-persistent (HTTP/1.0): new TCP per object; 2 RTT/obj</li>
 <li>Persistent (HTTP/1.1): reuse TCP for all objects on same server</li>
-<li>Pipelining: send next request before previous response</li>
-<li>Cookie: stateless HTTP + server-side state</li>
-<li><b>Web Cache (proxy)</b>: caches responses; cuts RTT + outbound BW</li>
-<li><b>Conditional GET</b>: <code>If-Modified-Since</code> → server returns 304 (no body) if unchanged</li>
+<li>Pipelining: client sends next request before getting previous response</li>
+<li><b>Web Cache (proxy)</b>: caches responses; cuts RTT + outbound BW; ISP often deploys</li>
+<li><b>Conditional GET</b>: client sends <code>If-Modified-Since: &lt;date&gt;</code>; server returns <b>304 Not Modified</b> (no body) if unchanged, else 200 + body</li>
+</ul>
+</section>
+
+<section>
+<h2>HTTP Cookies</h2>
+<ul>
+<li>HTTP is stateless; cookies add server-side state per user</li>
+<li>4 parts: <b>Set-Cookie</b> header in response → cookie file on client → <b>Cookie</b> header in next request → server backend DB</li>
+<li>First visit: server assigns ID (e.g. <code>amazon: 1678</code>); client sends ID on each subsequent request</li>
+<li>Uses: shopping cart, auth state, ad tracking</li>
+<li><b>GDPR</b>: EU regulation forces explicit consent</li>
+</ul>
+</section>
+
+<section>
+<h2>HTTP/2 + HTTP/3</h2>
+<ul>
+<li><b>HTTP/1.1 problem</b>: FCFS server response → small obj blocked behind large (HOL)</li>
+<li><b>HTTP/2</b> (RFC 7540, 2015): single TCP; split objects into <b>frames</b>; client priority; can <b>push</b> unrequested objects; interleave frames mitigates HOL</li>
+<li><b>HTTP/2 limit</b>: still 1 TCP → TCP packet loss stalls all objects</li>
+<li><b>HTTP/3</b>: over UDP (QUIC); per-object congestion control + error recovery; adds TLS by default</li>
 </ul>
 </section>
 
@@ -334,14 +364,50 @@
 <!-- ============ Ch 4a: Data Plane ============ -->
 
 <section>
-<h2>Forwarding vs Routing</h2>
+<h2>Data Plane vs Control Plane ⭐</h2>
 <table>
-<tr><th>Forwarding (DP)</th><th>Routing (CP)</th></tr>
-<tr><td>per-router</td><td>network-wide</td></tr>
-<tr><td>hardware ns</td><td>software ms</td></tr>
-<tr><td>match → port</td><td>compute paths</td></tr>
+<tr><th>Data Plane</th><th>Control Plane</th></tr>
+<tr><td>Per-router, local</td><td>Network-wide</td></tr>
+<tr><td>Hardware, ns scale</td><td>Software, ms scale</td></tr>
+<tr><td>Match + action on header</td><td>Compute paths</td></tr>
+<tr><td>Forwarding</td><td>Routing</td></tr>
+<tr><td>OpenFlow flow table</td><td>OSPF / BGP algorithm</td></tr>
 </table>
-<p class="mini">Classic: routing at each router. SDN: CP moved to remote controller; switches execute FTs.</p>
+<p class="mini">Classic: per-router CP. <b>SDN</b>: CP centralized to remote controller; switches just execute FTs (DP).</p>
+</section>
+
+<section>
+<h2>Forwarding vs Routing</h2>
+<ul>
+<li><b>Forwarding</b>: getting through single router (DP)</li>
+<li><b>Routing</b>: source → destination path planning (CP)</li>
+<li>Analogy: forwarding = one intersection; routing = whole trip</li>
+</ul>
+</section>
+
+<section>
+<h2>Network Service Model</h2>
+<table>
+<tr><th>Arch</th><th>BW</th><th>Loss</th><th>Order</th><th>Timing</th></tr>
+<tr><td>Internet</td><td>best-effort</td><td>no</td><td>no</td><td>no</td></tr>
+<tr><td>ATM CBR</td><td>const</td><td>yes</td><td>yes</td><td>yes</td></tr>
+<tr><td>ATM ABR</td><td>min guar</td><td>no</td><td>yes</td><td>no</td></tr>
+<tr><td>IntServ</td><td>yes</td><td>yes</td><td>yes</td><td>yes</td></tr>
+<tr><td>DiffServ</td><td>maybe</td><td>maybe</td><td>maybe</td><td>no</td></tr>
+</table>
+<p class="mini">Why best-effort won: simple → widely deployed; bursty packet-switching efficient; survives failures.</p>
+</section>
+
+<section>
+<h2>Internet Structure (AS)</h2>
+<ul>
+<li>~100 K Autonomous Systems (AS)</li>
+<li><b>Tier-1</b> ISPs: global backbones (e.g., AT&T, Sprint)</li>
+<li><b>Tier-2</b>: regional, peer with tier-1</li>
+<li><b>Tier-3 / access</b>: end-user connectivity</li>
+<li><b>IXP</b>: Internet Exchange Point — ASes peer</li>
+<li>Comcast = AS 7922; Columbia = AS 36</li>
+</ul>
 </section>
 
 <section>

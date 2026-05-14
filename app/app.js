@@ -422,22 +422,11 @@ function renderLecture(id) {
       </div>
     </div>
     <div class="split">
-      <div class="slide-pane">
-        <div class="slide-wrap" id="slideWrap">
-          <img id="slide" alt="">
-          <div id="slideOverlay" class="slide-overlay"></div>
-        </div>
-        <div class="slide-tools">
-          <button id="hlImgToggle" onclick="toggleImgHL()" title="按下后在 PPT 上拖出黄色高亮框">🖍️ 划框</button>
-          <button onclick="clearImgHL()" title="清除本页所有图片高亮">🧹 清空框</button>
-          <span class="subtle hl-hint">拖鼠标画框 · 点框删除</span>
-        </div>
-      </div>
+      <div class="slide-pane"><img id="slide" alt=""></div>
       <div class="explain-pane" id="explain"></div>
     </div>
   `;
   showPage();
-  setupImgHL();
 }
 
 function refreshStarBtn() {
@@ -477,8 +466,6 @@ function showPage() {
   const e = arr[currentPage-1];
   renderExplain(e, currentTab, currentPage);
   refreshStarBtn();
-  // re-render image highlights for this page (image load event also covers this)
-  if (typeof renderImgHL === 'function') renderImgHL();
 }
 
 function renderExplain(e, fileId, pageNum) {
