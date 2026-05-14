@@ -1,4 +1,4 @@
-<!-- CHEATSHEET_VERSION: 38 -->
+<!-- CHEATSHEET_VERSION: 37 -->
 <!--
   COMS 4119 FINAL CHEAT SHEET
   4 sheets organized by course chapter (Kurose-Ross order):
@@ -12,8 +12,17 @@
     <figure><img src="cheatsheet-assets/foo.png"><figcaption>caption</figcaption></figure>
 -->
 <div class="cheat-pages">
+
+
+<!-- ================================================================ -->
+<!-- SHEET 1 — APPLICATION + TRANSPORT (Chapters 1–3 + CC in lec14)    -->
+<!-- ================================================================ -->
 <div class="sheet">
+<h1>COMS 4119 · APP &amp; TRANSPORT</h1>
 <div class="cols">
+
+<!-- ============ Ch 1: Basics & Performance ============ -->
+
 <section data-key="layering-encapsulation" data-wired="1" contenteditable="true" spellcheck="false">
 <h2>Layering &amp; Encapsulation</h2>
 <ul>
@@ -23,52 +32,122 @@
 <li><b>Data Link</b> — Frame. MAC addr (Ethernet / 802.11). Direct-over-link: <b>ARP</b>.</li>
 <li><b>Physical</b> — Bits</li>
 </ul>
-<p class="mini"><b>TCP</b>: 3WHS · reliable, ordered · rwnd flow ctrl · AIMD cong ctrl · 20 B hdr · HTTP/SMTP/BGP. <b>UDP</b>:DNS/RTP/DHCP.</p>
+<p class="mini"><b>TCP</b>: 3WHS · reliable, ordered · rwnd flow ctrl · AIMD cong ctrl · 20 B hdr · HTTP/SMTP/BGP. <b>UDP</b>: no conn / reliable / order / flow / cong · 8 B hdr · DNS/RTP/DHCP.</p>
 <p class="mini">Encapsulation: lower layer wraps upper PDU. Demux up</p>
 </section>
+
 <section data-key="packet-vs-circuit-switching" data-wired="1" contenteditable="true" spellcheck="false">
 <h2>Packet vs Circuit Switching</h2>
 <ul>
-<li><b>Circuit</b>: reserve resources up-front. Mux via <b>TDM</b> or <b>FDM</b>.&nbsp;</li>
-<li><b>Packet</b>: on-demand, best-effort.&nbsp;</li>
+<li><b>Circuit</b>: reserve resources up-front. Mux via <b>TDM</b> or <b>FDM</b>. Phone network.</li>
+<li><b>Packet</b>: on-demand, best-effort. Internet.</li>
 </ul>
 <p class="mini"><b>Packet wins for bursty</b> (resource sharing, no setup) — but <span class="red">congestion possible</span> → buffer overflow → delay/loss → need RDT + congestion control.</p>
+<p class="mini">"How to make packet circuit-like? <b>It's complicated</b>." (QoS, virtual circuits, MPLS)</p>
 </section>
-<section data-key="delays-performance-mid-q2-q4" data-wired="1" contenteditable="true" spellcheck="false">
-<h2>Delays &amp; Performance&nbsp;</h2>
+
+<section data-key="delays-performance-mid-q2-q4">
+<h2>Delays &amp; Performance <span class="tag">mid Q2 Q4</span></h2>
 <ul>
-<li><b>Transmission</b> = L/R&nbsp;</li>
-<li><b>Propagation</b> = d/v&nbsp;</li>
+<li><b>Transmission</b> = L/R (size/bandwidth)</li>
+<li><b>Propagation</b> = d/v (light 3·10⁸ m/s, sound 1.5 km/s in water)</li>
 <li><b>Queuing</b>: depends on load</li>
+<li><b>End-to-end (1 pkt)</b> = Σ(L/R + d/v) per link + queue</li>
 <li><b>Pipelined N pkts</b>: 1st full path + (N−1)·<span class="red">bottleneck L/R</span></li>
 <li><b>Bottleneck</b> = link with <b>max L/R = min R</b> <span class="red">(NOT propagation!)</span></li>
-<li><b>Throughput</b> =&nbsp; bottleneck rate</li></ul></section>
-<section data-key="bdp-bandwidth-delay-product" data-wired="1" contenteditable="true" spellcheck="false">
+<li>Propagation paid <b>once</b> for 1st pkt (no stack)</li>
+<li><b>Throughput</b> = min(R) = bottleneck rate</li>
+</ul>
+<div class="my-note" data-note-key="mid:1:takeaway"><span class="my-note-tag">📝</span> <b>mid Q2 要诀:</b> Store-and-forward 链路链：第 1 个包 = Σ 每段 L/R，后面的包 = 瓶颈段 L/R 累加。</div></section>
+
+<section data-key="bdp-bandwidth-delay-product">
 <h2>BDP — Bandwidth-Delay Product</h2>
-<div class="formula">BDP = R · RTT  (bits in pipe)<span style="background-color: rgb(250, 250, 250); font-family: &quot;Helvetica Neue&quot;, Arial, &quot;PingFang SC&quot;, &quot;Microsoft YaHei&quot;, sans-serif; font-size: 7.5pt;">"How many bits fit in&nbsp; pipe at once"Window size must ≥ BDP to&nbsp; full</span></div>
+<div class="formula">BDP = R · RTT  (bits in pipe)</div>
+<ul>
+<li>"How many bits fit in the pipe at once"</li>
+<li>Window size must ≥ BDP to keep pipe full</li>
+<li>Example: 30 Kbps × 80 ms = 2400 bits</li>
+</ul>
 </section>
-<section data-key="stop-and-wait-utilization-mid-q5" data-wired="1" contenteditable="true" spellcheck="false">
+
+<section data-key="stop-and-wait-utilization-mid-q5">
 <h2>Stop-and-Wait Utilization</h2>
 <div class="formula">U = T_trans / (T_trans + 2·T_prop)</div>
 <ul>
 <li>T_trans = L/R</li>
-<li>L small / RTT large → U → 0 → need sliding window</li></ul></section>
-<section data-key="http-rtt-counting-mid-q1" data-wired="1" contenteditable="true" spellcheck="false">
-<h2>HTTP RTT Counting</h2><ul>
+<li><span class="red">×2 T_prop</span> in denom (round-trip)</li>
+<li>L small / RTT large → U → 0 → need sliding window</li>
+<li>Ex: 2 Kb @ 40 Kbps · 30 m acoustic + 3 km air → U≈0.54; @ 200 b → 0.11</li>
+</ul>
+<div class="my-note" data-note-key="mid:4:takeaway"><span class="my-note-tag">📝</span> <b>mid Q5 要诀:</b> Stop-and-wait U 公式：分子 transmission，分母 transmission + 2·prop。包小 / RTT 大 → U 暴跌 → 必须用滑窗。</div></section>
+
+<section data-key="sliding-window">
+<h2>Sliding Window</h2>
+<ul>
+<li>Window [base, base+N): send any unACKed in window</li>
+<li>ACK → base slides forward</li>
+<li>Stop-and-wait = window of 1</li>
+<li>Window ≥ BDP → full pipe</li>
+</ul>
+</section>
+
+
+<!-- ============ Ch 2: Application Layer ============ -->
+
+<section data-key="client-server-vs-p2p-架构">
+<h2>Client-Server vs P2P</h2>
+<table>
+<tr><th></th><th>Client-Server</th><th>P2P</th></tr>
+<tr><td>Server</td><td>always-on, fixed IP</td><td>none</td></tr>
+<tr><td>Hosting</td><td>data center</td><td>any end systems, direct</td></tr>
+<tr><td>Clients</td><td>contact server</td><td>peers serve each other</td></tr>
+<tr><td>Scale</td><td>limited by server</td><td><b>self-scaling</b> — each peer adds capacity</td></tr>
+<tr><td>Ex.</td><td>HTTP, DNS</td><td>BitTorrent</td></tr>
+</table>
+<p class="mini">Self-scaling: N peers join → upload capacity grows N×</p>
+</section>
+
+<section data-key="http-rtt-counting-mid-q1">
+<h2>HTTP RTT Counting</h2>
+<ul>
+<li><b>Dep tree</b>: base → inline → CSS-ref → JS-trig</li>
 <li><b>Non-persistent</b>: TCP setup 1 RTT + GET 1 RTT = <span class="red">2 RTT/obj</span></li>
 <li><b>Pers. + pipelined</b>: base 2 RTT · siblings 1 RTT · each nesting +1 RTT</li>
-<li><b>Pers. no pipeline</b>: 1 RTT/obj&nbsp;</li>
-<li>Ex: HTML + 4 jpg + 1 css(2 jpg), pers. pipelined = <b>4 RTT</b></li><li><b>Web Cache (proxy)</b>:</li><li><b>Conditional GET</b>: <code>If-Modified-Since</code> → <b>304</b> (no body) if same, else 200 + body</li>
+<li><b>Pers. no pipeline</b>: 1 RTT/obj serially</li>
+<li>Ex: HTML + 4 jpg + 1 css(2 jpg), pers. pipelined = <b>4 RTT</b></li>
 </ul>
-<div class="my-note" data-note-key="mid:0:takeaway"><span class="my-note-tag">📝</span> 看到『UDP 多少 socket』→ 答 1；『TCP 多少 socket』→ 答 N+1。</div></section>
-<section data-key="http-2-http-3" data-wired="1" contenteditable="true" spellcheck="false">
+<div class="my-note" data-note-key="mid:0:takeaway"><span class="my-note-tag">📝</span> <b>mid Q1 要诀:</b> 看到『UDP 多少 socket』→ 答 1；『TCP 多少 socket』→ 答 N+1。RTT 题画依赖树数层数。</div></section>
+
+<section data-key="http-persistence-cache">
+<h2>HTTP Persistence &amp; Cache</h2>
+<ul>
+<li>Non-persistent (1.0): new TCP/obj → 2 RTT/obj</li>
+<li>Persistent (1.1): reuse TCP for all objs to same server</li>
+<li>Pipelining: send next req before prev resp</li>
+<li><b>Web Cache (proxy)</b>: cuts RTT + outbound BW</li>
+<li><b>Conditional GET</b>: <code>If-Modified-Since</code> → <b>304</b> (no body) if same, else 200 + body</li>
+</ul>
+</section>
+
+<section data-key="http-cookies">
+<h2>HTTP Cookies</h2>
+<ul>
+<li>HTTP stateless → cookies add per-user state</li>
+<li>Flow: <b>Set-Cookie</b> in resp → client file → <b>Cookie</b> in next req → server DB</li>
+<li>Uses: cart · auth · ad tracking</li>
+</ul>
+</section>
+
+<section data-key="http-2-http-3">
 <h2>HTTP/2 + HTTP/3</h2>
 <ul>
-<li><b>1.1 HOL</b>: FCFS&nbsp;</li>
-<li><b>2</b>: object frames · priority&nbsp; mitigates HOL&nbsp;<b style="font-size: 7.5pt;">limit</b><span style="font-size: 7.5pt;">: 1 TCP&nbsp; 1 lost pkt stalls all objs</span></li>
+<li><b>1.1 HOL</b>: FCFS → small obj waits behind large</li>
+<li><b>2</b>: single TCP · object frames · priority · push · interleave frames mitigates HOL</li>
+<li><b>2 limit</b>: 1 TCP → 1 lost pkt stalls all objs</li>
 <li><b>3</b>: over UDP (QUIC) · per-obj CC + recovery · TLS default</li>
 </ul>
 </section>
+
 <section data-key="video-dash">
 <h2>Video / DASH</h2>
 <ul>
@@ -77,21 +156,40 @@
 <li>HTTP-based → any CDN works</li>
 </ul>
 </section>
-<section data-key="dns" data-wired="1" contenteditable="true" spellcheck="false">
+
+<section data-key="sockets-mid-q1">
+<h2>Sockets</h2>
+<ul>
+<li><b>UDP</b>: <span class="red">1 socket</span> total (no conn)</li>
+<li><b>TCP</b>: 1 welcome + N conn = <span class="red">N+1</span> sockets</li>
+<li>UDP demux: (src IP, src port)</li>
+<li>TCP: accept() → new socket; welcome stays</li>
+</ul>
+</section>
+
+<section data-key="dns">
 <h2>DNS</h2>
 <ul>
 <li>Hierarchy: local resolver → root → TLD (.com, .edu) → authoritative</li>
-<li><b>Recursive</b>&nbsp; vs <b>iterative</b>&nbsp;</li>
+<li><b>Recursive</b> ("resolve for me") vs <b>iterative</b> ("tell me next hop")</li>
+<li>Local resolver usually iterative</li>
 <li>RR: A (IPv4) · AAAA (IPv6) · NS · MX · CNAME</li>
+<li>UDP/53 short query; TCP fallback for large</li>
 </ul>
 </section>
-<section data-key="p2p-file-distribution-mid-q7" data-wired="1" contenteditable="true" spellcheck="false">
+
+<section data-key="p2p-file-distribution-mid-q7">
 <h2>P2P File Distribution</h2>
 <div class="formula">CS:  T = max(NF/U_s, F/d_min)</div>
 <div class="formula">P2P: T = max(F/U_s, F/d_min, NF/(U_s + ΣU_i))</div>
 <ul>
-<li><b>CS</b>: T grows linearly with N&nbsp;</li>
-<li><b>P2P</b>: T grows slowly with N&nbsp;</li></ul></section>
+<li><b>CS</b>: T grows linearly with N (server uploads N copies)</li>
+<li><b>P2P</b>: T grows slowly with N (collective upload also scales)</li>
+<li>Small N: tied · Large N: P2P wins</li>
+<li>Ex: 1 GB / 100 u, 40 Mbps server → CS 20000 s vs P2P ≈ 1000 s</li>
+</ul>
+<div class="my-note" data-note-key="mid:6:takeaway"><span class="my-note-tag">📝</span> <b>mid Q7 要诀:</b> Client-server 时间随 N 线性增（server 是瓶颈），P2P 时间随 N 微增（集体带宽也增）。N 大时 P2P 优势越来越明显。</div></section>
+
 <section data-key="bittorrent-dht">
 <h2>BitTorrent &amp; DHT</h2>
 <ul>
@@ -101,25 +199,43 @@
 <li><b>DHT</b>: distributed hash table replaces central tracker</li>
 </ul>
 </section>
-<section data-key="tcp-3whs-4-way-close" data-wired="1" contenteditable="true" spellcheck="false">
+
+<!-- ============ Ch 3a: Transport — Basics ============ -->
+
+<section data-key="tcp-segment-format">
+<h2>TCP Segment Format</h2>
+<ul>
+<li>Src/dst port (16 b each)</li>
+<li>Seq # = first byte (32 b) · ACK # = next expected (32 b)</li>
+<li>HLEN · flags: SYN/FIN/ACK/RST/PSH/URG/<b>CWR/ECE</b></li>
+<li><b>rwnd</b> (16 b) — flow control</li>
+<li>Checksum (16 b) · urgent ptr</li>
+</ul>
+</section>
+
+<section data-key="tcp-3whs-4-way-close">
 <h2>TCP 3WHS &amp; 4-Way Close</h2>
 <ol>
 <li>C→S: <b>SYN</b> seq=x</li>
 <li>S→C: <b>SYN-ACK</b> seq=y, ack=x+1</li>
 <li>C→S: <b>ACK</b> seq=x+1, ack=y+1</li>
 </ol>
-<p class="mini">Close = 4-way (FIN/ACK each dir)</p>
+<p class="mini">Close = 4-way (FIN/ACK each dir). <b>TIME_WAIT</b> 2·MSL → avoid stray pkts in next conn.</p>
 </section>
-<section data-key="what-can-go-wrong-in-data-transmission" data-wired="1" contenteditable="true" spellcheck="false">
+
+<section data-key="what-can-go-wrong-in-data-transmission">
 <h2>What Can Go Wrong in Data Transmission</h2>
 <ol>
 <li><b>Bit errors</b> → checksum</li>
 <li><b>Duplicates</b> → seq # dedupe</li>
 <li><b>Losses</b> → timer + retransmit</li>
-<li><b>Delay</b> → need in-order delivery</li>
-<li><b>Out-of-order</b> → seq # reorder</li></ol>
+<li><b>Delay</b> → still need in-order delivery</li>
+<li><b>Out-of-order</b> → seq # reorder</li>
+</ol>
+<p class="mini">Map: checksum (1) · ACK (1, 3) · seq # (2, 5) · timer (3, 4) · rcvr buffer (5)</p>
 </section>
-<section data-key="rdt-evolution-1-0-3-0" data-wired="1" contenteditable="true" spellcheck="false">
+
+<section data-key="rdt-evolution-1-0-3-0">
 <h2>RDT Evolution (1.0 → 3.0)</h2>
 <ul>
 <li><b>1.0</b>: perfect channel (useless)</li>
@@ -127,10 +243,12 @@
 <li><b>2.1</b>: + seq # → ACK corruption</li>
 <li><b>2.2</b>: NAK-free (ACK + last good seq)</li>
 <li><b>3.0</b>: + timer → losses (= stop-and-wait)</li>
+<li>Pipelined: GBN / SR</li>
 </ul>
 </section>
-<section data-key="rdt-gbn-vs-sr-selective-repeat-mid-q3" data-wired="1" contenteditable="true" spellcheck="false">
-<h2>RDT: GBN vs SR (Selective Repeat) pipelined</h2>
+
+<section data-key="rdt-gbn-vs-sr-selective-repeat-mid-q3">
+<h2>RDT: GBN vs SR (Selective Repeat)</h2>
 <table>
 <tbody><tr><th></th><th>GBN</th><th>SR</th></tr>
 <tr><td>ACK</td><td>cumulative</td><td>per-packet</td></tr>
@@ -139,26 +257,34 @@
 <tr><td>ACK loss heavy</td><td><span class="green">good</span></td><td>bad (timeout)</td></tr>
 <tr><td>Buf at rcvr</td><td>none</td><td>required</td></tr>
 </tbody></table>
-<p class="mini">SR window ≤ N/2 (seq space).</p></section>
+<p class="mini"><b>Rule</b>: data-loss heavy → SR; ACK-loss heavy → GBN. <span class="red">Always write the reason</span> (otherwise lose marks). SR window ≤ N/2 (seq space).</p>
+<div class="my-note" data-note-key="mid:2:takeaway"><span class="my-note-tag">📝</span> <b>mid Q3 要诀:</b> 判断哪个协议看『哪边在丢』。Data 丢 → SR；ACK 丢 → GBN。**永远要写出原因**，老师扣的就是『没解释』的分。</div></section>
+
 <section data-key="tcp-reliable-mechanisms" data-wired="1" contenteditable="true" spellcheck="false">
 <h2>TCP Reliable Mechanisms</h2><ul>
 <li><b>Fast retransmit</b>: 3 dup ACKs → immediate resend</li>
+<li>After timeout: RTO doubles (exp backoff)</li>
 </ul>
 </section>
-<section data-key="tcp-flow-control-sr-buffer-trap-mid-q6" data-wired="1" contenteditable="true" spellcheck="false">
+
+<section data-key="tcp-flow-control-sr-buffer-trap-mid-q6">
 <h2>TCP Flow Control + SR Buffer Trap</h2>
 <ul>
-<li>Rcvr advertises <b>rwnd</b>&nbsp;every ACK</li>
+<li>Rcvr advertises <b>rwnd</b> in every ACK</li>
 <li>Sender inflight ≤ min(cwnd, rwnd)</li>
 <li><b>SR rcv buffer</b> holds out-of-order → hold until in-order delivery</li>
 <li>Trap: pkt 1 lost + 2,3,4 fill buf → can't release → pkts 5+ <b>dropped</b></li>
 <li>Ex: 10 pkts, buf=4, pkt 1 lost → retransmit <b>7 pkts</b> (1 + 5–10)</li>
 <li>rwnd <span class="red">must ≤ buf size</span></li>
 </ul>
-<div class="my-note" data-note-key="mid:5:takeaway">Advertised window 必须 ≤ buffer，否则会丢包。</div></section>
-<section data-key="tcp-cwnd" data-wired="1" contenteditable="true" spellcheck="false">
-<h2>TCP cwnd</h2>
+<div class="my-note" data-note-key="mid:5:takeaway"><span class="my-note-tag">📝</span> <b>mid Q6 要诀:</b> Receive buffer 不是简单容量计数，是『等齐才交付』占用。Advertised window 必须 ≤ buffer，否则会丢包。</div></section>
 
+
+<!-- ============ Ch 3b: Transport — Congestion Control (lec14) ============ -->
+
+<section data-key="tcp-cwnd">
+<h2>TCP cwnd</h2>
+<figure><img src="cheatsheet-assets/tcp-cwnd.jpg"><figcaption>TCP cwnd mechanism</figcaption></figure>
 <ul>
 <li>LastByteSent − LastByteAcked &lt; cwnd</li>
 <li>rate ≈ cwnd / RTT</li>
@@ -166,6 +292,7 @@
 </ul>
 <div class="formula">throughput ≈ cwnd / RTT</div>
 </section>
+
 <section data-key="tcp-cc-fsm-exam" data-wired="1" contenteditable="true" spellcheck="false">
 <h2>TCP CC FSM <span class="tag">exam</span></h2>
 
@@ -180,38 +307,72 @@
 </ul>
 <p class="mini"><span class="red">Trap</span>: FR + new ACK → <b>CA</b>, NOT slow start.</p>
 </section>
+
 <section data-key="aimd-fairness-exam" data-wired="1" contenteditable="true" spellcheck="false">
 <h2>AIMD Fairness <span class="tag">exam</span></h2>
 <figure><img src="cheatsheet-assets/aimd-fairness.jpg"><figcaption>AIMD fairness convergence (x1 vs x2)</figcaption></figure>
 <ul>
-<li>+a → both move up 45° (efficiency line)×b → toward origin, ratio kept</li>
+<li>+a → both move up 45° (efficiency line)</li>
+<li>×b → toward origin, ratio kept</li>
 <li><b>Only AIMD</b> → both fairness + efficiency</li>
 </ul>
 <div class="formula">avg cwnd = 3W/4 → R = 3W/(4·RTT)</div>
 </section>
-<section data-key="cc-variants" data-wired="1" contenteditable="true" spellcheck="false">
-<h2>CC variants</h2>
 
+<section data-key="end-end-vs-network-assisted-congestion-control">
+<h2>End-end vs Network-assisted CC</h2>
+<table>
+<tr><th></th><th>End-end</th><th>Net-assisted</th></tr>
+<tr><td>Signal</td><td>none from net</td><td>router signals host</td></tr>
+<tr><td>Detect</td><td>infer from loss/delay</td><td>router tells (level/rate)</td></tr>
+<tr><td>Ex.</td><td>TCP (default)</td><td>ECN, ATM, DECbit</td></tr>
+</table>
+<p class="mini">Internet: end-end (loss-based) + optional ECN.</p>
+</section>
+
+<section data-key="cc-variants">
+<h2>CC variants</h2>
+<figure><img src="cheatsheet-assets/ecn.jpg"><figcaption>ECN mechanism</figcaption></figure>
 <ul>
-<li><b>CUBIC</b>: W(t) = C(t−K)³ + Wmax · fast climb to Wmax, slow probe&nbsp;</li>
+<li><b>CUBIC</b> (Linux): W(t) = C(t−K)³ + Wmax · fast climb to Wmax, slow probe past</li>
 <li><b>Vegas</b> (delay-based): rising RTT → cong; <span class="red">starves</span> vs loss-based</li>
 <li><b>BBR</b> (Google): model BtlBw + RTprop · inflight = BDP</li>
 <li><b>ECN</b>: router marks IP ToS 2 b at queue thresh → rcvr ACK ECE=1 → sender halves cwnd (no drop)</li>
 </ul>
 </section>
-<section data-key="loss-congestion-final-q1" data-wired="1" contenteditable="true" spellcheck="false">
+
+<section data-key="fairness-traps">
+<h2>Fairness traps</h2>
+<ul>
+<li>UDP doesn't CC → grabs unfair share</li>
+<li>K parallel TCPs → one app gets K/(K+others)</li>
+<li>Diff RTTs → shorter RTT wins</li>
+<li>"No Internet police"</li>
+</ul>
+</section>
+
+<section data-key="loss-congestion-final-q1">
 <h2>Loss ≠ Congestion</h2>
 <ul>
 <li>Bit error → checksum fails → silent drop (no ACK)</li>
 <li>Common on wireless links</li>
 <li>TCP misreads as congestion → halves cwnd → wireless throughput tanks</li>
-<li>Fix: ECN</li></ul></section>
-<section data-key="tcp-segment-format" data-wired="1" contenteditable="true" spellcheck="false">
-<h2>TCP Segment Format</h2>
-<ul>
-<li>Src/dst port, Seq # = first byte&nbsp; · ACK # = next expected,HLEN · flags:SYN/FIN/ACK/RST/PSH/URG/<b style="font-size: 7.5pt;">CWR/ECE</b><b style="font-size: 7.5pt;">rwnd</b><span style="font-size: 7.5pt;"> (16 b) flow control;</span>Checksum (16 b)&nbsp;</li>
+<li>Fix: ECN (see CC variants)</li>
 </ul>
-</section>
+<div class="my-note" data-note-key="final:0:gotcha"><span class="my-note-tag">⚠️</span> <b>final Q1 易错:</b> 考试时如果题目让你举一个例子，最稳的答法就是『链路层 bit error → checksum 失败 → 丢弃』。</div></section>
+
+</div></div>
+
+
+<!-- ================================================================ -->
+<!-- SHEET 2 — NETWORK LAYER (lec16–20: DP + Routing + SDN)            -->
+<!-- ================================================================ -->
+<div class="sheet">
+<h1>COMS 4119 · NETWORK LAYER</h1>
+<div class="cols">
+
+<!-- ============ Ch 4a: Data Plane ============ -->
+
 <section data-key="data-plane-vs-control-plane" data-wired="1" contenteditable="true" spellcheck="false">
 <h2>Data Plane vs Control Plane&nbsp;</h2>
 <table>
@@ -224,13 +385,16 @@
 </tbody></table>
 <p class="mini">Classic: per-router CP. <b>SDN</b>: CP centralized in controller; switches just run FTs (DP).</p>
 </section>
-<section data-key="forwarding-vs-routing" data-wired="1" contenteditable="true" spellcheck="false">
+
+<section data-key="forwarding-vs-routing">
 <h2>Forwarding vs Routing</h2>
 <ul>
 <li><b>Forwarding</b>: 1 router (DP)</li>
-<li><b>Routing</b>: src → dst path planning&nbsp;</li>
+<li><b>Routing</b>: src → dst path planning (CP)</li>
+<li>Analogy: forwarding = 1 intersection · routing = whole trip</li>
 </ul>
 </section>
+
 <section data-key="network-service-model">
 <h2>Network Service Model</h2>
 <table>
@@ -243,6 +407,7 @@
 </table>
 <p class="mini">Best-effort won: simple → widely deployed · packet-switching efficient for bursty · survives failures.</p>
 </section>
+
 <section data-key="internet-structure-as">
 <h2>Internet Structure (AS)</h2>
 <ul>
@@ -253,6 +418,7 @@
 <li><b>Gateway router</b>: AS edge, runs both inter-domain (BGP) + intra</li>
 </ul>
 </section>
+
 <section data-key="router-architecture">
 <h2>Router Architecture</h2>
 <ul>
@@ -263,14 +429,17 @@
 <li>Fabric needs N·R speed for full line-rate</li>
 </ul>
 </section>
-<section data-key="packet-scheduling" data-wired="1" contenteditable="true" spellcheck="false">
+
+<section data-key="packet-scheduling">
 <h2>Packet Scheduling</h2>
 <ul>
-<li><b>FCFS/FIFO</b>;<b style="font-size: 7.5pt;">Priority</b><span style="font-size: 7.5pt;">: classes by header; high first; FCFS within</span></li>
+<li><b>FCFS/FIFO</b>: order of arrival</li>
+<li><b>Priority</b>: classes by header; high first; FCFS within</li>
 <li><b>RR</b>: 1 pkt per class per round</li>
 <li><b>WFQ</b>: class i gets w_i / Σw_j share → min-BW guarantee</li>
 </ul>
 </section>
+
 <section data-key="buffer-management">
 <h2>Buffer Management</h2>
 <ul>
@@ -278,6 +447,7 @@
 <li>Mark: ECN · RED (early detect)</li>
 </ul>
 </section>
+
 <section data-key="ipv4-datagram">
 <h2>IPv4 Datagram</h2>
 <ul>
@@ -290,6 +460,7 @@
 <li>options + payload. Hdr ≥20 B, max 64 KB</li>
 </ul>
 </section>
+
 <section data-key="longest-prefix-matching-exam">
 <h2>Longest Prefix Matching <span class="tag">exam</span></h2>
 <ul>
@@ -298,6 +469,7 @@
 <li>Ex: 1010.1000.0100.1000 vs /4=1010.xxxx, /2=10xx, /6=1010.11xx → matches /4, /2 (NOT /6 since 10 ≠ 11) → <b>/4 wins → port 2</b></li>
 </ul>
 </section>
+
 <section data-key="subnet-concept">
 <h2>Subnet</h2>
 <ul>
@@ -309,6 +481,7 @@
 <li>IP attaches to <b>interface</b>, not host. N-iface router has N IPs</li>
 </ul>
 </section>
+
 <section data-key="cidr-subnet-calc-exam">
 <h2>CIDR &amp; Subnet calc <span class="tag">exam</span></h2>
 <div class="formula">prefix = IP AND mask · hosts = 2^(32−x)</div>
@@ -320,6 +493,7 @@
 <li>Private: 10/8 · 172.16/12 · 192.168/16</li>
 </ul>
 </section>
+
 <section data-key="dhcp-dora">
 <h2>DHCP DORA</h2>
 <ol>
@@ -330,6 +504,7 @@
 </ol>
 <p class="mini">Also returns: default gateway · DNS · netmask · lease</p>
 </section>
+
 <section data-key="nat">
 <h2>NAT</h2>
 <ul>
@@ -339,6 +514,7 @@
 <li>Breaks end-to-end · complicates P2P · needs STUN/TURN/ICE</li>
 </ul>
 </section>
+
 <section data-key="ipv4-vs-ipv6-tunneling">
 <h2>IPv4 vs IPv6 + Tunneling</h2>
 <table>
@@ -351,6 +527,10 @@
 </table>
 <p class="mini"><b>Tunneling</b>: v6 pkt as payload in v4 pkt across v4-only segment. Logical: looks like direct v6 link · Physical: v4 routers only see v4 hdr</p>
 </section>
+
+
+<!-- ============ Ch 4b: Control Plane (Routing) ============ -->
+
 <section data-key="link-state-routing-ls">
 <h2>Link State Routing (LS) — 4 steps</h2>
 <ol>
@@ -361,6 +541,7 @@
 </ol>
 <p class="mini">"Big mouth": flood everyone. Global view per node. Used by <b>OSPF, IS-IS</b>.</p>
 </section>
+
 <section data-key="distance-vector-routing-dv">
 <h2>Distance Vector Routing (DV)</h2>
 <ul>
@@ -371,6 +552,7 @@
 </ul>
 <p class="mini">"Whisper": only tell neighbors. Local view per node. BGP is a path-vector variant.</p>
 </section>
+
 <section data-key="ls-vs-dv-exam">
 <h2>LS vs DV <span class="tag">exam</span></h2>
 <table>
@@ -384,6 +566,7 @@
 <tr><td>ex</td><td>OSPF, IS-IS</td><td>(legacy)</td></tr>
 </tbody></table>
 </section>
+
 <section data-key="dijkstra-ls">
 <h2>Dijkstra (LS)</h2>
 <figure><img src="cheatsheet-assets/dijkstra-shortest-path-tree.jpg"><figcaption>Dijkstra shortest-path tree + forwarding table</figcaption></figure>
@@ -397,6 +580,7 @@
 </ol>
 <p class="mini">O(n²) · heap → O(n log n). Msg complexity O(n²).</p>
 </section>
+
 <section data-key="bellman-ford-dv">
 <h2>Bellman-Ford (DV)</h2>
 <div class="formula">D_x(y) = min_v ∈ N(x) [c(x, v) + D_v(y)]</div>
@@ -409,6 +593,7 @@
 <li>Convergence ≈ max-hop − 1 (sync, static, no CTI)</li>
 </ul>
 </section>
+
 <section data-key="count-to-infinity-poison-reverse">
 <h2>Count-to-Infinity + Poison Reverse</h2>
 <ul>
@@ -418,6 +603,7 @@
 <li>Cap loops with small "∞" (e.g. 16)</li>
 </ul>
 </section>
+
 <section data-key="ospf-intra-as">
 <h2>OSPF (intra-AS)</h2>
 <ul>
@@ -428,6 +614,7 @@
 <li><b>Hierarchy</b>: area + backbone (area 0); ABR summarizes; border router → other AS</li>
 </ul>
 </section>
+
 <section data-key="bgp-inter-as-exam">
 <h2>BGP (inter-AS) <span class="tag">exam</span></h2>
 <ul>
@@ -439,6 +626,7 @@
 <li><b>Route select</b>: 1) local pref → 2) shortest AS-PATH → 3) closest NEXT-HOP (hot potato) → 4) others</li>
 </ul>
 </section>
+
 <section data-key="bgp-policy-final-q3">
 <h2>BGP Policy</h2>
 <p class="mini"><span class="red">⚠️ Trap</span>: BGP <b>does NOT always</b> pick shortest AS-PATH — it is policy-based. If a neighbor AS refuses to forward, traffic must take a longer path.</p>
@@ -450,6 +638,7 @@
 <li>Customer-of-provider always gets advertised</li>
 </ul>
 <div class="my-note" data-note-key="final:2:gotcha"><span class="my-note-tag">⚠️</span> <b>final Q3 易错:</b> 考试看到『policy』『control who can traverse my network』关键词 → 一定是 BGP advertisement policy，不是 OSPF / Dijkstra / cost。OSPF 是 intra-AS（一个 AS 内部），BGP 才管 AS 之间的策略。</div></section>
+
 <section data-key="hot-potato-routing">
 <h2>Hot Potato Routing</h2>
 <p class="mini"><b>Def</b>: For a packet headed to another AS, the router forwards it to the border router with <b>minimum intra-AS cost</b> ("throw the hot potato out fast"). <br><b>Why</b>: each AS only minimizes <b>its own</b> traffic cost, ignoring how far the packet travels in other ASes.</p>
@@ -459,6 +648,7 @@
 <li>Locally optimal per AS, may not be globally shortest</li>
 </ul>
 </section>
+
 <section data-key="why-intra-inter-exam">
 <h2>Why Intra ≠ Inter <span class="tag">exam</span></h2>
 <ul>
@@ -467,6 +657,10 @@
 <li><b>Perf</b>: intra optimizes path · inter optimizes policy</li>
 </ul>
 </section>
+
+
+<!-- ============ Ch 4c: SDN ============ -->
+
 <section data-key="sdn-openflow">
 <h2>SDN + OpenFlow</h2>
 <ul>
@@ -480,6 +674,7 @@
 <li>Northbound API → apps · Southbound → switches</li>
 </ul>
 </section>
+
 <section data-key="sdn-4-principles">
 <h2>SDN — 4 Design Principles</h2>
 <ul>
@@ -490,6 +685,19 @@
 </ul>
 <p class="mini">→ Network shifts from purpose-built hardware to commodity switches + a centralized programmable controller.</p>
 </section>
+
+</div></div>
+
+
+<!-- ================================================================ -->
+<!-- SHEET 3 — LINK LAYER + WIRELESS (lec20–23)                        -->
+<!-- ================================================================ -->
+<div class="sheet">
+<h1>COMS 4119 · LINK &amp; WIRELESS</h1>
+<div class="cols">
+
+<!-- ============ Ch 5a: Data Link — wired ============ -->
+
 <section data-key="link-layer-services">
 <h2>Link Layer services</h2>
 <ul>
@@ -499,6 +707,7 @@
 <li><b>Reliable delivery</b> (often skipped on low-BER wired; needed on wireless)</li>
 </ul>
 </section>
+
 <section data-key="error-detection">
 <h2>Error Detection</h2>
 <ul>
@@ -510,6 +719,7 @@
 <div class="formula">R = (D · 2^r) mod G   (mod 2 = XOR)</div>
 <p class="mini">CRC detects all burst errors ≤ r bits.</p>
 </section>
+
 <section data-key="crc-worked-example">
 <h2>CRC worked example</h2>
 <p class="mini">G=1001, D=101011, r=3:</p>
@@ -522,6 +732,7 @@ Divide mod-2 (XOR) by 1001:
 Remainder R = 110 (3 bits)
 Transmit: 101011 110</pre>
 </section>
+
 <section data-key="mac-categories">
 <h2>MAC categories</h2>
 <figure><img src="cheatsheet-assets/quiz-round1-a.jpg"><figcaption>Quiz Round 1 — A's view</figcaption></figure>
@@ -532,6 +743,7 @@ Transmit: 101011 110</pre>
 <tr><td>Random access</td><td>ALOHA · CSMA · CSMA/CD · CSMA/CA</td></tr>
 </table>
 </section>
+
 <section data-key="slotted-aloha-derivation">
 <h2>Slotted ALOHA derivation</h2>
 <div class="formula">S(p) = N · p · (1−p)^(N−1)</div>
@@ -541,6 +753,7 @@ Transmit: 101011 110</pre>
 <li>Pure ALOHA (no slots): collision window 2× → S_max → 1/(2e) ≈ 0.18</li>
 </ul>
 </section>
+
 <section data-key="csma-csma-cd">
 <h2>CSMA / CSMA-CD</h2>
 <ul>
@@ -550,6 +763,7 @@ Transmit: 101011 110</pre>
 <li>Wireless can't CD: TX power >> far-end RX → own RX deafened</li>
 </ul>
 </section>
+
 <section data-key="csma-cd-vs-csma-ca">
 <h2>CSMA/CD vs CSMA/CA <span class="tag">exam</span></h2>
 <p class="mini">Key diff: <b>wireless can't listen while TX</b> (own TX dominates RX) → no detection, must avoid.</p>
@@ -561,6 +775,7 @@ Transmit: 101011 110</pre>
 <li>CA <b>ACKs every frame</b> · CD doesn't ACK</li>
 </ul>
 </section>
+
 <section data-key="csma-cd-min-frame-size-exam">
 <h2>CSMA/CD min frame size <span class="tag">exam</span></h2>
 <div class="formula">L_min / R ≥ 2 · d_max / v</div>
@@ -570,6 +785,7 @@ Transmit: 101011 110</pre>
 <li>Binary backoff: after n collisions pick slot ∈ [0, 2ⁿ − 1]</li>
 </ul>
 </section>
+
 <section data-key="ethernet-frame">
 <h2>Ethernet Frame</h2>
 <ul>
@@ -581,6 +797,7 @@ Transmit: 101011 110</pre>
 </ul>
 <p class="mini">Modern Ethernet = switched, point-to-point, full duplex, <b>no CSMA/CD</b>.</p>
 </section>
+
 <section data-key="mac-address">
 <h2>MAC Address vs IP Address</h2>
 <table>
@@ -596,6 +813,7 @@ Transmit: 101011 110</pre>
 <li>MAC 6 B; first 3 B = OUI (vendor) · broadcast = FF:FF:FF:FF:FF:FF · OS can spoof · not used for security</li>
 </ul>
 </section>
+
 <section data-key="arp">
 <h2>ARP</h2>
 <ul>
@@ -605,6 +823,7 @@ Transmit: 101011 110</pre>
 <li>Host decides via netmask (from DHCP)</li>
 </ul>
 </section>
+
 <section data-key="switch-l2">
 <h2>Switch</h2>
 <ul>
@@ -615,6 +834,7 @@ Transmit: 101011 110</pre>
 <li>Doesn't touch TTL</li>
 </ul>
 </section>
+
 <section data-key="vlan">
 <h2>VLAN</h2>
 <ul>
@@ -623,6 +843,7 @@ Transmit: 101011 110</pre>
 <li>Cross-VLAN → must go through router</li>
 </ul>
 </section>
+
 <section data-key="router-vs-switch-exam">
 <h2>Router vs Switch <span class="tag">exam</span></h2>
 <table>
@@ -634,6 +855,7 @@ Transmit: 101011 110</pre>
 <tr><td>TTL</td><td>−1</td><td>untouched</td></tr>
 </tbody></table>
 </section>
+
 <section data-key="collision-broadcast-domains">
 <h2>Collision &amp; Broadcast Domains</h2>
 <ul>
@@ -641,6 +863,10 @@ Transmit: 101011 110</pre>
 <li><b>Broadcast domain</b>: bounded by router or VLAN</li>
 </ul>
 </section>
+
+
+<!-- ============ Ch 6a: Wireless — Physical ============ -->
+
 <section data-key="wireless-wired-exam">
 <h2>Wireless ≠ Wired <span class="tag">exam</span></h2>
 <ol>
@@ -649,6 +875,7 @@ Transmit: 101011 110</pre>
 </ol>
 <p class="mini">These two drive all wireless MAC design.</p>
 </section>
+
 <section data-key="free-space-pathloss">
 <h2>Free-Space Pathloss</h2>
 <div class="formula">L = (4πd/λ)² = (4πdf/c)²</div>
@@ -659,6 +886,7 @@ Transmit: 101011 110</pre>
 </ul>
 <p class="mini">Real env: PL(d) = PL(d₀) + 10α · log(d/d₀) + X. α = 2 free · 2.7–3.5 urban · 4–6 indoor.</p>
 </section>
+
 <section data-key="propagation-modes">
 <h2>Propagation Modes</h2>
 <ul>
@@ -667,6 +895,7 @@ Transmit: 101011 110</pre>
 <li><b>Scattering</b>: object &lt; λ (leaves, lamp posts) — hardest to model</li>
 </ul>
 </section>
+
 <section data-key="fading">
 <h2>Fading</h2>
 <ul>
@@ -675,6 +904,7 @@ Transmit: 101011 110</pre>
 <li>Mobility → small-scale fade</li>
 </ul>
 </section>
+
 <section data-key="multipath-coherence-time">
 <h2>Multipath &amp; Coherence Time</h2>
 <ul>
@@ -683,6 +913,7 @@ Transmit: 101011 110</pre>
 <li>Symbol period < coherence time</li>
 </ul>
 </section>
+
 <section data-key="snr-sinr">
 <h2>SNR / SINR</h2>
 <div class="formula">SNR_dB = 10·log₁₀(S/N) · SINR_dB = 10·log₁₀(S/(N+I))</div>
@@ -691,6 +922,7 @@ Transmit: 101011 110</pre>
 <li>SINR adds interference from other senders</li>
 </ul>
 </section>
+
 <section data-key="wifi-ranges">
 <h2>WiFi ranges</h2>
 <ul>
@@ -698,6 +930,10 @@ Transmit: 101011 110</pre>
 <li>Neighbors may interfere but not decode</li>
 </ul>
 </section>
+
+
+<!-- ============ Ch 6b: Wireless — MAC ============ -->
+
 <section data-key="csma-sender-driven-problem">
 <h2>CSMA's Fundamental Flaw (Wireless)</h2>
 <p class="mini"><b>Key</b>: CSMA = <b>sender</b> senses channel — but collision = at <b>receiver</b>.</p>
@@ -709,6 +945,7 @@ Transmit: 101011 110</pre>
 </ul>
 <p class="mini">Fix: shift decision from sender → receiver. <b>ACK</b> (CSMA/CA) + <b>RTS/CTS</b> (receiver claims channel).</p>
 </section>
+
 <section data-key="hidden-terminal-exam">
 <h2>Hidden Terminal <span class="tag">exam</span></h2>
 <figure><img src="cheatsheet-assets/example-q5-hidden-exposed.jpg"><figcaption>Example Q5 — Hidden / Exposed Terminal identification</figcaption></figure>
@@ -719,6 +956,7 @@ Transmit: 101011 110</pre>
 </ul>
 <p class="mini">Fixes: <b>CSMA/CA</b> (ACK) + <b>RTS/CTS</b> (NAV). See those sections.</p>
 </section>
+
 <section data-key="exposed-terminal">
 <h2>Exposed Terminal</h2>
 <ul>
@@ -728,6 +966,7 @@ Transmit: 101011 110</pre>
 </ul>
 <p class="mini">Mnemonic: hidden = sender-OUT + recv-IN (should stop, doesn't). Exposed = sender-IN + target-OUT (defers, didn't need to).</p>
 </section>
+
 <section data-key="rts-cts-nav">
 <h2>RTS / CTS / NAV</h2>
 <ul>
@@ -737,6 +976,7 @@ Transmit: 101011 110</pre>
 <li>Solves hidden · <span class="red">NOT exposed</span></li>
 </ul>
 </section>
+
 <section data-key="csma-ca-full-flow-exam">
 <h2>CSMA/CA full flow <span class="tag">exam</span></h2>
 <figure><img src="cheatsheet-assets/csma-ca-three-mechanisms.jpg"><figcaption>CSMA/CA three mechanisms</figcaption></figure>
@@ -751,6 +991,7 @@ Transmit: 101011 110</pre>
 </ol>
 <p class="mini">No collision detection: TX deafens own RX.</p>
 </section>
+
 <section data-key="backoff-variants">
 <h2>Backoff variants</h2>
 <ul>
@@ -759,6 +1000,20 @@ Transmit: 101011 110</pre>
 <li>Append CW to packet so peers track congestion</li>
 </ul>
 </section>
+
+<section data-key="802-11-standards">
+<h2>802.11 standards</h2>
+<table>
+<tr><th>Std</th><th>Band</th><th>Rate</th></tr>
+<tr><td>b</td><td>2.4 G</td><td>11 M</td></tr>
+<tr><td>a / g</td><td>5 / 2.4 G</td><td>54 M</td></tr>
+<tr><td>n</td><td>2.4 / 5 G</td><td>~600 M (MIMO)</td></tr>
+<tr><td>ac (WiFi 5)</td><td>5 G</td><td>&gt; 1 G</td></tr>
+<tr><td>ax (WiFi 6)</td><td>2.4 / 5 G</td><td>~14 G</td></tr>
+</table>
+<p class="mini">2.4 G non-overlap channels: 1, 6, 11 (22 MHz each).</p>
+</section>
+
 <section data-key="802-11-architecture">
 <h2>802.11 Architecture</h2>
 <ul>
@@ -767,6 +1022,19 @@ Transmit: 101011 110</pre>
 <li>Associate first (probe + auth) → then data</li>
 </ul>
 </section>
+
+</div></div>
+
+
+<!-- ================================================================ -->
+<!-- SHEET 4 — REFERENCE (Formulas + Constants + Units & Conversions)  -->
+<!-- ================================================================ -->
+<div class="sheet">
+<h1>COMS 4119 · REFERENCE</h1>
+<div class="cols">
+
+<!-- ============ Formula Index ============ -->
+
 <section data-key="formula-index">
 <h2>Formula Index</h2>
 <ol>
@@ -789,6 +1057,7 @@ Transmit: 101011 110</pre>
 <li>Timeout = EstRTT + 4·DevRTT</li>
 </ol>
 </section>
+
 <section data-key="constants-useful-numbers">
 <h2>Constants &amp; Useful Numbers</h2>
 <ul>
@@ -805,6 +1074,10 @@ Transmit: 101011 110</pre>
 <li>TCP/IP overhead 40 B per packet</li>
 </ul>
 </section>
+
+
+<!-- ============ Units & Conversions ============ -->
+
 <section data-key="time-units">
 <h2>Time Units</h2>
 <table>
@@ -819,6 +1092,7 @@ Transmit: 101011 110</pre>
 <li>1 ms = 1000 μs = 10⁶ ns</li>
 </ul>
 </section>
+
 <section data-key="bytes-bits">
 <h2>Bytes &amp; Bits</h2>
 <ul>
@@ -835,6 +1109,7 @@ Transmit: 101011 110</pre>
 </tbody></table>
 <p class="mini">Networking uses <b>SI (base-10)</b>. Storage often binary.</p>
 </section>
+
 <section data-key="bandwidth">
 <h2>Bandwidth</h2>
 <table>
@@ -850,6 +1125,9 @@ Transmit: 101011 110</pre>
 <li>1 Gbps = 1000 Mbps = 10⁶ Kbps</li>
 </ul>
 </section>
+
+
+
 <section data-key="length-distance">
 <h2>Length / Distance</h2>
 <table>
@@ -861,6 +1139,7 @@ Transmit: 101011 110</pre>
 </tbody></table>
 <p class="mini">1 mile ≈ 1.609 km (rarely needed)</p>
 </section>
+
 <section data-key="propagation-quickref">
 <h2>Propagation Quickref</h2>
 <ul>
@@ -872,6 +1151,7 @@ Transmit: 101011 110</pre>
 <li>Sound (water): 1 km → <b>0.67 s</b></li>
 </ul>
 </section>
+
 <section data-key="transmission-quickref">
 <h2>Transmission Quickref</h2>
 <ul>
@@ -883,6 +1163,7 @@ Transmit: 101011 110</pre>
 <li>500 B @ 8 Mbps → 0.5 ms</li>
 </ul>
 </section>
+
 <section data-key="bdp-quickref">
 <h2>BDP Quickref</h2>
 <ul>
@@ -892,6 +1173,7 @@ Transmit: 101011 110</pre>
 <li>Throughput × RTT = pipe contents</li>
 </ul>
 </section>
+
 <section data-key="rtt-numbers-typical">
 <h2>RTT Numbers (typical)</h2>
 <table>
@@ -905,6 +1187,7 @@ Transmit: 101011 110</pre>
 <tr><td>Satellite (GEO)</td><td>~500 ms</td></tr>
 </tbody></table>
 </section>
+
 <section data-key="powers-of-2-memorize">
 <h2>Powers of 2 (memorize)</h2>
 <table>
@@ -917,6 +1200,7 @@ Transmit: 101011 110</pre>
 <tr><td>2¹²⁸</td><td>~3.4·10³⁸ (IPv6)</td></tr>
 </tbody></table>
 </section>
+
 <section data-key="subnet-x-hosts">
 <h2>Subnet /x → hosts</h2>
 <table>
@@ -930,6 +1214,7 @@ Transmit: 101011 110</pre>
 <tr><td>/30</td><td>2² = 4</td><td>point-to-point</td></tr>
 </tbody></table>
 </section>
+
 <section data-key="mask-x">
 <h2>Mask ↔ /x</h2>
 <table>
@@ -943,6 +1228,7 @@ Transmit: 101011 110</pre>
 </tbody></table>
 <p class="mini">Octet pattern: 128, 192, 224, 240, 248, 252, 254, 255</p>
 </section>
+
 <section data-key="db-conversions">
 <h2>dB Conversions</h2>
 <ul>
@@ -954,6 +1240,7 @@ Transmit: 101011 110</pre>
 <li>WiFi: −50 dBm strong, −70 dBm medium, −90 dBm weak</li>
 </ul>
 </section>
+
 <section data-key="hex-binary">
 <h2>Hex ↔ Binary</h2>
 <table>
@@ -969,6 +1256,7 @@ Transmit: 101011 110</pre>
 </tbody></table>
 <p class="mini">e.g. MAC 00-15-C5 = 0x0015C5</p>
 </section>
+
 <section data-key="si-prefixes">
 <h2>SI Prefixes</h2>
 <table>
@@ -982,6 +1270,7 @@ Transmit: 101011 110</pre>
 <tr><td>tera</td><td>T</td><td>10¹²</td></tr>
 </tbody></table>
 </section>
+
 <section data-key="combo-cheats" data-wired="1" contenteditable="true" spellcheck="false">
 <h2>Combo Cheats</h2>
 <ul>
@@ -989,6 +1278,9 @@ Transmit: 101011 110</pre>
 <li>Gbps × μs = Kb</li>
 </ul>
 </section>
-</div>
-</div>
+
+
+
+</div></div>
+
 </div>
