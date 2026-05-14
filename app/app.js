@@ -891,8 +891,10 @@ async function renderPostMid() {
   content.innerHTML = `<div class="postmid-view">
     <div class="postmid-inner">
       <div class="toolbar">
-        <div class="title"><b>📖 期中后内容总结</b> <span class="subtle">lec14, 16-23 · 中文 · 重点概念 + 公式 + 解题策略</span></div>
+        <div class="title"><b>📖 期中后内容总结</b> <span class="subtle">lec14, 16-23 · 中文 · 勾选你想确认的概念，按🔍批量查 ctpp 覆盖</span></div>
         <div class="pager">
+          <button onclick="postmidCheckAll()" title="检查所有勾选的概念是否在 cheatsheet 中">🔍 检查 ctpp 覆盖</button>
+          <button onclick="postmidClearChecks()" title="清空所有勾选">↩️ 清空勾选</button>
           <button onclick="document.querySelector('.postmid-view').scrollTo({top:0,behavior:'smooth'})">⬆️ 顶部</button>
           <button onclick="window.print()">🖨️ 打印</button>
         </div>
@@ -912,12 +914,117 @@ async function renderPostMid() {
   }
   const body = document.getElementById('postmidBody');
   body.innerHTML = marked.parse(md);
+  // Add a checkbox + status badge to every numbered h3 concept (### N. ...)
+  body.querySelectorAll('h3').forEach(h3 => {
+    const txt = h3.textContent;
+    if (!/^\s*\d+\.\s/.test(txt)) return;
+    const cleanTitle = txt.trim();
+    const key = 'postmid:check:' + cleanTitle.slice(0, 80);
+    const checked = localStorage.getItem(key) === '1';
+    const wrap = document.createElement('span');
+    wrap.className = 'postmid-check-wrap';
+    wrap.contentEditable = 'false';
+    wrap.dataset.title = cleanTitle;
+    wrap.innerHTML = `
+      <label class="postmid-checkbox"><input type="checkbox" ${checked?'checked':''}><span class="cbox">${checked?'☑':'☐'}</span></label>
+      <span class="postmid-status"></span>`;
+    h3.appendChild(wrap);
+    const input = wrap.querySelector('input');
+    input.addEventListener('change', () => {
+      localStorage.setItem(key, input.checked ? '1' : '0');
+      wrap.querySelector('.cbox').textContent = input.checked ? '☑' : '☐';
+      wrap.querySelector('.postmid-status').textContent = '';
+    });
+  });
   if (window.renderMathInElement) {
     try { window.renderMathInElement(body, {delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]}); } catch(e) {}
   }
   const root = content.querySelector('.postmid-view');
   renderAllQAIn(root);
   wireQAShortcuts(root);
+}
+
+// Extract concept keywords from a numbered h3 like "### 5. CIDR — `a.b.c.d/x` ⭐⭐⭐"
+function _conceptKeywords(text) {
+  let t = text.replace(/^\s*\d+\.\s*/, '').replace(/[⭐✨🔥☐☑]/g, '').replace(/\(final Q\d+\)/gi, '').trim();
+  // main name = up to first separator
+  const main = t.split(/[—\-:：·,，(（]/)[0].trim();
+  // also pull uppercase acronyms (CIDR, BGP, OSPF, AS-PATH...)
+  const acronyms = t.match(/\b[A-Z][A-Z0-9/\-]{1,}\b/g) || [];
+  // Chinese 4-char concept candidates
+  const cjk = (t.match(/[一-鿿]{2,}/g) || []).filter(w => w.length >= 2 && w.length <= 8);
+  const all = [main, ...acronyms, ...cjk.slice(0, 3)];
+  // dedupe + drop very short
+  return [...new Set(all)].filter(w => w && w.length >= 2);
+}
+
+// Find first cheatsheet <section> whose text best matches the keywords
+function _findCheatSection(doc, keywords) {
+  const sections = [...doc.querySelectorAll('section')];
+  let best = null, bestScore = 0;
+  sections.forEach(sec => {
+    const text = sec.textContent.toLowerCase();
+    let score = 0;
+    keywords.forEach(k => {
+      const kl = k.toLowerCase();
+      if (text.includes(kl)) score += k.length;  // longer keyword = stronger match
+    });
+    if (score > bestScore) { bestScore = score; best = sec; }
+  });
+  if (bestScore === 0) return null;
+  const h2 = best.querySelector('h2');
+  return { score: bestScore, title: (h2?.textContent || '').replace(/\s+/g, ' ').trim() };
+}
+
+async function postmidCheckAll() {
+  const checks = [...document.querySelectorAll('.postmid-view h3 .postmid-check-wrap input:checked')];
+  if (checks.length === 0) {
+    alert('先勾选你想检查的概念（每个 ### N. 标题右边有 ☐）');
+    return;
+  }
+  let cheatHtml = '';
+  try {
+    cheatHtml = await fetch('cheatsheet.html?t=' + Date.now()).then(r => r.text());
+  } catch (e) {
+    alert('拉取 cheatsheet 失败：' + e.message);
+    return;
+  }
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(cheatHtml, 'text/html');
+  let found = 0, missing = 0;
+  const missingItems = [];
+  checks.forEach(input => {
+    const wrap = input.closest('.postmid-check-wrap');
+    const status = wrap.querySelector('.postmid-status');
+    const title = wrap.dataset.title || '';
+    const kws = _conceptKeywords(title);
+    const result = _findCheatSection(doc, kws);
+    if (result && result.score >= Math.max(3, kws[0]?.length || 3)) {
+      status.textContent = `✓ ${result.title.slice(0, 30)}`;
+      status.className = 'postmid-status ok';
+      found++;
+    } else {
+      status.textContent = `✗ 未在 ctpp（kw: ${kws.slice(0,3).join(', ')}）`;
+      status.className = 'postmid-status missing';
+      missing++;
+      missingItems.push(title.replace(/\s+/g, ' ').slice(0, 60));
+    }
+  });
+  const summary = `检查完成：${found} 个已在 ctpp · ${missing} 个未覆盖`
+    + (missingItems.length ? `\n\n缺的：\n• ${missingItems.join('\n• ')}` : '');
+  alert(summary);
+}
+
+function postmidClearChecks() {
+  if (!confirm('清空所有勾选？')) return;
+  document.querySelectorAll('.postmid-view h3 .postmid-check-wrap').forEach(wrap => {
+    const input = wrap.querySelector('input');
+    if (input) input.checked = false;
+    wrap.querySelector('.cbox').textContent = '☐';
+    wrap.querySelector('.postmid-status').textContent = '';
+    const key = 'postmid:check:' + (wrap.dataset.title || '').slice(0, 80);
+    localStorage.removeItem(key);
+  });
 }
 
 // ============ Cheat Sheet (interactive editor) ============

@@ -327,6 +327,51 @@ body {
 .postmid-body hr { border: 0; border-top: 1px solid #2a3247; margin: 24px 0; }
 .postmid-body strong { color: #fff; }
 
+/* concept checkboxes in postmid summary */
+.postmid-body h3 { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.postmid-check-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  font-weight: normal;
+  font-size: 13px;
+}
+.postmid-checkbox {
+  cursor: pointer;
+  user-select: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+.postmid-checkbox input[type=checkbox] { display: none; }
+.postmid-checkbox .cbox {
+  font-size: 18px;
+  line-height: 1;
+  color: var(--accent, #7aa2ff);
+  transition: color 0.15s;
+}
+.postmid-checkbox:hover .cbox { color: var(--accent-2, #f5c46e); }
+.postmid-status {
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.postmid-status.ok {
+  background: rgba(109, 208, 109, 0.15);
+  color: #6dd06d;
+  border: 1px solid rgba(109, 208, 109, 0.4);
+}
+.postmid-status.missing {
+  background: rgba(232, 91, 91, 0.15);
+  color: #ff8a8a;
+  border: 1px solid rgba(232, 91, 91, 0.4);
+}
+@media print {
+  .postmid-check-wrap { display: none !important; }
+}
+
 /* ============ Cheatsheet section overlay (delete/image buttons) ============ */
 .cheat-host section {
   position: relative;
