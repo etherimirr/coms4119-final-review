@@ -1,4 +1,4 @@
-<!-- CHEATSHEET_VERSION: 22 -->
+<!-- CHEATSHEET_VERSION: 23 -->
 <!--
   COMS 4119 FINAL CHEAT SHEET
   4 sheets organized by course chapter (Kurose-Ross order):
@@ -8,8 +8,6 @@
     SHEET 4 — Reference (formulas, constants, units & conversions)
 
   Each section is contentEditable (click to type). Hover for ✕/📷/🤖.
-  All midterm Q-takeaways live inside their topical sections (tagged "mid Q*").
-
   IMAGES: drop into app/cheatsheet-assets/ then reference as:
     <figure><img src="cheatsheet-assets/foo.png"><figcaption>caption</figcaption></figure>
 -->
@@ -29,7 +27,7 @@
 <h2>Layering &amp; Encapsulation</h2>
 <ul>
 <li><b>Application</b>: <b>Message</b> — HTTP / DNS / SMTP</li>
-<li><b>Transport</b>: <b>Segment</b> (both TCP &amp; UDP, per PPT 3-22) — port addressing</li>
+<li><b>Transport</b>: <b>Segment</b> (both TCP &amp; UDP) — port addressing</li>
 <li><b>Network</b>: <b>(IP) Datagram</b> — IP address</li>
 <li><b>Data Link</b>: <b>Frame</b> — MAC address (Eth / 802.11)</li>
 <li><b>Physical</b>: <b>Bits</b> — signal on wire / air</li>
@@ -43,7 +41,6 @@
 <li>Complex functions go at <b>endpoints</b>, not in the network core</li>
 <li>e.g. reliability: TCP at hosts, not per-hop</li>
 <li>Drives many designs: best-effort IP, IPv6 (no router fragmentation), NAT controversy, RDT at L4</li>
-<li>Cite: Saltzer et al. "End-to-End Arguments in System Design" (1984)</li>
 </ul>
 </section>
 
@@ -98,13 +95,13 @@
 </section>
 
 <section data-key="stop-and-wait-utilization-mid-q5">
-<h2>Stop-and-Wait Utilization <span class="tag">mid Q5</span></h2>
+<h2>Stop-and-Wait Utilization</h2>
 <div class="formula">U = T_trans / (T_trans + 2·T_prop)</div>
 <ul>
 <li>T_trans = L/R</li>
 <li><span class="red">Denominator has 2·T_prop</span> — don't forget ×2 (round-trip)</li>
 <li>When L small or RTT large → U collapses → need sliding window</li>
-<li>Mid Q5: 2 Kb @ 40 Kbps over 30 m acoustic + 3 km air → U ≈ 0.54; @ 200 b → 0.11 (small packets tank utilization)</li>
+<li>2 Kb @ 40 Kbps over 30 m acoustic + 3 km air → U ≈ 0.54; @ 200 b → 0.11 (small packets tank utilization)</li>
 </ul>
 <div class="my-note" data-note-key="mid:4:takeaway"><span class="my-note-tag">📝</span> <b>mid Q5 要诀:</b> Stop-and-wait U 公式：分子 transmission，分母 transmission + 2·prop。包小 / RTT 大 → U 暴跌 → 必须用滑窗。</div></section>
 
@@ -136,13 +133,13 @@
 </section>
 
 <section data-key="http-rtt-counting-mid-q1">
-<h2>HTTP RTT Counting <span class="tag">mid Q1</span></h2>
+<h2>HTTP RTT Counting</h2>
 <ul>
 <li><b>Draw dependency tree</b>: base → inline siblings → CSS-referenced → JS-triggered</li>
 <li><b>Non-persistent</b>: each obj = 1 RTT TCP setup + 1 RTT GET = <span class="red">2 RTT/obj</span></li>
 <li><b>Persistent + pipelined</b>: base 2 RTT; same-layer inline 1 RTT; each nesting +1 RTT</li>
 <li><b>Persistent no pipeline</b>: each obj 1 RTT sequentially</li>
-<li>Mid Q1: HTML + 4 jpg + 1 css(2 jpg), persistent pipelined = <b>4 RTT</b></li>
+<li>HTML + 4 jpg + 1 css(2 jpg), persistent pipelined = <b>4 RTT</b></li>
 </ul>
 <div class="my-note" data-note-key="mid:0:takeaway"><span class="my-note-tag">📝</span> <b>mid Q1 要诀:</b> 看到『UDP 多少 socket』→ 答 1；『TCP 多少 socket』→ 答 N+1。RTT 题画依赖树数层数。</div></section>
 
@@ -188,7 +185,7 @@
 </section>
 
 <section data-key="sockets-mid-q1">
-<h2>Sockets <span class="tag">mid Q1</span></h2>
+<h2>Sockets</h2>
 <ul>
 <li><b>UDP server</b>: <span class="red">1</span> socket only (no connection)</li>
 <li><b>TCP server</b>: 1 welcome + N connection = <span class="red">N+1</span></li>
@@ -209,14 +206,14 @@
 </section>
 
 <section data-key="p2p-file-distribution-mid-q7">
-<h2>P2P File Distribution <span class="tag">mid Q7</span></h2>
+<h2>P2P File Distribution</h2>
 <div class="formula">CS:  T = max(NF/U_s, F/d_min)</div>
 <div class="formula">P2P: T = max(F/U_s, F/d_min, NF/(U_s + ΣU_i))</div>
 <ul>
 <li><b>CS time grows linearly with N</b> (server uploads N copies)</li>
 <li><b>P2P time grows slowly with N</b> (collective upload also grows; denom increases)</li>
 <li>Small N: tied. Large N: P2P wins.</li>
-<li>Mid Q7: 1GB/100u, 40Mbps server → CS = 20000s; P2P ≈ 1000s. N ≥ 5 to outperform.</li>
+<li>1GB/100u, 40Mbps server → CS = 20000s; P2P ≈ 1000s. N ≥ 5 to outperform.</li>
 </ul>
 <div class="my-note" data-note-key="mid:6:takeaway"><span class="my-note-tag">📝</span> <b>mid Q7 要诀:</b> Client-server 时间随 N 线性增（server 是瓶颈），P2P 时间随 N 微增（集体带宽也增）。N 大时 P2P 优势越来越明显。</div></section>
 
@@ -295,7 +292,7 @@
 </section>
 
 <section data-key="rdt-gbn-vs-sr-selective-repeat-mid-q3">
-<h2>RDT: GBN vs SR (Selective Repeat) <span class="tag">mid Q3</span></h2>
+<h2>RDT: GBN vs SR (Selective Repeat)</h2>
 <table>
 <tbody><tr><th></th><th>GBN</th><th>SR</th></tr>
 <tr><td>ACK</td><td>cumulative</td><td>per-packet</td></tr>
@@ -319,13 +316,13 @@
 </section>
 
 <section data-key="tcp-flow-control-sr-buffer-trap-mid-q6">
-<h2>TCP Flow Control + SR Buffer Trap <span class="tag">mid Q6</span></h2>
+<h2>TCP Flow Control + SR Buffer Trap</h2>
 <ul>
 <li>Receiver advertises <b>rwnd</b> in every ACK</li>
 <li>Sender's inflight ≤ min(cwnd, rwnd)</li>
 <li><b>SR receive buffer</b> holds out-of-order packets — "hold until in-order delivery"</li>
 <li>If pkt 1 lost + pkts 2,3,4 fill buffer → buffer can't release → pkts 5+ <b>dropped</b></li>
-<li>Mid Q6: 10 pkts, buffer=4, pkt 1 lost → retransmit <b>7 pkts</b> (1 + 5–10)</li>
+<li>10 pkts, buffer=4, pkt 1 lost → retransmit <b>7 pkts</b> (1 + 5–10)</li>
 <li>Advertised window <span class="red">must ≤ buffer size</span>, else overflow</li>
 </ul>
 <div class="my-note" data-note-key="qa:midterm:5:0"><span class="my-note-tag">💬</span> <b>Q:</b> 我想问一下如果advertise太多了，像第一问这样，receiver那边丢了5-10 六个包，之后sender就会跳过这些从11开始吗<br><b>A:</b> 如果 receiver 的 advertise window 设置得太大，导致 buffer 溢出，确实会造成丢包。在这种情况下，sender 不会跳过丢失的包，而是会继续重传丢失的包。 具体来说，Selective Repeat (SR) 协议要求 receiver 必须保留 out-of-order 的包，直到所有需要的包都到齐才能交付。因此，如果包 1 丢失，包 2、3、4 到达并被存入 buffer，但由于 buffer 满了，…</div><div class="my-note" data-note-key="mid:5:takeaway"><span class="my-note-tag">📝</span> <b>mid Q6 要诀:</b> Receive buffer 不是简单容量计数，是『等齐才交付』占用。Advertised window 必须 ≤ buffer，否则会丢包。</div></section>
@@ -345,7 +342,7 @@
 
 <section data-key="tcp-cc-fsm-exam">
 <h2>TCP CC FSM <span class="tag">exam</span></h2>
-<figure><img src="cheatsheet-assets/tcp-cc-fsm.jpg"><figcaption>lec14 p12 · TCP CC state machine</figcaption></figure>
+<figure><img src="cheatsheet-assets/tcp-cc-fsm.jpg"><figcaption>TCP CC state machine</figcaption></figure>
 <p class="mini"><b>Loss detection → recovery</b>:
 <span class="red">Timeout</span> ⇒ cwnd=1 + <b>slow start</b>;
 <span class="red">3 dup ACK</span> ⇒ cwnd/=2 + <b>fast recovery → CA</b>.</p>
@@ -401,7 +398,7 @@
 </section>
 
 <section data-key="loss-congestion-final-q1">
-<h2>Loss ≠ Congestion <span class="tag">final Q1</span></h2>
+<h2>Loss ≠ Congestion</h2>
 <ul>
 <li>Bit error → checksum fails → silently dropped (no ACK)</li>
 <li>Common on wireless links</li>
@@ -553,7 +550,7 @@
 
 <section data-key="dhcp-dora">
 <h2>DHCP DORA</h2>
-<figure><img src="cheatsheet-assets/dhcp-dora.jpg"><figcaption>lec17 p15 · DHCP DORA timing</figcaption></figure>
+<figure><img src="cheatsheet-assets/dhcp-dora.jpg"><figcaption>DHCP DORA timing</figcaption></figure>
 <ol>
 <li><b>Discover</b> (src 0.0.0.0:68 → 255.255.255.255:67, broadcast)</li>
 <li><b>Offer</b> (server: yiaddr, lease)</li>
@@ -627,7 +624,7 @@
 
 <section data-key="dijkstra-ls">
 <h2>Dijkstra (LS)</h2>
-<figure><img src="cheatsheet-assets/dijkstra-example.jpg"><figcaption>lec18 p26 · Dijkstra example + iteration table</figcaption></figure>
+<figure><img src="cheatsheet-assets/dijkstra-example.jpg"><figcaption>Dijkstra example + iteration table</figcaption></figure>
 <div class="formula">D(v) = min(D(v), D(w) + c(w,v))</div>
 <ol>
 <li>N'={u}; D(v)=c(u,v) or ∞</li>
@@ -682,11 +679,11 @@
 <li>AS-PATH includes own AS → reject (loop)</li>
 <li><b>Route select</b>: 1) local pref 2) shortest AS-PATH 3) closest NEXT-HOP (hot potato) 4) others</li>
 </ul>
-<figure><img src="cheatsheet-assets/bgp-route-select.jpg"><figcaption>lec19 p23 · BGP Route Selection 4-step priority</figcaption></figure>
+<figure><img src="cheatsheet-assets/bgp-route-select.jpg"><figcaption>BGP Route Selection 4-step priority</figcaption></figure>
 </section>
 
 <section data-key="bgp-policy-final-q3">
-<h2>BGP Policy <span class="tag">final Q3</span></h2>
+<h2>BGP Policy</h2>
 <p class="mini"><span class="red">⚠️ Trap</span>: BGP <b>does NOT always</b> pick shortest AS-PATH — it is policy-based. If a neighbor AS refuses to forward, traffic must take a longer path.</p>
 <ul>
 <li><b>Export</b>: choose whom to advertise to</li>
@@ -845,7 +842,7 @@ Transmit: 101011 110</pre>
 
 <section data-key="ethernet-frame">
 <h2>Ethernet Frame</h2>
-<figure><img src="cheatsheet-assets/ethernet-frame.jpg"><figcaption>lec21 p26 · Ethernet frame fields + lengths</figcaption></figure>
+<figure><img src="cheatsheet-assets/ethernet-frame.jpg"><figcaption>Ethernet frame fields + lengths</figcaption></figure>
 <ul>
 <li>Preamble 7 B + SFD 1 B (clock sync)</li>
 <li>Dst MAC 6 B + Src MAC 6 B</li>
@@ -1006,7 +1003,7 @@ Transmit: 101011 110</pre>
 
 <section data-key="hidden-terminal-exam">
 <h2>Hidden Terminal <span class="tag">exam</span></h2>
-<figure><img src="cheatsheet-assets/hidden-terminal.jpg"><figcaption>lec23 p19 · Hidden terminal geometry</figcaption></figure>
+<figure><img src="cheatsheet-assets/hidden-terminal.jpg"><figcaption>Hidden terminal geometry</figcaption></figure>
 <p class="mini"><b>Def</b>: a third node <b>X</b> is <b>outside</b> sender <b>A</b>'s range (can't hear A) but <b>inside</b> receiver <b>B</b>'s interference range. X thinks idle → sends → collides with A at B.</p>
 <ul>
 <li>Symptom: A transmits fine, B receives nothing</li>
@@ -1037,7 +1034,7 @@ Transmit: 101011 110</pre>
 
 <section data-key="csma-ca-full-flow-exam">
 <h2>CSMA/CA full flow <span class="tag">exam</span></h2>
-<figure><img src="cheatsheet-assets/csma-ca-flow.jpg"><figcaption>lec23 p29 · CSMA/CA full flow</figcaption></figure>
+<figure><img src="cheatsheet-assets/csma-ca-flow.jpg"><figcaption>CSMA/CA full flow</figcaption></figure>
 <ol>
 <li>Carrier sense (physical + virtual NAV)</li>
 <li>Idle → wait <b>DIFS</b> → still idle → send</li>
@@ -1227,7 +1224,7 @@ Transmit: 101011 110</pre>
 <li>1 Kb @ 1 Mbps → 1 ms</li>
 <li>1 Kb @ 1 Gbps → 1 μs</li>
 <li>1500 B @ 100 Mbps → 120 μs</li>
-<li>2 Kb @ 40 Kbps → <b>50 ms</b> (mid Q4)</li>
+<li>2 Kb @ 40 Kbps → <b>50 ms</b></li>
 <li>500 B @ 1 Mbps → 4 ms</li>
 <li>500 B @ 8 Mbps → 0.5 ms</li>
 </ul>
@@ -1238,7 +1235,7 @@ Transmit: 101011 110</pre>
 <ul>
 <li>1 Gbps × 100 ms = 100 Mb = 12.5 MB</li>
 <li>10 Mbps × 30 ms = 300 Kb = 37.5 KB</li>
-<li>30 Kbps × 80 ms = 2.4 Kb = 300 B (mid Q4)</li>
+<li>30 Kbps × 80 ms = 2.4 Kb = 300 B</li>
 <li>Throughput × RTT = pipe contents</li>
 </ul>
 </section>
