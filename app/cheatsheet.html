@@ -1,4 +1,4 @@
-<!-- CHEATSHEET_VERSION: 20 -->
+<!-- CHEATSHEET_VERSION: 21 -->
 <!--
   COMS 4119 FINAL CHEAT SHEET
   4 sheets organized by course chapter (Kurose-Ross order):
@@ -29,12 +29,12 @@
 <h2>Layering &amp; Encapsulation</h2>
 <ul>
 <li><b>Application</b>: <b>Message</b> — HTTP / DNS / SMTP</li>
-<li><b>Transport</b>: <b>Segment</b>（TCP/UDP 都叫 segment，PPT 3-22）— port 寻址</li>
-<li><b>Network</b>: <b>(IP) Datagram</b> — IP addr</li>
-<li><b>Data Link</b>: <b>Frame</b> — MAC addr (Eth / 802.11)</li>
-<li><b>Physical</b>: <b>Bits</b> — 线/空气信号</li>
+<li><b>Transport</b>: <b>Segment</b> (both TCP &amp; UDP, per PPT 3-22) — port addressing</li>
+<li><b>Network</b>: <b>(IP) Datagram</b> — IP address</li>
+<li><b>Data Link</b>: <b>Frame</b> — MAC address (Eth / 802.11)</li>
+<li><b>Physical</b>: <b>Bits</b> — signal on wire / air</li>
 </ul>
-<p class="mini">下一层加 header 把上层 PDU 包起来（encapsulation）。Demux 上行：Ethertype → IP protocol → port → app。</p>
+<p class="mini">Each layer adds its own header (encapsulation). Demux upward: Ethertype → IP protocol → port → app.</p>
 <div class="my-note" data-note-key="qa:final-preview:5:0"><span class="my-note-tag">💬</span> <b>Q:</b> ecn怎么工作<br><b>A:</b> ECN（Explicit Congestion Notification）是一种网络拥塞控制机制，旨在通过提前通知端点来避免数据包丢失。 **工作原理**： 1. **标记**：当网络设备（如路由器）检测到拥塞时，它不会丢弃数据包，而是将数据包的头部中的ECN字段标记为“标记”状态（通常是“ECN-Echo”）。 2. **反馈**：接收方在收到带有ECN标记的数据包后，会在其返回的ACK中设置ECN-Echo标志，告知发送方网络出现了…</div></section>
 
 <section data-key="end-to-end-principle">
@@ -49,28 +49,28 @@
 
 
 <section data-key="protocols-transport-mapping">
-<h2>协议跑在哪一层 / 用 TCP 还是 UDP</h2>
+<h2>Protocols by Transport Layer</h2>
 <ul>
-<li><b>TCP</b>（可靠有序）: HTTP / HTTPS · SMTP · IMAP · POP3 · FTP · SSH · Telnet · <b>BGP</b> · BitTorrent · DNS（大响应回退）</li>
-<li><b>UDP</b>（快、无连接、无可靠性）: <b>DNS</b>（默认）· <b>DHCP</b> · RTP（实时音视频）· SNMP · TFTP · QUIC (= HTTP/3) · VoIP</li>
-<li><b>直接跑在 IP 上</b>（不走 L4）: <b>ICMP</b>（ping / traceroute）· <b>OSPF</b>（IP protocol 89）· IGMP</li>
-<li><b>直接跑在 L2 上</b>（不走 IP）: <b>ARP</b>（Ethertype 0x0806）· STP · LLDP</li>
+<li><b>TCP</b> (reliable, ordered): HTTP / HTTPS · SMTP · IMAP · POP3 · FTP · SSH · Telnet · <b>BGP</b> · BitTorrent · DNS (fallback for large response)</li>
+<li><b>UDP</b> (fast, connectionless, unreliable): <b>DNS</b> (default) · <b>DHCP</b> · RTP · SNMP · TFTP · QUIC (= HTTP/3) · VoIP</li>
+<li><b>Direct over IP</b> (no L4): <b>ICMP</b> (ping/traceroute) · <b>OSPF</b> (IP protocol 89) · IGMP</li>
+<li><b>Direct over L2</b> (no IP): <b>ARP</b> (Ethertype 0x0806) · STP · LLDP</li>
 </ul>
-<p class="mini">考点：『邮件用什么协议？SMTP / IMAP / POP3 都跑 TCP』『打开网页拿 IP 用 DNS over UDP』『查路由器到底走不走 TCP？OSPF 直接 IP，BGP 才用 TCP』。</p>
+<p class="mini">Exam traps: SMTP/IMAP/POP3 all run on TCP. DNS default UDP. OSPF runs over raw IP, BGP runs over TCP.</p>
 </section>
 
 
 <section data-key="packet-vs-circuit-switching">
 <h2>Packet vs Circuit Switching</h2>
 <ul>
-<li><b>Circuit</b>: source establish 连接 → 节点 reserve resources → send（无 dst 地址）→ tear down。复用：<b>TDM</b>（时分）/ <b>FDM</b>（频分）。</li>
-<li><b>Packet</b>: 切包带 header → 包独立 forward → 节点暂存 → dst 重组。<b>Best-effort</b>：可能 loss / corrupt / 乱序。</li>
+<li><b>Circuit</b>: source establishes connection → nodes reserve resources → send (no dst addr) → tear down. Multiplex: <b>TDM</b> or <b>FDM</b>.</li>
+<li><b>Packet</b>: split into packets w/ header → independent forward → nodes may store → dst reassembles. <b>Best-effort</b>: may be lost / corrupted / out-of-order.</li>
 </ul>
 <table>
 <tr><th>Circuit ✅</th><th>Circuit ❌</th></tr>
-<tr><td class="mini">Guaranteed BW · 简单抽象 · 简单 forwarding · 低 per-pkt overhead</td><td class="mini"><span class="red">Bursty 浪费 BW</span> · Blocked connections · Set-up delay · Per-conn 状态</td></tr>
+<tr><td class="mini">Guaranteed BW · simple abstraction · simple forwarding · low per-pkt overhead</td><td class="mini"><span class="red">Wasted BW on bursty</span> · blocked connections · set-up delay · per-conn state</td></tr>
 </table>
-<p class="mini"><b>vs Packet</b>：packet 适合 <b>bursty</b>（resource sharing + 无 setup）；congestion → buffer overflow → delay/loss。Internet 选 packet。</p>
+<p class="mini"><b>vs Packet</b>: great for <b>bursty</b> (resource sharing, no setup); congestion → buffer overflow → delay/loss. Internet picks packet.</p>
 </section>
 
 <section data-key="delays-performance-mid-q2-q4">
@@ -104,7 +104,7 @@
 <li>T_trans = L/R</li>
 <li><span class="red">Denominator has 2·T_prop</span> — don't forget ×2 (round-trip)</li>
 <li>When L small or RTT large → U collapses → need sliding window</li>
-<li>Mid Q5: 2 Kb @ 40 Kbps over 30m acoustic + 3km air → U ≈ 0.54；@ 200 b → 0.11（小包时利用率极低）</li>
+<li>Mid Q5: 2 Kb @ 40 Kbps over 30 m acoustic + 3 km air → U ≈ 0.54; @ 200 b → 0.11 (small packets tank utilization)</li>
 </ul>
 <div class="my-note" data-note-key="mid:4:takeaway"><span class="my-note-tag">📝</span> <b>mid Q5 要诀:</b> Stop-and-wait U 公式：分子 transmission，分母 transmission + 2·prop。包小 / RTT 大 → U 暴跌 → 必须用滑窗。</div></section>
 
@@ -123,16 +123,16 @@
 <!-- ============ Ch 2: Application Layer ============ -->
 
 <section data-key="client-server-vs-p2p-架构">
-<h2>Client-Server vs P2P 架构</h2>
+<h2>Client-Server vs P2P</h2>
 <table>
-<tbody><tr><th></th><th>Client-Server</th><th>P2P</th></tr>
-<tr><td>Server</td><td>always-on, 永久 IP</td><td>none</td></tr>
-<tr><td>部署</td><td>data center</td><td>任意 end systems 直接通信</td></tr>
-<tr><td>Clients</td><td>contact server</td><td>peers 互相请求 + 提供服务</td></tr>
-<tr><td>Scalability</td><td>受限于 server</td><td><b>self-scaling</b> — 新 peer 自带容量</td></tr>
-<tr><td>例</td><td>HTTP, DNS</td><td>BitTorrent, P2P</td></tr>
-</tbody></table>
-<p class="mini">P2P 自扩展是核心优势：N 个 peer 加入 → upload 容量也加 N 倍。</p>
+<tr><th></th><th>Client-Server</th><th>P2P</th></tr>
+<tr><td>Server</td><td>always-on, fixed IP</td><td>none</td></tr>
+<tr><td>Hosting</td><td>data center</td><td>any end systems, direct</td></tr>
+<tr><td>Clients</td><td>contact server</td><td>peers serve each other</td></tr>
+<tr><td>Scale</td><td>limited by server</td><td><b>self-scaling</b> — each peer adds capacity</td></tr>
+<tr><td>Ex.</td><td>HTTP, DNS</td><td>BitTorrent</td></tr>
+</table>
+<p class="mini">P2P self-scaling: N peers join → upload capacity also grows N×.</p>
 </section>
 
 <section data-key="http-rtt-counting-mid-q1">
@@ -270,15 +270,15 @@
 
 <section data-key="what-can-go-wrong-in-data-transmission">
 <h2>What Can Go Wrong in Data Transmission</h2>
-<p>RDT 协议要处理的 5 类问题（lec11）：</p>
+<p>5 problems RDT must handle (lec11):</p>
 <ol>
-<li><b>Bit errors</b> — 包内 bit 翻转 → checksum 检测</li>
-<li><b>Duplicated packets</b> — 包重复到达 → seq # 去重</li>
-<li><b>Packet losses</b> — 包丢失 → timer + retransmit</li>
-<li><b>Packet delay</b> — 包延迟到达 → 仍要按序交付</li>
-<li><b>Packets arriving out of order</b> — 乱序 → seq # 重排</li>
+<li><b>Bit errors</b> — flipped bits → detect w/ checksum</li>
+<li><b>Duplicate packets</b> — same pkt arrives twice → dedupe by seq #</li>
+<li><b>Packet losses</b> — pkt never arrives → timer + retransmit</li>
+<li><b>Packet delay</b> — arrives late → still need in-order delivery</li>
+<li><b>Out-of-order arrival</b> — reorder via seq #</li>
 </ol>
-<p class="mini">机制对应：checksum (1) · ACK (1,3) · seq # (2,5) · timer (3,4) · receiver buffer (5)</p>
+<p class="mini">Mechanism map: checksum (1) · ACK (1,3) · seq # (2,5) · timer (3,4) · receiver buffer (5)</p>
 <div class="my-note" data-note-key="qa:final-preview:8:0"><span class="my-note-tag">💬</span> <b>Q:</b> CSMA/CD**: min frame size
 说一下<br><b>A:</b> CSMA/CD（Carrier Sense Multiple Access with Collision Detection）是一种用于以太网的接入控制协议。最小帧大小的概念是为了确保在发生碰撞时，发送方能够检测到碰撞并及时停止发送。 **最小帧大小的推导**： 1. **传播延迟**：在网络中，信号从发送端传播到接收端需要一定的时间，称为传播延迟（<span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>T</mi><mrow><mi>p</mi><mi>r</mi><mi>o</mi><mi>p</mi></mrow></msub></mrow><annotation encoding="application/x-tex">T_{prop}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.9694em; vertical-align: -0.2861em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right: 0.1389em;">T</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.1514em;"><span class="" style="top: -2.55em; margin-left: -0.1389em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">p</span><span class="mord mathnormal mtight">ro</span><span class="mord mathnormal mtight">p</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.2861em;"><span class=""></span></span></span></span></span></span></span></span></span></span>）。 2. **发送时间**：发送一帧的时间（<span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>T</mi><mrow><mi>t</mi><mi>r</mi><mi>a</mi><mi>n</mi><mi>s</mi></mrow></msub></mrow><annotation encoding="application/x-tex">T_{trans}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.8333em; vertical-align: -0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right: 0.1389em;">T</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.2806em;"><span class="" style="top: -2.55em; margin-left: -0.1389em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">t</span><span class="mord mathnormal mtight" style="margin-right: 0.0278em;">r</span><span class="mord mathnormal mtight">an</span><span class="mord mathnormal mtight">s</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span></span></span></span></span>…</div></section>
 
@@ -345,10 +345,10 @@
 
 <section data-key="tcp-cc-fsm-exam">
 <h2>TCP CC FSM <span class="tag">exam</span></h2>
-<figure><img src="cheatsheet-assets/tcp-cc-fsm.jpg"><figcaption>lec14 p12 · TCP CC 状态机总图</figcaption></figure>
-<p class="mini"><b>Loss detection → recovery：</b>
-<span class="red">Timeout</span> ⇒ cwnd=1 + <b>slow start</b>；
-<span class="red">3 dup ACK</span> ⇒ cwnd/=2 + <b>congestion avoidance</b>。</p>
+<figure><img src="cheatsheet-assets/tcp-cc-fsm.jpg"><figcaption>lec14 p12 · TCP CC state machine</figcaption></figure>
+<p class="mini"><b>Loss detection → recovery</b>:
+<span class="red">Timeout</span> ⇒ cwnd=1 + <b>slow start</b>;
+<span class="red">3 dup ACK</span> ⇒ cwnd/=2 + <b>fast recovery → CA</b>.</p>
 <ul>
 <li><b>Slow start</b>: cwnd=1; each ACK cwnd += MSS (×2/RTT)</li>
 <li>cwnd &gt; ssthresh → <b>Congestion avoidance</b> (+1 MSS/RTT)</li>
@@ -370,14 +370,14 @@
 <div class="my-note" data-note-key="star:lec14:6"><span class="my-note-tag">⭐</span> <b>lec14 p6</b> AIMD — 唯一收敛公平 ✨ ⭐⭐</div></section>
 
 <section data-key="end-end-vs-network-assisted-congestion-control">
-<h2>End-end vs Network-assisted Congestion Control</h2>
+<h2>End-end vs Network-assisted CC</h2>
 <table>
-<tbody><tr><th></th><th>End-end congestion control</th><th>Network-assisted congestion control</th></tr>
-<tr><td>反馈</td><td>无来自网络的显式反馈</td><td>路由器直接反馈给 host</td></tr>
-<tr><td>怎么察觉拥塞</td><td>从观察到的 loss / delay 推断</td><td>路由器明确告诉（拥塞级别或速率）</td></tr>
-<tr><td>例</td><td>TCP（默认）</td><td>TCP ECN, ATM, DECbit</td></tr>
-</tbody></table>
-<p class="mini">现代 Internet 主要是 end-end（TCP loss-based）+ 可选 network-assisted（ECN）。</p>
+<tr><th></th><th>End-end CC</th><th>Network-assisted CC</th></tr>
+<tr><td>Feedback</td><td>no explicit signal from network</td><td>router directly signals the host</td></tr>
+<tr><td>Detect congestion</td><td>infer from observed loss / delay</td><td>router tells you (level or rate)</td></tr>
+<tr><td>Ex.</td><td>TCP (default)</td><td>TCP ECN, ATM, DECbit</td></tr>
+</table>
+<p class="mini">Modern Internet is mostly end-end (TCP loss-based) + optional network-assisted (ECN).</p>
 </section>
 
 <section data-key="cc-variants">
@@ -471,8 +471,8 @@
 <li><b>Tier-2</b>: regional, peer with tier-1</li>
 <li><b>Tier-3 / access</b>: end-user connectivity</li>
 <li><b>IXP</b>: Internet Exchange Point — ASes peer</li>
-<li>AS = a.k.a. "domain"；同 AS 内运行同一 intra-domain 协议；不同 AS 可选不同协议</li>
-<li>Gateway router 在 AS 边缘，跑 inter-domain（BGP）+ intra-domain</li>
+<li>AS = a.k.a. "domain". All routers in an AS run the same intra-domain protocol; different ASes can run different ones</li>
+<li>Gateway router sits at AS edge, runs both inter-domain (BGP) and intra-domain</li>
 </ul>
 </section>
 
@@ -527,15 +527,15 @@
 </ul>
 <div class="my-note" data-note-key="star:lec17:12"><span class="my-note-tag">⭐</span> <b>lec17 p12</b> IP 地址获取 — 两个问题</div><div class="my-note" data-note-key="star:lec17:13"><span class="my-note-tag">⭐</span> <b>lec17 p13</b> DHCP — Dynamic Host Configuration Protocol 介绍</div><div class="my-note" data-note-key="qa:lec17:3:0"><span class="my-note-tag">💬</span> <b>Q:</b> sdn controller是什么<br><b>A:</b> SDN（软件定义网络）控制器是网络架构中的核心组件，负责集中管理和控制网络设备。它通过抽象化网络硬件，使网络管理员能够以编程方式配置和管理网络。 主要功能包括： 1. **集中控制**：SDN 控制器提供一个集中化的视图，能够管理整个网络的流量和策略。 2. **流量管理**：通过定义流表，控制器可以决定数据包的转发路径，优化网络流量。 3. **网络编程**：管理员可以使用高层次的编程语言和API来配置网络，而不需要直接操作每个设备。…</div><div class="my-note" data-note-key="qa:lec17:21:0"><span class="my-note-tag">💬</span> <b>Q:</b> ipv4和6区别<br><b>A:</b> IPv4 和 IPv6 的主要区别在于地址长度和地址数量。 1. **地址长度**： - **IPv4**：使用 32 位地址，最多可提供约 42 亿个地址（<span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mn>2</mn><mn>32</mn></msup></mrow><annotation encoding="application/x-tex">2^{32}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.8141em;"></span><span class="mord"><span class="mord">2</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height: 0.8141em;"><span class="" style="top: -3.063em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">32</span></span></span></span></span></span></span></span></span></span></span></span></span>）。 - **IPv6**：使用 128 位地址，最多可提供约 <span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>3.4</mn><mo>×</mo><mn>1</mn><msup><mn>0</mn><mn>38</mn></msup></mrow><annotation encoding="application/x-tex">3.4 \times 10^{38}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.7278em; vertical-align: -0.0833em;"></span><span class="mord">3.4</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.8141em;"></span><span class="mord">1</span><span class="mord"><span class="mord">0</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height: 0.8141em;"><span class="" style="top: -3.063em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">38</span></span></span></span></span></span></span></span></span></span></span></span></span> 个地址（<span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mn>2</mn><mn>128</mn></msup></mrow><annotation encoding="application/x-tex">2^{128}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.8141em;"></span><span class="mord"><span class="mord">2</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height: 0.8141em;"><span class="" style="top: -3.063em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">128</span></span></span></span></span></span></span></span></span></span></span></span></span>）。 2. **地址表示**： - **IPv4**：以点分十进制表示，如 192.168.1.1。 - **IPv6**：以冒分十六…</div><div class="my-note" data-note-key="qa:lec17:27:0"><span class="my-note-tag">💬</span> <b>Q:</b> 为什么相比nat IPv6 才是治本<br><b>A:</b> IPv6 被认为是治本的原因在于它提供了更大的地址空间和更简洁的网络架构，解决了 NAT 带来的多个问题。 1. **地址空间**：IPv6 提供了几乎无限的地址（<span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mn>2</mn><mn>128</mn></msup></mrow><annotation encoding="application/x-tex">2^{128}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.8141em;"></span><span class="mord"><span class="mord">2</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height: 0.8141em;"><span class="" style="top: -3.063em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">128</span></span></span></span></span></span></span></span></span></span></span></span></span>），允许每个设备都有一个唯一的公网 IP 地址，从根本上消除了地址不足的问题。 2. **简化网络结构**：IPv6 允许设备直接进行点对点通信，避免了 NAT 需要进行地址转换和端口映射的复杂性，恢复了端到端的通信模型。 3. **支持 P2P 应用**：…</div></section>
 
-<section data-key="subnet-概念">
-<h2>Subnet 概念</h2>
+<section data-key="subnet-concept">
+<h2>Subnet</h2>
 <ul>
-<li><b>Subnet</b> = 一组『不经 router 就能互通』的接口</li>
-<li>IP 地址 = <b>subnet 部分</b>（高位）+ <b>host 部分</b>（低位）</li>
-<li>Mask 决定『前多少位是 subnet 部分』</li>
-<li><b>同子网</b> = ARP 直接通；<b>跨子网</b> = 经 router</li>
-<li><b>识别 recipe</b>：把图里每个 router 接口断开 → 数剩下的『孤岛』，每个孤岛 = 一个 subnet</li>
-<li>IP 关联到 <b>interface</b>（不是 host）：router 有几个接口就有几个 IP</li>
+<li><b>Subnet</b> = set of interfaces that can reach each other <b>without</b> a router</li>
+<li>IP addr = <b>subnet part</b> (high bits) + <b>host part</b> (low bits)</li>
+<li>Mask says how many high bits are the subnet part</li>
+<li>Same subnet → ARP directly; cross subnet → via router</li>
+<li><b>Find subnets</b>: detach each router interface in the topology; each isolated island = one subnet</li>
+<li>IP attaches to <b>interface</b>, not host. A router with N interfaces has N IPs</li>
 </ul>
 </section>
 
@@ -553,7 +553,7 @@
 
 <section data-key="dhcp-dora">
 <h2>DHCP DORA</h2>
-<figure><img src="cheatsheet-assets/dhcp-dora.jpg"><figcaption>lec17 p15 · DHCP DORA 时序</figcaption></figure>
+<figure><img src="cheatsheet-assets/dhcp-dora.jpg"><figcaption>lec17 p15 · DHCP DORA timing</figcaption></figure>
 <ol>
 <li><b>Discover</b> (src 0.0.0.0:68 → 255.255.255.255:67, broadcast)</li>
 <li><b>Offer</b> (server: yiaddr, lease)</li>
@@ -589,26 +589,26 @@
 
 <!-- ============ Ch 4b: Control Plane (Routing) ============ -->
 
-<section data-key="link-state-routing-ls-4-步">
-<h2>Link State Routing (LS) — 4 步</h2>
+<section data-key="link-state-routing-ls">
+<h2>Link State Routing (LS) — 4 steps</h2>
 <ol>
-<li>每 node 维护 <b>local link state</b>（直连邻居 + cost）</li>
-<li>每 node <b>flood</b> 自己的 link state 给所有 router</li>
-<li>每 node 学到整个网络拓扑</li>
-<li>用 <b>Dijkstra</b> 算最短路径</li>
+<li>Each node maintains its <b>local link state</b> (direct neighbors + costs)</li>
+<li>Each node <b>floods</b> its link state to all routers</li>
+<li>Each node learns the full topology</li>
+<li>Run <b>Dijkstra</b> to compute shortest paths</li>
 </ol>
-<p class="mini">"Big mouth"：广播全网。每 node 全局视角。代表：<b>OSPF, IS-IS</b>。</p>
+<p class="mini">"Big mouth": flood everyone. Global view per node. Used by <b>OSPF, IS-IS</b>.</p>
 </section>
 
 <section data-key="distance-vector-routing-dv">
 <h2>Distance Vector Routing (DV)</h2>
 <ul>
-<li>每 node 只跟<b>邻居</b>说自己的 distance vector</li>
-<li>用 <b>Bellman-Ford</b> 方程更新：D_x(y) = min_v {c(x,v) + D_v(y)}</li>
-<li>DV 变了 → 通知邻居 → 渐进收敛</li>
-<li><b>异步、自停</b>：无变化无消息</li>
+<li>Each node tells only its <b>neighbors</b> its distance vector</li>
+<li>Update via <b>Bellman-Ford</b>: D_x(y) = min_v {c(x,v) + D_v(y)}</li>
+<li>DV changes → notify neighbors → eventually converges</li>
+<li><b>Asynchronous, self-stopping</b>: no change, no messages</li>
 </ul>
-<p class="mini">"Whisper"：只跟邻居说。每 node 局部视角。代表：<b>RIP</b>（已被 OSPF 取代）。BGP 是 path-vector 变种。</p>
+<p class="mini">"Whisper": only tell neighbors. Local view per node. BGP is a path-vector variant.</p>
 </section>
 
 <section data-key="ls-vs-dv-exam">
@@ -621,13 +621,13 @@
 <tr><td>msgs</td><td>O(n²)</td><td>varies</td></tr>
 <tr><td>conv</td><td>fast (may oscillate)</td><td>slow (CTI)</td></tr>
 <tr><td>error</td><td>local</td><td><span class="red">propagates</span></td></tr>
-<tr><td>ex</td><td>OSPF</td><td>RIP</td></tr>
+<tr><td>ex</td><td>OSPF, IS-IS</td><td>(legacy)</td></tr>
 </tbody></table>
 </section>
 
 <section data-key="dijkstra-ls">
 <h2>Dijkstra (LS)</h2>
-<figure><img src="cheatsheet-assets/dijkstra-example.jpg"><figcaption>lec18 p26 · Dijkstra 算法 + 迭代表</figcaption></figure>
+<figure><img src="cheatsheet-assets/dijkstra-example.jpg"><figcaption>lec18 p26 · Dijkstra example + iteration table</figcaption></figure>
 <div class="formula">D(v) = min(D(v), D(w) + c(w,v))</div>
 <ol>
 <li>N'={u}; D(v)=c(u,v) or ∞</li>
@@ -657,7 +657,7 @@
 <li>Link cost ↑: stale DVs cause loops, +1/+1 spiral</li>
 <li><b>Poison reverse</b>: if Z routes thru Y to X, Z advertises Z→X=∞ to Y</li>
 <li>Solves 2-node loops; <span class="red">not 3+ node loops</span></li>
-<li>RIP hop=16 means ∞</li>
+<li>Use small "infinity" value (e.g. 16) to cap loops</li>
 </ul>
 <div class="my-note" data-note-key="star:lec18:12"><span class="my-note-tag">⭐</span> <b>lec18 p12</b> Network 层 两功能（复习）</div><div class="my-note" data-note-key="star:lec18:19"><span class="my-note-tag">⭐</span> <b>lec18 p19</b> 两种路由方法论 — Big Mouth vs Whisper</div><div class="my-note" data-note-key="star:lec18:20"><span class="my-note-tag">⭐</span> <b>lec18 p20</b> 路由算法分类 — 4 个维度</div><div class="my-note" data-note-key="star:lec18:27"><span class="my-note-tag">⭐</span> <b>lec18 p27</b> Dijkstra 例 — Step 0 (Init)</div><div class="my-note" data-note-key="star:lec18:38"><span class="my-note-tag">⭐</span> <b>lec18 p38</b> Dijkstra — 最短路径树 + Forwarding Table</div><div class="my-note" data-note-key="star:lec18:49"><span class="my-note-tag">⭐</span> <b>lec18 p49</b> DV — 核心循环</div><div class="my-note" data-note-key="star:lec18:54"><span class="my-note-tag">⭐</span> <b>lec18 p54</b> LS vs DV — 全面对比</div></section>
 
@@ -682,12 +682,12 @@
 <li>AS-PATH includes own AS → reject (loop)</li>
 <li><b>Route select</b>: 1) local pref 2) shortest AS-PATH 3) closest NEXT-HOP (hot potato) 4) others</li>
 </ul>
-<figure><img src="cheatsheet-assets/bgp-route-select.jpg"><figcaption>lec19 p23 · BGP Route Selection 4 步优先级</figcaption></figure>
+<figure><img src="cheatsheet-assets/bgp-route-select.jpg"><figcaption>lec19 p23 · BGP Route Selection 4-step priority</figcaption></figure>
 </section>
 
 <section data-key="bgp-policy-final-q3">
 <h2>BGP Policy <span class="tag">final Q3</span></h2>
-<p class="mini"><span class="red">⚠️ Trap</span>: BGP <b>不一定</b>选 AS 跳数最少的路 — policy-based。例如 shortest path 上的 neighbor AS 拒绝转发 → 只能绕远路。</p>
+<p class="mini"><span class="red">⚠️ Trap</span>: BGP <b>does NOT always</b> pick shortest AS-PATH — it is policy-based. If a neighbor AS refuses to forward, traffic must take a longer path.</p>
 <ul>
 <li><b>Export</b>: choose whom to advertise to</li>
 <li><b>Import</b>: choose whose route to accept</li>
@@ -699,11 +699,11 @@
 
 <section data-key="hot-potato-routing">
 <h2>Hot Potato Routing</h2>
-<p class="mini"><b>Def</b>: 对去往其他 AS 的包，router 把它转给 <b>intra-AS cost 最小</b>的 border router（"扔掉烫手山芋"）。<br><b>Why</b>: 每个 AS 只关心 minimize <b>自己</b>的 traffic cost，不在乎包出去后在别的 AS 走多远。</p>
+<p class="mini"><b>Def</b>: For a packet headed to another AS, the router forwards it to the border router with <b>minimum intra-AS cost</b> ("throw the hot potato out fast"). <br><b>Why</b>: each AS only minimizes <b>its own</b> traffic cost, ignoring how far the packet travels in other ASes.</p>
 <ul>
 <li>Multi-exit to same dst → pick gateway with min intra-AS cost</li>
-<li>BGP route selection 第 3 步：tie-break 用 closest NEXT-HOP</li>
-<li>全局未必最短，但每个 AS 自己便宜（自私最优）</li>
+<li>3rd tiebreaker in BGP route selection: closest NEXT-HOP</li>
+<li>Locally optimal per AS, may not be globally shortest</li>
 </ul>
 <div class="my-note" data-note-key="star:lec19:20"><span class="my-note-tag">⭐</span> <b>lec19 p20</b> Hot Potato Routing</div></section>
 
@@ -723,8 +723,8 @@
 <h2>SDN + OpenFlow</h2>
 <ul>
 <li>Controller computes FTs, ships to switches via <b>OpenFlow</b></li>
-<li><b>Match + Action</b> 统一替代 router / switch / firewall / NAT / load-balancer 等专用设备</li>
-<li>Match: <b>11 个字段</b>（L1 in-port · L2 src/dst MAC, Ethertype, VLAN id+priority · L3 src/dst IP, IP proto, IP ToS · L4 src/dst port）— 都可 wildcard</li>
+<li><b>Match + Action</b> uniformly replaces router / switch / firewall / NAT / load-balancer</li>
+<li>Match: <b>11 fields</b> (L1 in-port · L2 src/dst MAC, Ethertype, VLAN id+priority · L3 src/dst IP, IP proto, IP ToS · L4 src/dst port) — all wildcardable</li>
 <li>Action: forward / drop / modify / to-controller</li>
 <li>Priority resolves overlaps; counters track stats</li>
 <li>Msgs C→S: features, configure, modify-state, packet-out</li>
@@ -734,14 +734,14 @@
 </section>
 
 <section data-key="sdn-4-principles">
-<h2>SDN 4 大设计原则</h2>
+<h2>SDN — 4 Design Principles</h2>
 <ul>
-<li><b>① Flow-based forwarding</b>: 按 11 元组而不是只 dst IP（generalized match）</li>
-<li><b>② DP/CP 分离</b>: switch 只做 dumb fast 转发；controller 做所有 routing 决策</li>
-<li><b>③ CP 从设备搬到外部</b>: 集中式 controller 跑在专门 server 上</li>
-<li><b>④ Programmable network</b>: app 通过 northbound API 编程网络行为</li>
+<li><b>① Flow-based forwarding</b>: match on 11-tuple, not just dst IP (generalized match)</li>
+<li><b>② Separate DP from CP</b>: switch only does fast forwarding; controller makes all routing decisions</li>
+<li><b>③ External, centralized CP</b>: a dedicated server runs the controller</li>
+<li><b>④ Programmable network</b>: apps program network behavior via northbound API</li>
 </ul>
-<p class="mini">→ 网络从专用硬件设备变成通用 switch + 集中式可编程控制器。</p>
+<p class="mini">→ Network shifts from purpose-built hardware to commodity switches + a centralized programmable controller.</p>
 </section>
 
 </div></div>
@@ -817,19 +817,19 @@ Transmit: 101011 110</pre>
 <li><b>CS</b>: listen before send</li>
 <li>Collisions still happen due to <b>propagation delay</b></li>
 <li><b>CSMA/CD</b> (wired only): listen <b>while sending</b>; abort on collision; jam + binary backoff</li>
-<li>Wireless can't CD: 发射功率远大于远端到达的信号 → 自己 RX 听不到别人</li>
+<li>Wireless can't CD: own TX power >> far-end RX signal → can't hear others while sending</li>
 </ul>
 </section>
 
 <section data-key="csma-cd-vs-csma-ca">
 <h2>CSMA/CD vs CSMA/CA <span class="tag">exam</span></h2>
-<p class="mini">关键差异：<b>无线没法边发边听</b>（发射功率远大于远端信号 → 自己 RX 被淹）→ 不能检测碰撞，只能避免。</p>
+<p class="mini">Key diff: <b>wireless can't listen while transmitting</b> (own TX dominates RX antenna) → can't detect collision, must avoid.</p>
 <ul>
-<li><b>CSMA/CD</b>（Ethernet 有线）：发时继续监听 → 直接<b>检测</b>碰撞 → 立即停 + jam + backoff</li>
-<li><b>CSMA/CA</b>（WiFi 无线）：发完不知道碰没碰 → 靠接收方 <b>ACK</b> 推断 → 没 ACK 就 backoff 重发</li>
-<li>CD 一旦空闲立即发；CA 要等 <b>DIFS</b>，ACK/CTS 等更短 <b>SIFS</b>（优先）</li>
-<li>CD 用 <b>min frame size 64B</b> 保证发完前能听到碰撞；CA 用 <b>RTS/CTS</b> 防 hidden terminal</li>
-<li>CA <b>每帧必 ACK</b>；CD 不需要 ACK</li>
+<li><b>CSMA/CD</b> (wired Ethernet): keep listening while sending → <b>detect</b> collision → stop + jam + backoff</li>
+<li><b>CSMA/CA</b> (wireless WiFi): can't detect → relies on receiver <b>ACK</b>; no ACK = inferred collision → backoff &amp; retry</li>
+<li>CD: send immediately when idle. CA: wait <b>DIFS</b>; ACK/CTS wait shorter <b>SIFS</b> (priority)</li>
+<li>CD uses <b>min frame size 64 B</b> so collision is heard before TX ends. CA uses <b>RTS/CTS</b> to combat hidden terminal</li>
+<li>CA <b>ACKs every frame</b>; CD does not ACK</li>
 </ul>
 </section>
 
@@ -845,7 +845,7 @@ Transmit: 101011 110</pre>
 
 <section data-key="ethernet-frame">
 <h2>Ethernet Frame</h2>
-<figure><img src="cheatsheet-assets/ethernet-frame.jpg"><figcaption>lec21 p26 · Ethernet 帧结构（字段 + 长度）</figcaption></figure>
+<figure><img src="cheatsheet-assets/ethernet-frame.jpg"><figcaption>lec21 p26 · Ethernet frame fields + lengths</figcaption></figure>
 <ul>
 <li>Preamble 7 B + SFD 1 B (clock sync)</li>
 <li>Dst MAC 6 B + Src MAC 6 B</li>
@@ -860,15 +860,15 @@ Transmit: 101011 110</pre>
 <h2>MAC Address vs IP Address</h2>
 <table>
 <tr><th></th><th>MAC</th><th>IP</th></tr>
-<tr><td>层</td><td>L2</td><td>L3</td></tr>
-<tr><td>长度</td><td>48 b (6 B)</td><td>32 b (v4) / 128 b (v6)</td></tr>
-<tr><td>分配</td><td>厂商烧入 NIC (OUI+serial)</td><td>DHCP / 管理员配</td></tr>
-<tr><td>范围</td><td>同 LAN 内唯一</td><td>全局唯一（除 NAT）</td></tr>
-<tr><td>是否换</td><td><b>每跳改</b>（rewrite src/dst MAC）</td><td><b>端到端不变</b></td></tr>
-<tr><td>类比</td><td>身份证号</td><td>邮政地址</td></tr>
+<tr><td>Layer</td><td>L2</td><td>L3</td></tr>
+<tr><td>Length</td><td>48 b (6 B)</td><td>32 b (v4) / 128 b (v6)</td></tr>
+<tr><td>Assignment</td><td>burned into NIC by vendor (OUI + serial)</td><td>DHCP / static</td></tr>
+<tr><td>Scope</td><td>unique within LAN</td><td>globally unique (except NAT)</td></tr>
+<tr><td>Rewritten?</td><td><b>changes per hop</b> (src/dst MAC rewritten)</td><td><b>end-to-end, unchanged</b></td></tr>
+<tr><td>Analogy</td><td>SSN / ID number</td><td>postal address</td></tr>
 </table>
 <ul>
-<li>MAC 6 B；首 3 B = OUI (vendor) · broadcast = FF:FF:FF:FF:FF:FF · OS 可改 (MAC spoofing) · 不用于安全</li>
+<li>MAC 6 B; first 3 B = OUI (vendor) · broadcast = FF:FF:FF:FF:FF:FF · OS can spoof · not used for security</li>
 </ul>
 </section>
 
@@ -993,28 +993,28 @@ Transmit: 101011 110</pre>
 <!-- ============ Ch 6b: Wireless — MAC ============ -->
 
 <section data-key="csma-sender-driven-problem">
-<h2>CSMA 的根本缺陷（无线下）</h2>
-<p class="mini"><b>关键洞察</b>：CSMA 让 <b>sender</b> 听信道 — 但碰撞发生在 <b>receiver</b>。</p>
+<h2>CSMA's Fundamental Flaw (Wireless)</h2>
+<p class="mini"><b>Key insight</b>: CSMA has the <b>sender</b> sense the channel — but collision happens at the <b>receiver</b>.</p>
 <ul>
-<li>Sender 听到信道空 ≠ receiver 收得到</li>
-<li>无线信号随距离衰减 → sender / receiver 看到的信道状态完全不一样</li>
-<li>→ 直接派生出 <b>Hidden Terminal</b>（sender 觉得空但 receiver 在碰撞）</li>
-<li>→ 也派生出 <b>Exposed Terminal</b>（sender 觉得忙但 receiver 其实闲）</li>
+<li>Sender hears idle ≠ receiver can decode</li>
+<li>Wireless attenuates with distance → sender and receiver see different channel states</li>
+<li>→ Derives <b>Hidden Terminal</b> (sender thinks idle, receiver collides)</li>
+<li>→ Also derives <b>Exposed Terminal</b> (sender thinks busy, receiver is actually free)</li>
 </ul>
-<p class="mini">解法（无线场景）：把决定权从 sender 移到 receiver — <b>显式 ACK</b>（CSMA/CA）+ <b>RTS/CTS</b>（让 receiver 说话占信道）。</p>
+<p class="mini">Fix (wireless): move decision-making from sender to receiver — <b>explicit ACK</b> (CSMA/CA) + <b>RTS/CTS</b> (receiver claims channel).</p>
 </section>
 
 <section data-key="hidden-terminal-exam">
 <h2>Hidden Terminal <span class="tag">exam</span></h2>
-<figure><img src="cheatsheet-assets/hidden-terminal.jpg"><figcaption>lec23 p19 · Hidden terminal 几何图</figcaption></figure>
-<p class="mini"><b>定义</b>：第三方 <b>X</b> 在 sender <b>A</b> 范围<b>外</b>（听不到 A），但在 receiver <b>B</b> 干扰范围<b>内</b>。X 觉得信道空 → 发 → 在 B 处和 A 的信号碰撞。</p>
+<figure><img src="cheatsheet-assets/hidden-terminal.jpg"><figcaption>lec23 p19 · Hidden terminal geometry</figcaption></figure>
+<p class="mini"><b>Def</b>: a third node <b>X</b> is <b>outside</b> sender <b>A</b>'s range (can't hear A) but <b>inside</b> receiver <b>B</b>'s interference range. X thinks idle → sends → collides with A at B.</p>
 <ul>
-<li>症状：A 发得好好的，B 啥都收不到</li>
-<li>NYU Final Q6b 等价说法：A 和 B 都对中间的 C 发，A↔B 距离太远互相听不到 → 在 C 处碰撞</li>
+<li>Symptom: A transmits fine, B receives nothing</li>
+<li>NYU Final Q6b restatement: A and B both transmit to C in the middle; A↔B too far to hear each other → collision at C</li>
 </ul>
-<p class="mini"><b>两个解法</b>：
-<br>① <b>CSMA/CA</b>：接收方对每帧显式 <span class="red">ACK</span>，没 ACK = 推断碰撞，退避重发
-<br>② <b>RTS/CTS</b>：sender 先发 RTS；receiver 选一个回 CTS（广播）；其他 sender 听到 CTS → 设 NAV 静音</p>
+<p class="mini"><b>Two fixes</b>:
+<br>① <b>CSMA/CA</b>: receiver sends explicit <span class="red">ACK</span> for every frame; no ACK = inferred collision → backoff &amp; retry
+<br>② <b>RTS/CTS</b>: sender sends RTS; receiver replies with CTS (broadcast); other senders hearing the CTS set NAV and stay silent</p>
 </section>
 
 <section data-key="exposed-terminal">
@@ -1039,7 +1039,7 @@ Transmit: 101011 110</pre>
 
 <section data-key="csma-ca-full-flow-exam">
 <h2>CSMA/CA full flow <span class="tag">exam</span></h2>
-<figure><img src="cheatsheet-assets/csma-ca-flow.jpg"><figcaption>lec23 p29 · CSMA/CA 完整流程图</figcaption></figure>
+<figure><img src="cheatsheet-assets/csma-ca-flow.jpg"><figcaption>lec23 p29 · CSMA/CA full flow</figcaption></figure>
 <ol>
 <li>Carrier sense (physical + virtual NAV)</li>
 <li>Idle → wait <b>DIFS</b> → still idle → send</li>
@@ -1308,7 +1308,7 @@ Transmit: 101011 110</pre>
 <li>+20 dB → ×100 power</li>
 <li>+30 dB → ×1000 power</li>
 <li>dBm: 0 dBm = 1 mW; −30 dBm = 1 μW</li>
-<li>WiFi: −50 dBm 强, −70 dBm 中, −90 dBm 弱</li>
+<li>WiFi: −50 dBm strong, −70 dBm medium, −90 dBm weak</li>
 </ul>
 </section>
 
