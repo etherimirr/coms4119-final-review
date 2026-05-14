@@ -6,3 +6,12 @@
 
 # server runtime files (in /tmp during dev)
 nohup.out
+
+# 个人期中信息 — 不进 public repo
+midoriginoutput.pdf
+submission_396807124.pdf
+app/pages/midoriginoutput/
+app/pages/submission_396807124/
+app/text/midoriginoutput.txt
+app/text/submission_396807124.txt
+app/data/midterm.json

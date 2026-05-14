@@ -593,9 +593,61 @@ function renderFinal() {
   wireQAShortcuts(content);
 }
 
-// ============ Midterm Review (split view: original PDF + standard answers) ============
+// ============ Midterm Review (password-gated, split view) ============
 let midtermPage = 1;
-function renderMidterm() {
+const KEY_MID_HASH = '4119:mid:hash';   // sha256(password)
+const KEY_MID_SESSION = '4119:mid:unlocked';  // session flag
+
+async function sha256(s) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+function isMidUnlocked() {
+  return sessionStorage.getItem(KEY_MID_SESSION) === '1';
+}
+
+async function gateMidterm() {
+  if (isMidUnlocked()) return true;
+  const stored = localStorage.getItem(KEY_MID_HASH);
+  if (!stored) {
+    // first time - set password
+    const p1 = prompt('🔒 期中复盘需要密码保护。\n\n第一次设置 — 输入你想设的密码：');
+    if (!p1) return false;
+    const p2 = prompt('再输一次确认：');
+    if (p1 !== p2) { alert('两次不一致'); return false; }
+    localStorage.setItem(KEY_MID_HASH, await sha256(p1));
+    sessionStorage.setItem(KEY_MID_SESSION, '1');
+    return true;
+  }
+  // existing password - check
+  const p = prompt('🔒 期中复盘 — 输入密码：');
+  if (p === null) return false;
+  const h = await sha256(p);
+  if (h !== stored) { alert('❌ 密码错'); return false; }
+  sessionStorage.setItem(KEY_MID_SESSION, '1');
+  return true;
+}
+
+async function renderMidterm() {
+  const ok = await gateMidterm();
+  if (!ok) {
+    const content = document.getElementById('content');
+    content.innerHTML = `<div class="toolbar">
+      <div class="title"><b>📝 期中复盘</b> <span class="subtle">🔒 已锁</span></div>
+    </div>
+    <div style="padding:60px 40px;text-align:center;color:var(--subtle)">
+      <h2 style="color:var(--text)">🔒 这个 tab 已锁</h2>
+      <p>期中复盘包含个人成绩和答案，需要密码才能查看。</p>
+      <p><button onclick="renderMidterm()" style="background:var(--accent);color:#0a0c12;border:none;padding:8px 20px;border-radius:6px;cursor:pointer;font-size:14px;margin-top:16px">重新输入密码</button></p>
+      <p class="subtle" style="margin-top:30px;font-size:11px">忘了密码？开浏览器 DevTools Console 跑 <code>localStorage.removeItem('4119:mid:hash')</code> 即可重置。</p>
+    </div>`;
+    return;
+  }
+  renderMidtermContent();
+}
+
+function renderMidtermContent() {
   const content = document.getElementById('content');
   content.innerHTML = `<div class="toolbar">
       <div class="title"><b>📝 期中复盘</b> <span class="subtle">左：原题 PDF (4 页) · 右：标准答案 / 错点分析</span></div>
@@ -626,7 +678,11 @@ function showMidterm() {
     4: [5, 6]        // Q6 cont + final extras
   };
   const qs = pageMap[midtermPage] || [];
-  let html = `<h2>这页对应的题（你总分 <span class="score-mid">52 / 100</span>）</h2>`;
+  // Total score read from MIDTERM (sums actual question scores)
+  const totalGot = (MIDTERM || []).reduce((s, q) => s + (q.got || 0), 0);
+  const totalFull = (MIDTERM || []).reduce((s, q) => s + (q.full || 0), 0);
+  const scoreText = totalFull > 0 ? `${totalGot} / ${totalFull}` : '— / —';
+  let html = `<h2>这页对应的题（你总分 <span class="score-mid">${scoreText}</span>）</h2>`;
   qs.forEach(i => {
     const q = MIDTERM[i];
     if (!q) return;

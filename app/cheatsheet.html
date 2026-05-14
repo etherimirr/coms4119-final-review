@@ -105,6 +105,19 @@
 <!-- ============ Ch 2: Application Layer ============ -->
 
 <section>
+<h2>Client-Server vs P2P 架构</h2>
+<table>
+<tr><th></th><th>Client-Server</th><th>P2P</th></tr>
+<tr><td>Server</td><td>always-on, 永久 IP</td><td>none</td></tr>
+<tr><td>部署</td><td>data center</td><td>任意 end systems 直接通信</td></tr>
+<tr><td>Clients</td><td>contact server</td><td>peers 互相请求 + 提供服务</td></tr>
+<tr><td>Scalability</td><td>受限于 server</td><td><b>self-scaling</b> — 新 peer 自带容量</td></tr>
+<tr><td>例</td><td>HTTP, DNS</td><td>BitTorrent, P2P</td></tr>
+</table>
+<p class="mini">P2P 自扩展是核心优势：N 个 peer 加入 → upload 容量也加 N 倍。</p>
+</section>
+
+<section>
 <h2>HTTP RTT Counting <span class="tag">mid Q1</span></h2>
 <ul>
 <li><b>Draw dependency tree</b>: base → inline siblings → CSS-referenced → JS-triggered</li>
@@ -239,6 +252,19 @@
 </section>
 
 <section>
+<h2>What Can Go Wrong in Data Transmission</h2>
+<p>RDT 协议要处理的 5 类问题（lec11）：</p>
+<ol>
+<li><b>Bit errors</b> — 包内 bit 翻转 → checksum 检测</li>
+<li><b>Duplicated packets</b> — 包重复到达 → seq # 去重</li>
+<li><b>Packet losses</b> — 包丢失 → timer + retransmit</li>
+<li><b>Packet delay</b> — 包延迟到达 → 仍要按序交付</li>
+<li><b>Packets arriving out of order</b> — 乱序 → seq # 重排</li>
+</ol>
+<p class="mini">机制对应：checksum (1) · ACK (1,3) · seq # (2,5) · timer (3,4) · receiver buffer (5)</p>
+</section>
+
+<section>
 <h2>RDT Evolution (1.0 → 3.0)</h2>
 <ul>
 <li><b>1.0</b>: perfect channel (useless)</li>
@@ -319,6 +345,17 @@
 <li><b>Only AIMD</b> achieves both fairness and efficiency</li>
 </ul>
 <div class="formula">avg cwnd = 3W/4 ⇒ R = 3W/(4·RTT)</div>
+</section>
+
+<section>
+<h2>End-end vs Network-assisted CC</h2>
+<table>
+<tr><th></th><th>End-end CC</th><th>Network-assisted CC</th></tr>
+<tr><td>反馈</td><td>无来自网络的显式反馈</td><td>路由器直接反馈给 host</td></tr>
+<tr><td>怎么察觉拥塞</td><td>从观察到的 loss / delay 推断</td><td>路由器明确告诉（拥塞级别或速率）</td></tr>
+<tr><td>例</td><td>TCP（默认）</td><td>TCP ECN, ATM, DECbit</td></tr>
+</table>
+<p class="mini">现代 Internet 主要是 end-end（TCP loss-based）+ 可选 network-assisted（ECN）。</p>
 </section>
 
 <section>
@@ -521,6 +558,28 @@
 
 
 <!-- ============ Ch 4b: Control Plane (Routing) ============ -->
+
+<section>
+<h2>Link State Routing (LS) — 4 步</h2>
+<ol>
+<li>每 node 维护 <b>local link state</b>（直连邻居 + cost）</li>
+<li>每 node <b>flood</b> 自己的 link state 给所有 router</li>
+<li>每 node 学到整个网络拓扑</li>
+<li>用 <b>Dijkstra</b> 算最短路径</li>
+</ol>
+<p class="mini">"Big mouth"：广播全网。每 node 全局视角。代表：<b>OSPF, IS-IS</b>。</p>
+</section>
+
+<section>
+<h2>Distance Vector Routing (DV)</h2>
+<ul>
+<li>每 node 只跟<b>邻居</b>说自己的 distance vector</li>
+<li>用 <b>Bellman-Ford</b> 方程更新：D_x(y) = min_v {c(x,v) + D_v(y)}</li>
+<li>DV 变了 → 通知邻居 → 渐进收敛</li>
+<li><b>异步、自停</b>：无变化无消息</li>
+</ul>
+<p class="mini">"Whisper"：只跟邻居说。每 node 局部视角。代表：<b>RIP（废）</b>。BGP 是 path-vector 变种。</p>
+</section>
 
 <section>
 <h2>LS vs DV <span class="tag">exam</span></h2>
