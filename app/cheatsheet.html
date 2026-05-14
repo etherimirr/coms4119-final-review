@@ -1,4 +1,4 @@
-<!-- CHEATSHEET_VERSION: 9 -->
+<!-- CHEATSHEET_VERSION: 10 -->
 <!--
   COMS 4119 FINAL CHEAT SHEET
   4 sheets organized by course chapter (Kurose-Ross order):
@@ -37,6 +37,17 @@
 <p class="mini">下一层加 header 把上层 PDU 包起来（encapsulation）。Demux 上行：Ethertype → IP protocol → port → app。</p>
 <div class="my-note" data-note-key="qa:final-preview:5:0"><span class="my-note-tag">💬</span> <b>Q:</b> ecn怎么工作<br><b>A:</b> ECN（Explicit Congestion Notification）是一种网络拥塞控制机制，旨在通过提前通知端点来避免数据包丢失。 **工作原理**： 1. **标记**：当网络设备（如路由器）检测到拥塞时，它不会丢弃数据包，而是将数据包的头部中的ECN字段标记为“标记”状态（通常是“ECN-Echo”）。 2. **反馈**：接收方在收到带有ECN标记的数据包后，会在其返回的ACK中设置ECN-Echo标志，告知发送方网络出现了…</div></section>
 
+
+<section data-key="protocols-transport-mapping">
+<h2>协议跑在哪一层 / 用 TCP 还是 UDP</h2>
+<ul>
+<li><b>TCP</b>（可靠有序）: HTTP / HTTPS · SMTP · IMAP · POP3 · FTP · SSH · Telnet · <b>BGP</b> · BitTorrent · DNS（大响应回退）</li>
+<li><b>UDP</b>（快、无连接、无可靠性）: <b>DNS</b>（默认）· <b>DHCP</b> · RTP（实时音视频）· SNMP · TFTP · QUIC (= HTTP/3) · VoIP</li>
+<li><b>直接跑在 IP 上</b>（不走 L4）: <b>ICMP</b>（ping / traceroute）· <b>OSPF</b>（IP protocol 89）· IGMP</li>
+<li><b>直接跑在 L2 上</b>（不走 IP）: <b>ARP</b>（Ethertype 0x0806）· STP · LLDP</li>
+</ul>
+<p class="mini">考点：『邮件用什么协议？SMTP / IMAP / POP3 都跑 TCP』『打开网页拿 IP 用 DNS over UDP』『查路由器到底走不走 TCP？OSPF 直接 IP，BGP 才用 TCP』。</p>
+</section>
 
 
 <section data-key="packet-vs-circuit-switching">
