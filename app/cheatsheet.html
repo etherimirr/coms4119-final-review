@@ -1,4 +1,4 @@
-<!-- CHEATSHEET_VERSION: 29 -->
+<!-- CHEATSHEET_VERSION: 30 -->
 <!--
   COMS 4119 FINAL CHEAT SHEET
   4 sheets organized by course chapter (Kurose-Ross order):
@@ -35,16 +35,6 @@
 <p class="mini">Encapsulation: lower layer wraps upper PDU. Demux up: Ethertype → IP proto → port → app.</p>
 <p class="mini">Transport map: HTTP / SMTP / IMAP / FTP / BGP / BitTorrent → TCP · DNS (default) / DHCP / RTP → UDP · OSPF / ICMP → raw IP · ARP → link</p>
 </section>
-
-<section data-key="end-to-end-principle">
-<h2>End-to-End Principle</h2>
-<ul>
-<li>Complex functions → <b>endpoints</b>, not core</li>
-<li>Reliability: TCP at hosts, not per-hop</li>
-<li>Drives: best-effort IP · IPv6 (no router frag) · NAT controversy · RDT at transport</li>
-</ul>
-</section>
-
 
 <section data-key="packet-vs-circuit-switching">
 <h2>Packet vs Circuit Switching</h2>
