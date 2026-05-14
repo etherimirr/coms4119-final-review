@@ -1,47 +1,35 @@
 <!--
-  HOW TO PUT IMAGES (later, when you ask):
+  COMS 4119 FINAL CHEAT SHEET
+  4 sheets organized by course chapter (Kurose-Ross order):
+    SHEET 1 — Application + Transport (lec1–14)
+    SHEET 2 — Network Layer (DP + CP + SDN, lec16–20)
+    SHEET 3 — Link Layer + Wireless (lec20–23)
+    SHEET 4 — Reference (formulas, constants, units & conversions)
 
-  1) Click the 📷 button on any section (in screen mode) and pick a file.
-  2) Server saves it under app/cheatsheet-assets/<timestamp>.<ext>
-     and inserts <img src="cheatsheet-assets/..."> into the section.
-  3) CSS already handles column fit + print scaling.
+  Each section is contentEditable (click to type). Hover for ✕/📷/🤖.
+  All midterm Q-takeaways live inside their topical sections (tagged "mid Q*").
 
-  For two side-by-side images use:
-    <div class="img-row">
-      <img src="cheatsheet-assets/a.png">
-      <img src="cheatsheet-assets/b.png">
-    </div>
+  IMAGES: drop into app/cheatsheet-assets/ then reference as:
+    <figure><img src="cheatsheet-assets/foo.png"><figcaption>caption</figcaption></figure>
 -->
 <div class="cheat-pages">
 
-<!-- ====================== PAGE 1 (FRONT) ====================== -->
+
+<!-- ================================================================ -->
+<!-- SHEET 1 — APPLICATION + TRANSPORT (Chapters 1–3 + CC in lec14)    -->
+<!-- ================================================================ -->
 <div class="sheet">
-<h1>COMS 4119 FINAL CHEAT SHEET — APP + TRANSPORT</h1>
+<h1>COMS 4119 · APP &amp; TRANSPORT</h1>
 <div class="cols">
 
-<section>
-<h2>Delays &amp; Performance <span class="tag">mid Q2 Q4</span></h2>
-<ul>
-<li><b>Transmission</b> = L/R (size/bandwidth)</li>
-<li><b>Propagation</b> = d/v (light 3·10⁸ m/s, sound 1.5 km/s)</li>
-<li><b>Queuing</b>: depends on load</li>
-<li><b>End-to-end</b> (1 pkt) = Σ(L/R + d/v) per link + queue</li>
-<li><b>Pipelined N pkts</b>: 1st full path + (N−1)·<span class="red">bottleneck L/R</span></li>
-<li><b>Bottleneck</b> = min R = <b>max L/R</b> link <span class="red">(NOT propagation!)</span></li>
-<li>Propagation is paid <b>once</b> for 1st pkt; doesn't stack across N pkts</li>
-<li><b>BDP</b> = R · RTT (bits in pipe)</li>
-<li><b>Throughput</b> = min(per-link R) = bottleneck</li>
-</ul>
-</section>
+<!-- ============ Ch 1: Basics & Performance ============ -->
 
 <section>
-<h2>Stop-and-Wait Utilization <span class="tag">mid Q5</span></h2>
-<div class="formula">U = T_trans / (T_trans + 2·T_prop)</div>
+<h2>Layering &amp; Encapsulation</h2>
 <ul>
-<li>T_trans = L/R</li>
-<li><span class="red">Denominator has 2·T_prop</span> — don't forget the ×2 (round-trip)</li>
-<li>When L small or distance long → U collapses → need sliding window</li>
-<li>Mid: 2 Kb @ 40 Kbps over 30 m acoustic + 3 km air → U≈0.54; @ 200 b → 0.11. <b>Not good.</b></li>
+<li>L7 App (HTTP/DNS) ↔ L4 (TCP/UDP) ↔ L3 (IP) ↔ L2 (Eth/802.11) ↔ L1 phys</li>
+<li>Each layer adds its own header</li>
+<li>Demux: port (L4) → IP protocol (L3) → Ethertype (L2)</li>
 </ul>
 </section>
 
@@ -52,105 +40,184 @@
 <tr><td>BW</td><td>shared</td><td>reserved</td></tr>
 <tr><td>Bursty</td><td><span class="green">eff</span></td><td>waste</td></tr>
 <tr><td>Failure</td><td>robust</td><td>fragile</td></tr>
-<tr><td>Setup</td><td>none</td><td>req</td></tr>
+<tr><td>Setup</td><td>none</td><td>required</td></tr>
 </table>
 <p class="mini">Internet uses packet switching = simple + robust.</p>
 </section>
 
 <section>
-<h2>Layering</h2>
+<h2>Delays &amp; Performance <span class="tag">mid Q2 Q4</span></h2>
 <ul>
-<li>L7 App (HTTP/DNS) ↔ L4 (TCP/UDP) ↔ L3 (IP) ↔ L2 (Eth/802.11) ↔ L1</li>
-<li>Each layer adds its own header (encapsulation)</li>
-<li>Demux by port (L4), IP proto (L3), Ethertype (L2)</li>
+<li><b>Transmission</b> = L/R (size/bandwidth)</li>
+<li><b>Propagation</b> = d/v (light 3·10⁸ m/s, sound 1.5 km/s in water)</li>
+<li><b>Queuing</b>: depends on load</li>
+<li><b>End-to-end (1 pkt)</b> = Σ(L/R + d/v) per link + queue</li>
+<li><b>Pipelined N pkts</b>: 1st full path + (N−1)·<span class="red">bottleneck L/R</span></li>
+<li><b>Bottleneck</b> = link with <b>max L/R = min R</b> <span class="red">(NOT propagation!)</span></li>
+<li>Propagation paid <b>once</b> for 1st pkt; doesn't stack across N pkts</li>
+<li><b>Throughput</b> = min(per-link R) = bottleneck rate</li>
 </ul>
 </section>
 
 <section>
-<h2>HTTP RTTs <span class="tag">mid Q1</span></h2>
+<h2>BDP — Bandwidth-Delay Product</h2>
+<div class="formula">BDP = R · RTT  (bits in pipe)</div>
+<ul>
+<li>"How many bits fit in the pipe at once"</li>
+<li>Window size must ≥ BDP to keep pipe full</li>
+<li>Example: 30 Kbps × 80 ms = 2400 bits</li>
+</ul>
+</section>
+
+<section>
+<h2>Stop-and-Wait Utilization <span class="tag">mid Q5</span></h2>
+<div class="formula">U = T_trans / (T_trans + 2·T_prop)</div>
+<ul>
+<li>T_trans = L/R</li>
+<li><span class="red">Denominator has 2·T_prop</span> — don't forget ×2 (round-trip)</li>
+<li>When L small or RTT large → U collapses → need sliding window</li>
+<li>Mid Q5: 2 Kb @ 40 Kbps over 30m acoustic + 3km air → U ≈ 0.54; @ 200 b → 0.11. <b>Not good.</b></li>
+</ul>
+</section>
+
+<section>
+<h2>Sliding Window</h2>
+<ul>
+<li>Sender maintains window [base, base+N)</li>
+<li>Can send any unACKed packet in window without waiting</li>
+<li>ACK arrives → base slides forward</li>
+<li>Stop-and-wait = window of 1 (special case)</li>
+<li>Window size ≥ BDP keeps pipe full</li>
+</ul>
+</section>
+
+
+<!-- ============ Ch 2: Application Layer ============ -->
+
+<section>
+<h2>HTTP RTT Counting <span class="tag">mid Q1</span></h2>
 <ul>
 <li><b>Draw dependency tree</b>: base → inline siblings → CSS-referenced → JS-triggered</li>
-<li><b>Non-persistent</b>: each obj = 1 RTT TCP + 1 RTT GET = <span class="red">2 RTT/obj</span></li>
+<li><b>Non-persistent</b>: each obj = 1 RTT TCP setup + 1 RTT GET = <span class="red">2 RTT/obj</span></li>
 <li><b>Persistent + pipelined</b>: base 2 RTT; same-layer inline 1 RTT; each nesting +1 RTT</li>
 <li><b>Persistent no pipeline</b>: each obj 1 RTT sequentially</li>
-<li>Web cache (proxy): cuts RTT/BW but adds consistency issues</li>
-<li>Mid Q1 example: HTML + 4 jpg + 1 css(2 jpg) → 2 + 1 + 1 = <b>4 RTT</b></li>
+<li>Mid Q1: HTML + 4 jpg + 1 css(2 jpg), persistent pipelined = <b>4 RTT</b></li>
 </ul>
 </section>
 
 <section>
-<h2>Sockets (Q1 trap)</h2>
+<h2>HTTP Persistence &amp; Cache</h2>
+<ul>
+<li>Non-persistent (HTTP/1.0): new TCP per object</li>
+<li>Persistent (HTTP/1.1): reuse TCP for all objects on same server</li>
+<li>Pipelining: send next request before previous response</li>
+<li>Cookie: stateless HTTP + server-side state</li>
+<li><b>Web Cache (proxy)</b>: caches responses; cuts RTT + outbound BW</li>
+<li><b>Conditional GET</b>: <code>If-Modified-Since</code> → server returns 304 (no body) if unchanged</li>
+</ul>
+</section>
+
+<section>
+<h2>Sockets <span class="tag">mid Q1</span></h2>
 <ul>
 <li><b>UDP server</b>: <span class="red">1</span> socket only (no connection)</li>
 <li><b>TCP server</b>: 1 welcome + N connection = <span class="red">N+1</span></li>
-<li>Distinguish clients by (src IP, port) in UDP datagram</li>
+<li>UDP distinguishes clients by (src IP, port) in datagram</li>
+<li>TCP: each accept() returns a new socket; listening socket stays</li>
 </ul>
 </section>
 
 <section>
 <h2>DNS</h2>
 <ul>
-<li>Hierarchy: local → root → TLD(.com,.edu) → authoritative</li>
-<li>Recursive vs iterative resolution; local usually iterative</li>
-<li>RR: A (IPv4), AAAA (IPv6), NS, MX, CNAME</li>
-<li>UDP 53 short, falls back to TCP for large</li>
+<li>Hierarchy: local resolver → root → TLD(.com,.edu) → authoritative</li>
+<li>Recursive (resolve for me) vs iterative (tell me next hop)</li>
+<li>Local resolver usually iterative</li>
+<li>RR types: A (IPv4), AAAA (IPv6), NS, MX, CNAME</li>
+<li>UDP 53 short query; falls back to TCP for large response</li>
 </ul>
 </section>
 
 <section>
-<h2>P2P file distribution <span class="tag">mid Q7</span></h2>
+<h2>P2P File Distribution <span class="tag">mid Q7</span></h2>
 <div class="formula">CS:  T = max(NF/U_s, F/d_min)</div>
 <div class="formula">P2P: T = max(F/U_s, F/d_min, NF/(U_s + ΣU_i))</div>
 <ul>
-<li><b>CS time grows linearly with N</b> (server uploads N copies, is bottleneck)</li>
-<li><b>P2P time grows slowly with N</b> (collective upload also grows; denominator increases)</li>
-<li>N small: roughly tied. N large: P2P wins by a lot.</li>
-<li>Mid 1GB/100 users, 40 Mbps server: CS = 20000s; P2P ≈ 1000s. N ≥ 5 to outperform.</li>
-<li>BitTorrent: tit-for-tat + rarest-first + optimistic unchoke</li>
-<li>DHT: distributed hash for resource lookup</li>
+<li><b>CS time grows linearly with N</b> (server uploads N copies)</li>
+<li><b>P2P time grows slowly with N</b> (collective upload also grows; denom increases)</li>
+<li>Small N: tied. Large N: P2P wins.</li>
+<li>Mid Q7: 1GB/100u, 40Mbps server → CS = 20000s; P2P ≈ 1000s. N ≥ 5 to outperform.</li>
+</ul>
+</section>
+
+<section>
+<h2>BitTorrent &amp; DHT</h2>
+<ul>
+<li><b>Rarest first</b>: prioritize chunks scarce in the swarm</li>
+<li><b>Tit-for-tat</b>: upload to those who upload to you</li>
+<li><b>Optimistic unchoke</b>: every ~30 s gift bw to a new peer (explore)</li>
+<li><b>DHT</b>: distributed hash table → replaces central tracker</li>
 </ul>
 </section>
 
 <section>
 <h2>Video / DASH</h2>
 <ul>
-<li>Chunks at multiple bitrates</li>
+<li>Video chunked at multiple bitrates</li>
 <li>Client adapts based on observed BW</li>
-<li>HTTP-based; can use any CDN</li>
+<li>HTTP-based; any CDN works</li>
 </ul>
 </section>
+
+
+<!-- ============ Ch 3a: Transport — Basics ============ -->
 
 <section>
 <h2>UDP vs TCP</h2>
 <table>
-<tr><th>UDP</th><th>TCP</th></tr>
-<tr><td>connectionless</td><td>3-way handshake</td></tr>
-<tr><td>unreliable</td><td>seq+ACK+retx</td></tr>
-<tr><td>no flow/CC</td><td>sliding win + AIMD</td></tr>
-<tr><td>8 B header</td><td>20 B header</td></tr>
-<tr><td>DNS/video/DHCP</td><td>HTTP/SSH/...</td></tr>
+<tr><th></th><th>UDP</th><th>TCP</th></tr>
+<tr><td>conn</td><td>none</td><td>3WHS</td></tr>
+<tr><td>reliable</td><td>no</td><td>yes</td></tr>
+<tr><td>order</td><td>no</td><td>yes</td></tr>
+<tr><td>flow ctrl</td><td>no</td><td>rwnd</td></tr>
+<tr><td>cong ctrl</td><td>no</td><td>AIMD</td></tr>
+<tr><td>hdr</td><td>8 B</td><td>20 B</td></tr>
+<tr><td>uses</td><td>DNS, RTP, DHCP</td><td>HTTP, SSH</td></tr>
 </table>
 </section>
 
 <section>
 <h2>TCP Segment Format</h2>
 <ul>
-<li>src/dst port (16 b each)</li>
-<li>seq# / ACK# (32 b each)</li>
-<li>flags: SYN, FIN, ACK, RST, PSH, URG, <b>CWR/ECE</b> (ECN)</li>
-<li><b>rwnd</b> (receiver buffer free) → flow control</li>
-<li>checksum (header + payload)</li>
+<li>Src/dst port (16 b each)</li>
+<li>Seq #: first byte of data (32 b)</li>
+<li>ACK #: next expected byte (32 b)</li>
+<li>HLEN, flags: SYN/FIN/ACK/RST/PSH/URG/<b>CWR/ECE</b></li>
+<li><b>Receive window</b> rwnd (16 b) — flow control</li>
+<li>Checksum (16 b), urgent ptr</li>
 </ul>
 </section>
 
 <section>
-<h2>3-Way Handshake</h2>
+<h2>TCP 3WHS &amp; 4-Way Close</h2>
 <ol>
-<li>Client → SYN, seq=x</li>
-<li>Server → SYN-ACK, seq=y, ack=x+1</li>
-<li>Client → ACK, seq=x+1, ack=y+1</li>
+<li><b>SYN</b> seq=x</li>
+<li><b>SYN-ACK</b> seq=y, ack=x+1</li>
+<li><b>ACK</b> seq=x+1, ack=y+1</li>
 </ol>
-<p class="mini">Connection close = 4-way (FIN/ACK each direction).</p>
+<p>Close = 4-way (FIN/ACK each direction). <b>TIME_WAIT</b> 2·MSL avoids stray old packets affecting new connection.</p>
+</section>
+
+<section>
+<h2>RDT Evolution (1.0 → 3.0)</h2>
+<ul>
+<li><b>1.0</b>: perfect channel (useless)</li>
+<li><b>2.0</b>: + ACK/NAK + checksum (handles bit errors)</li>
+<li><b>2.1</b>: + seq # (handles ACK corruption)</li>
+<li><b>2.2</b>: NAK-free (use ACK + last good seq)</li>
+<li><b>3.0</b>: + timer (handles packet loss) — stop-and-wait</li>
+<li>Pipelined: GBN / SR</li>
+</ul>
 </section>
 
 <section>
@@ -163,9 +230,34 @@
 <tr><td>ACK loss heavy</td><td><span class="green">good</span></td><td>bad (timeout)</td></tr>
 <tr><td>Buf at rcvr</td><td>none</td><td>required</td></tr>
 </table>
-<p class="mini"><b>Rule</b>: data-loss heavy → SR; ACK-loss heavy → GBN. <span class="red">Always write the reason</span> (otherwise lose marks).</p>
-<p class="mini">SR window ≤ N/2 (seq space ambiguity).</p>
+<p class="mini"><b>Rule</b>: data-loss heavy → SR; ACK-loss heavy → GBN. <span class="red">Always write the reason</span> (otherwise lose marks). SR window ≤ N/2 (seq space).</p>
 </section>
+
+<section>
+<h2>TCP Reliable Mechanisms</h2>
+<ul>
+<li><b>Timeout retransmit</b>: TimeoutInterval = EstRTT + 4·DevRTT</li>
+<li>EstRTT = (1−α)·EstRTT + α·SampleRTT, α=0.125</li>
+<li>DevRTT = (1−β)·DevRTT + β·|SampleRTT−EstRTT|, β=0.25</li>
+<li><b>Fast retransmit</b>: 3 dup ACKs → immediate resend</li>
+<li>Exponential backoff after timeout (RTO doubles)</li>
+</ul>
+</section>
+
+<section>
+<h2>TCP Flow Control + SR Buffer Trap <span class="tag">mid Q6</span></h2>
+<ul>
+<li>Receiver advertises <b>rwnd</b> in every ACK</li>
+<li>Sender's inflight ≤ min(cwnd, rwnd)</li>
+<li><b>SR receive buffer</b> holds out-of-order packets — "hold until in-order delivery"</li>
+<li>If pkt 1 lost + pkts 2,3,4 fill buffer → buffer can't release → pkts 5+ <b>dropped</b></li>
+<li>Mid Q6: 10 pkts, buffer=4, pkt 1 lost → retransmit <b>7 pkts</b> (1 + 5–10)</li>
+<li>Advertised window <span class="red">must ≤ buffer size</span>, else overflow</li>
+</ul>
+</section>
+
+
+<!-- ============ Ch 3b: Transport — Congestion Control (lec14) ============ -->
 
 <section>
 <h2>TCP cwnd</h2>
@@ -185,7 +277,7 @@
 <li><b>3 dup ACKs</b> in CA → ssthresh=cwnd/2, cwnd=ssthresh+3 → <b>Fast recovery</b>; new ACK → back to CA (cwnd=ssthresh)</li>
 <li><b>Timeout</b> any state → ssthresh=cwnd/2, cwnd=1 → slow start</li>
 </ul>
-<p class="mini"><span class="red">Trap</span>: FR + new ACK → CA, NOT slow start.</p>
+<p class="mini"><span class="red">Trap</span>: FR + new ACK → <b>CA</b>, NOT slow start.</p>
 </section>
 
 <section>
@@ -203,7 +295,7 @@
 <h2>CC variants</h2>
 <ul>
 <li><b>CUBIC</b> (Linux default): W(t) = C(t−K)³ + Wmax. Fast climb back to Wmax, slow probe past.</li>
-<li><b>Delay-based</b> (Vegas): detect via rising RTT; <span class="red">starves</span> alongside loss-based</li>
+<li><b>Delay-based</b> (Vegas): detect via rising RTT; <span class="red">starves</span> alongside loss-based.</li>
 <li><b>BBR</b> (Google): model BtlBw + RTprop, inflight = BDP</li>
 <li><b>ECN</b>: router marks IP ToS 2 bits at queue threshold; rcvr ACK ECE=1; sender halves cwnd, no drop</li>
 </ul>
@@ -213,19 +305,33 @@
 <h2>Fairness traps</h2>
 <ul>
 <li>UDP doesn't CC → grabs unfair share</li>
-<li>K parallel TCPs → app gets K/(K+others)</li>
+<li>K parallel TCPs → one app gets K/(K+others)</li>
 <li>Different RTTs → shorter RTT wins</li>
 <li>"No Internet police"</li>
+</ul>
+</section>
+
+<section>
+<h2>Loss ≠ Congestion <span class="tag">final Q1</span></h2>
+<ul>
+<li>Bit error → checksum fails → silently dropped (no ACK)</li>
+<li>Common on wireless links</li>
+<li>TCP misreads as congestion, halves cwnd → wireless throughput tanks</li>
+<li><b>ECN</b> helps: explicit signal instead of relying on loss</li>
 </ul>
 </section>
 
 </div></div>
 
 
-<!-- ====================== PAGE 2 (BACK) ====================== -->
+<!-- ================================================================ -->
+<!-- SHEET 2 — NETWORK LAYER (lec16–20: DP + Routing + SDN)            -->
+<!-- ================================================================ -->
 <div class="sheet">
-<h1>COMS 4119 FINAL CHEAT SHEET — NETWORK LAYER</h1>
+<h1>COMS 4119 · NETWORK LAYER</h1>
 <div class="cols">
+
+<!-- ============ Ch 4a: Data Plane ============ -->
 
 <section>
 <h2>Forwarding vs Routing</h2>
@@ -233,9 +339,9 @@
 <tr><th>Forwarding (DP)</th><th>Routing (CP)</th></tr>
 <tr><td>per-router</td><td>network-wide</td></tr>
 <tr><td>hardware ns</td><td>software ms</td></tr>
-<tr><td>match→port</td><td>compute paths</td></tr>
+<tr><td>match → port</td><td>compute paths</td></tr>
 </table>
-<p class="mini">SDN: CP moved to remote controller; switches just exec FTs.</p>
+<p class="mini">Classic: routing at each router. SDN: CP moved to remote controller; switches execute FTs.</p>
 </section>
 
 <section>
@@ -250,7 +356,7 @@
 </section>
 
 <section>
-<h2>Scheduling</h2>
+<h2>Packet Scheduling</h2>
 <ul>
 <li><b>FCFS/FIFO</b>: order of arrival</li>
 <li><b>Priority</b>: classes by header; high first; FCFS within</li>
@@ -260,7 +366,7 @@
 </section>
 
 <section>
-<h2>Buffer Mgmt</h2>
+<h2>Buffer Management</h2>
 <ul>
 <li>Drop: tail / priority</li>
 <li>Mark: ECN, RED (early detect)</li>
@@ -273,7 +379,7 @@
 <li>ver(4) | hlen(4) | <b>ToS</b>(8, ECN low 2 b) | total len(16)</li>
 <li>id | flags(3) | frag offset(13) → fragmentation</li>
 <li><b>TTL</b>(8): −1/hop, 0 → drop (prevents loops)</li>
-<li><b>protocol</b>(8): 6=TCP, 17=UDP</li>
+<li><b>protocol</b>(8): 6=TCP, 17=UDP, 1=ICMP</li>
 <li>header checksum(16) — header only!</li>
 <li>src/dst IP (32 b each)</li>
 <li>options + payload. Hdr ≥20 B, max 64 KB</li>
@@ -294,6 +400,8 @@
 <div class="formula">prefix = IP AND mask;  hosts = 2^(32−x)</div>
 <ul>
 <li>mask /20 = 255.255.240.0 = 20 ones + 12 zeros</li>
+<li><span class="red">Do the AND in binary, not decimal</span> — middle octet bites</li>
+<li>Reserved: all-0 (network), all-1 (broadcast)</li>
 <li>Final ex: 128.16.51.2 /20 → 51 (00110011) AND 240 (11110000) = 48 → <b>prefix 128.16.48.0/20</b>, host 0.0.3.2, <b>2¹²=4096</b></li>
 <li>Private: 10/8, 172.16/12, 192.168/16</li>
 </ul>
@@ -316,27 +424,30 @@
 <li>LAN shares 1 public IP</li>
 <li>Out: replace (priv IP, port) → (NAT IP, new port); record in table</li>
 <li>In: lookup (NAT IP, new port) → restore (priv IP, port)</li>
-<li>Violates end-to-end; complicates P2P; needs STUN/TURN</li>
+<li>Violates end-to-end; complicates P2P; needs STUN/TURN/ICE</li>
 </ul>
 </section>
 
 <section>
-<h2>IPv4 vs IPv6</h2>
+<h2>IPv4 vs IPv6 + Tunneling</h2>
 <table>
 <tr><th></th><th>v4</th><th>v6</th></tr>
 <tr><td>addr</td><td>32 b</td><td>128 b</td></tr>
 <tr><td>hdr</td><td>20+ B</td><td>40 B fixed</td></tr>
 <tr><td>checksum</td><td>yes</td><td>no</td></tr>
-<tr><td>fragment</td><td>routers</td><td>endpoints</td></tr>
+<tr><td>fragment</td><td>routers</td><td>endpoints only</td></tr>
 <tr><td>flow label</td><td>no</td><td>yes</td></tr>
 </table>
-<p class="mini"><b>Tunneling</b>: IPv6 packet as payload in IPv4 packet for transit.</p>
+<p class="mini"><b>Tunneling</b>: IPv6 packet as payload in IPv4 packet for transit across v4-only segment. Logical: B—E look like direct v6 link. Physical: C, D only see v4 header.</p>
 </section>
+
+
+<!-- ============ Ch 4b: Control Plane (Routing) ============ -->
 
 <section>
 <h2>LS vs DV <span class="tag">exam</span></h2>
 <table>
-<tr><th></th><th>LS</th><th>DV</th></tr>
+<tr><th></th><th>LS (Big mouth)</th><th>DV (Whisper)</th></tr>
 <tr><td>view</td><td>global</td><td>local</td></tr>
 <tr><td>flood</td><td>all</td><td>neighbors only</td></tr>
 <tr><td>algo</td><td>Dijkstra</td><td>Bellman-Ford</td></tr>
@@ -356,7 +467,7 @@
 <li>relax all neighbors of w</li>
 <li>repeat until N' = all nodes</li>
 </ol>
-<p class="mini">O(n²); heap O(n log n). Msg complexity O(n²) too.</p>
+<p class="mini">O(n²); heap → O(n log n). Msg complexity O(n²) too.</p>
 </section>
 
 <section>
@@ -366,16 +477,18 @@
 <li>Each node: table[dst][via neighbor]</li>
 <li>DV = row-min of table</li>
 <li>On neighbor DV msg → update via BF; if own DV changes → tell neighbors</li>
+<li><span class="red">Init: only direct neighbors filled, rest ∞ per-via column</span></li>
+<li>BF takes <b>min over neighbors</b>, not sum</li>
 <li>Convergence ≈ max-hop-count in shortest-path tree − 1 (sync, static, no CTI)</li>
 </ul>
 </section>
 
 <section>
-<h2>Count-to-Infinity</h2>
+<h2>Count-to-Infinity + Poison Reverse</h2>
 <ul>
 <li>Link cost ↑: stale DVs cause loops, +1/+1 spiral</li>
 <li><b>Poison reverse</b>: if Z routes thru Y to X, Z advertises Z→X=∞ to Y</li>
-<li>Solves 2-node loops; not 3+ node loops</li>
+<li>Solves 2-node loops; <span class="red">not 3+ node loops</span></li>
 <li>RIP hop=16 means ∞</li>
 </ul>
 </section>
@@ -384,10 +497,10 @@
 <h2>OSPF (intra-AS)</h2>
 <ul>
 <li>Open, link-state, runs Dijkstra</li>
-<li>Flood LSAs directly over IP (no TCP/UDP)</li>
+<li>Flood LSAs directly over IP (no TCP/UDP — self-reliable)</li>
 <li>Multi-metric weights (BW, delay)</li>
 <li>Authenticated messages</li>
-<li><b>Hierarchy</b>: area + backbone; ABR summarizes</li>
+<li><b>Hierarchy</b>: area + backbone (area 0); ABR summarizes; boundary router connects other AS</li>
 </ul>
 </section>
 
@@ -395,7 +508,7 @@
 <h2>BGP (inter-AS) <span class="tag">exam</span></h2>
 <ul>
 <li><b>Path vector</b>, advertised over <b>TCP</b></li>
-<li><b>eBGP</b>: between ASes; <b>iBGP</b>: within an AS</li>
+<li><b>eBGP</b>: between ASes; <b>iBGP</b>: within an AS (propagate eBGP routes)</li>
 <li>Msgs: OPEN / UPDATE / KEEPALIVE / NOTIFICATION</li>
 <li>Advertise = (prefix, <b>AS-PATH</b>, <b>NEXT-HOP</b>)</li>
 <li>AS-PATH includes own AS → reject (loop)</li>
@@ -408,8 +521,9 @@
 <ul>
 <li><b>Export</b>: choose whom to advertise to</li>
 <li><b>Import</b>: choose whose route to accept</li>
-<li>Provider only wants to carry traffic to/from <b>customers</b>; refuses transit between other ISPs</li>
+<li>Provider only carries traffic to/from <b>customers</b>; refuses transit between other ISPs</li>
 <li><b>Columbia-CERN example</b>: don't advertise CERN path to NYU → NYU can't route via Columbia</li>
+<li>Customer-of-provider always gets advertised</li>
 </ul>
 </section>
 
@@ -419,6 +533,7 @@
 <li>Multi-exit to same dst → pick gateway with min intra-AS cost</li>
 <li>"Throw the hot potato out fast"</li>
 <li>Economics: don't carry traffic on own network longer than needed</li>
+<li>Hot potato = picks closest exit in <b>intra-AS</b> cost, ignores inter-AS hops</li>
 </ul>
 </section>
 
@@ -426,10 +541,13 @@
 <h2>Why Intra ≠ Inter <span class="tag">exam</span></h2>
 <ul>
 <li><b>Policy</b>: inter needs admin policy; intra single admin</li>
-<li><b>Scale</b>: hierarchy shrinks tables</li>
+<li><b>Scale</b>: hierarchy shrinks tables (1M BGP prefixes total)</li>
 <li><b>Performance</b>: intra optimizes path; inter optimizes policy</li>
 </ul>
 </section>
+
+
+<!-- ============ Ch 4c: SDN ============ -->
 
 <section>
 <h2>SDN + OpenFlow</h2>
@@ -448,10 +566,14 @@
 </div></div>
 
 
-<!-- ====================== PAGE 3 (LINK LAYER) ====================== -->
+<!-- ================================================================ -->
+<!-- SHEET 3 — LINK LAYER + WIRELESS (lec20–23)                        -->
+<!-- ================================================================ -->
 <div class="sheet">
-<h1>COMS 4119 FINAL CHEAT SHEET — DATA LINK</h1>
+<h1>COMS 4119 · LINK &amp; WIRELESS</h1>
 <div class="cols">
+
+<!-- ============ Ch 5a: Data Link — wired ============ -->
 
 <section>
 <h2>Link Layer services</h2>
@@ -459,7 +581,7 @@
 <li><b>Framing</b> (hdr + trailer)</li>
 <li><b>Error detection/correction</b></li>
 <li><b>MAC</b> (medium access control)</li>
-<li><b>Reliable delivery</b> (often skipped on low-BER)</li>
+<li><b>Reliable delivery</b> (often skipped on low-BER wired; needed on wireless)</li>
 </ul>
 </section>
 
@@ -484,8 +606,7 @@ Divide mod-2 (XOR) by 1001:
    101011000
  ⊕ 1001
   --------
-    011 → bring next bits
-   ...
+    011 → bring next bits ...
 Remainder R = 110 (3 bits)
 Transmit: 101011 110</pre>
 </section>
@@ -526,7 +647,7 @@ Transmit: 101011 110</pre>
 <ul>
 <li>Need to detect collision before tx ends</li>
 <li>10 Mbps Ethernet: min 512 bit, max cable 100 m</li>
-<li>Binary backoff: after n collisions, pick slot ∈ [0, 2^n − 1]</li>
+<li>Binary backoff: after n collisions, pick slot ∈ [0, 2ⁿ − 1]</li>
 </ul>
 </section>
 
@@ -535,7 +656,7 @@ Transmit: 101011 110</pre>
 <ul>
 <li>Preamble 7 B + SFD 1 B (clock sync)</li>
 <li>Dst MAC 6 B + Src MAC 6 B</li>
-<li>Type 2 B (0x0800 IP, 0x0806 ARP)</li>
+<li>Type 2 B (0x0800 IP, 0x0806 ARP, 0x86DD IPv6)</li>
 <li>Payload 46–1500 B</li>
 <li>CRC 4 B</li>
 </ul>
@@ -556,8 +677,8 @@ Transmit: 101011 110</pre>
 <h2>ARP</h2>
 <ul>
 <li>Map IP → MAC</li>
-<li>Broadcast query, unicast reply, cache with TTL</li>
-<li><b>Cross-subnet</b>: ARP resolves <b>first-hop router</b>'s MAC, not the final dst</li>
+<li>Broadcast query, unicast reply, cache with TTL (soft state)</li>
+<li><span class="red">Cross-subnet</span>: ARP resolves <b>first-hop router</b>'s MAC, NOT the final dst</li>
 <li>Host knows when to use router via netmask (from DHCP)</li>
 </ul>
 </section>
@@ -602,13 +723,8 @@ Transmit: 101011 110</pre>
 </ul>
 </section>
 
-</div></div>
 
-
-<!-- ====================== PAGE 4 (WIRELESS) ====================== -->
-<div class="sheet">
-<h1>COMS 4119 FINAL CHEAT SHEET — WIRELESS</h1>
-<div class="cols">
+<!-- ============ Ch 6a: Wireless — Physical ============ -->
 
 <section>
 <h2>Wireless ≠ Wired <span class="tag">exam</span></h2>
@@ -616,7 +732,7 @@ Transmit: 101011 110</pre>
 <li><b>Time-varying channel</b>: distance, mobility, environment</li>
 <li><b>Broadcast → interference</b> from neighbors</li>
 </ol>
-<p class="mini">These drive all wireless MAC design.</p>
+<p class="mini">These two drive all wireless MAC design.</p>
 </section>
 
 <section>
@@ -673,6 +789,9 @@ Transmit: 101011 110</pre>
 <li>Neighbors may interfere but not decode</li>
 </ul>
 </section>
+
+
+<!-- ============ Ch 6b: Wireless — MAC ============ -->
 
 <section>
 <h2>Hidden Terminal <span class="tag">exam</span></h2>
@@ -752,166 +871,60 @@ Transmit: 101011 110</pre>
 </div></div>
 
 
-<!-- ====================== PAGE 5 (PITFALLS + FORMULA INDEX) ====================== -->
+<!-- ================================================================ -->
+<!-- SHEET 4 — REFERENCE (Formulas + Constants + Units & Conversions)  -->
+<!-- ================================================================ -->
 <div class="sheet">
-<h1>COMS 4119 — EXAM PITFALLS &amp; FORMULA INDEX</h1>
+<h1>COMS 4119 · REFERENCE</h1>
 <div class="cols">
 
-<section>
-<h2>Loss ≠ Congestion <span class="tag">final Q1</span></h2>
-<ul>
-<li>Bit error → checksum fail → silently dropped</li>
-<li>Common in wireless</li>
-<li>TCP misreads as congestion, halves cwnd</li>
-<li>ECN helps by giving explicit signal</li>
-</ul>
-</section>
-
-<section>
-<h2>RTT counting pitfalls</h2>
-<ul>
-<li>Non-persistent: don't forget connection-setup RTT (×2 per object)</li>
-<li>Nested deps (CSS → image inside CSS): +1 RTT per layer</li>
-<li>Pipelining vs no-pipelining matters even in persistent</li>
-</ul>
-</section>
-
-<section>
-<h2>Bottleneck calc traps <span class="tag">mid Q2 Q4</span></h2>
-<ul>
-<li>N pkts pipelined: 1st pkt = full path; rest = (N−1)·bottleneck only</li>
-<li>Store-and-forward adds tx delay at EVERY hop</li>
-<li>Don't double-count propagation if asked for one-way vs round-trip</li>
-<li><span class="red">Propagation is NOT a bottleneck</span> — paid once for 1st pkt only, doesn't stack</li>
-<li>Bottleneck = link with <b>max L/R</b> = min R, not max d</li>
-</ul>
-</section>
-
-<section>
-<h2>SR Receive Buffer trap <span class="tag">mid Q6</span></h2>
-<ul>
-<li>Receive buffer is NOT a simple counter — it's <b>"hold until in-order delivery"</b></li>
-<li>If pkt 1 lost + pkts 2,3,4 fill buffer → buffer can't release → pkts 5+ dropped</li>
-<li>Advertised window <b>must ≤ buffer size</b>, else overflow drops</li>
-<li>Example: 10 pkts, buffer=4, pkt 1 lost → retransmit <b>7 pkts</b> (1 + 5–10)</li>
-<li>Initial handshake: rcvr should advertise rwnd = actual buffer capacity</li>
-</ul>
-</section>
-
-<section>
-<h2>Subnet math</h2>
-<ul>
-<li>Do AND in binary, not decimal; the middle octet bites</li>
-<li>Mask /x → host bits = 32 − x</li>
-<li>Reserved: all-0 (network), all-1 (broadcast)</li>
-</ul>
-</section>
-
-<section>
-<h2>BGP policy</h2>
-<ul>
-<li>"Don't carry transit" → don't advertise external path to peer</li>
-<li>Customer of provider always gets advertised</li>
-<li>Hot potato = pick exit closest in <b>intra-AS</b> cost, ignore inter-AS hops</li>
-</ul>
-</section>
-
-<section>
-<h2>DV mechanical errors</h2>
-<ul>
-<li>Init: only direct neighbors filled, rest ∞ (per-via column)</li>
-<li>BF takes <b>min over neighbors</b>, not sum</li>
-<li>Count-to-infinity: bad news travels slow</li>
-<li>Poison reverse only breaks 2-node loops</li>
-</ul>
-</section>
-
-<section>
-<h2>TCP FSM trap</h2>
-<ul>
-<li>Fast recovery + new ACK → <b>CA</b> (cwnd=ssthresh), <span class="red">not slow start</span></li>
-<li>Timeout always → slow start (cwnd=1)</li>
-<li>ssthresh updated to cwnd/2 on any loss event</li>
-</ul>
-</section>
-
-<section>
-<h2>Hidden vs Exposed</h2>
-<ul>
-<li>Hidden: sender's range <b>out</b>, receiver's interference <b>in</b></li>
-<li>Exposed: sender's range <b>in</b>, my target <b>out</b> of sender's range</li>
-<li>RTS/CTS solves hidden; exposed has no clean fix</li>
-</ul>
-</section>
-
-<section>
-<h2>CSMA/CD limits</h2>
-<ul>
-<li>Min frame ≥ 2·d·R/v (else can't detect collision before TX ends)</li>
-<li>Wireless can't CD because TX deafens RX → CSMA/CA instead</li>
-</ul>
-</section>
-
-<section>
-<h2>Sockets count</h2>
-<ul>
-<li>UDP server with N clients: <b>1</b> socket</li>
-<li>TCP server with N clients: <b>N+1</b> (welcome + per-client)</li>
-</ul>
-</section>
-
-<section>
-<h2>ARP cross-subnet</h2>
-<ul>
-<li>If dst not in my subnet (by netmask): ARP for <b>default gateway's MAC</b>, not for dst</li>
-<li>Switch only knows MACs; cross-LAN needs router</li>
-</ul>
-</section>
+<!-- ============ Formula Index ============ -->
 
 <section>
 <h2>Formula Index</h2>
 <ol>
-<li>End-to-end = Σ(L/R + d/v) + queue</li>
+<li>End-to-end (1 pkt) = Σ(L/R + d/v) + queue</li>
+<li>Pipelined N pkts = 1st full path + (N−1)·max(L/R)</li>
 <li>BDP = R · RTT</li>
-<li>U_SW = T_tr / (T_tr + 2·T_prop)</li>
-<li>TCP throughput = 3W/(4·RTT)</li>
+<li>U_stop-and-wait = T_tr / (T_tr + 2·T_prop)</li>
+<li>TCP throughput (CA) = 3W/(4·RTT)</li>
 <li>CS time = max(NF/U_s, F/d_min)</li>
 <li>P2P time = max(F/U_s, F/d_min, NF/(U_s+ΣU_i))</li>
-<li>Slotted ALOHA S_max = 1/e at p=1/N</li>
-<li>CSMA/CD min frame ≥ 2·d·R/v</li>
+<li>Slotted ALOHA: S_max → 1/e at p=1/N</li>
+<li>Pure ALOHA: S_max → 1/(2e)</li>
+<li>CSMA/CD: L_min ≥ 2·d·R/v</li>
 <li>Pathloss L = (4πdf/c)²</li>
 <li>SNR_dB = 10·log(S/N)</li>
 <li>D_x(y) = min_v {c(x,v) + D_v(y)}</li>
 <li>CRC: R = D·2^r mod G</li>
 <li>WFQ class i share = w_i / Σw_j</li>
+<li>EstRTT = (1−α)·EstRTT + α·SampleRTT, α=0.125</li>
+<li>Timeout = EstRTT + 4·DevRTT</li>
 </ol>
 </section>
 
 <section>
-<h2>Constants</h2>
+<h2>Constants &amp; Useful Numbers</h2>
 <ul>
-<li>Light = 3·10⁸ m/s</li>
+<li>Light (vacuum/fiber) = 3·10⁸ m/s</li>
+<li>Copper signal ≈ 2·10⁸ m/s (~⅔ c)</li>
 <li>Sound (water) = 1.5 km/s</li>
-<li>e ≈ 2.718, 1/e ≈ 0.368</li>
-<li>2¹⁰ = 1024 ≈ 10³</li>
-<li>2²⁰ ≈ 10⁶, 2³⁰ ≈ 10⁹</li>
+<li>Sound (air) ≈ 343 m/s</li>
+<li>e ≈ 2.718, 1/e ≈ 0.368, 1/(2e) ≈ 0.184</li>
+<li>2¹⁰ = 1024 ≈ 10³; 2²⁰ ≈ 10⁶; 2³⁰ ≈ 10⁹</li>
 <li>Min Eth frame 64 B, max 1518 B (w/ hdr)</li>
+<li>MTU typical 1500 B</li>
 <li>SIFS ~10 μs, DIFS ~50 μs</li>
-<li>CWmin = 31 (b) / 15 (g)</li>
+<li>CWmin = 31 (802.11b) / 15 (802.11g)</li>
+<li>TCP/IP overhead 40 B per packet</li>
 </ul>
 </section>
 
 
-</div></div>
-
-
-<!-- ====================== PAGE 6 (UNITS & CONVERSIONS) ====================== -->
-<div class="sheet">
-<h1>COMS 4119 — UNITS &amp; CONVERSIONS</h1>
-<div class="cols">
+<!-- ============ Units & Conversions ============ -->
 
 <section>
-<h2>Time</h2>
+<h2>Time Units</h2>
 <table>
 <tr><th>Symbol</th><th>=</th><th>seconds</th></tr>
 <tr><td>1 s</td><td>=</td><td>10⁰</td></tr>
@@ -930,7 +943,7 @@ Transmit: 101011 110</pre>
 <ul>
 <li><b>1 byte (B) = 8 bits (b)</b></li>
 <li>Lowercase b = bit; uppercase B = byte</li>
-<li>Mbps = megabits/sec ≠ MBps</li>
+<li>Mbps = megabits/sec ≠ MBps (megabytes/sec)</li>
 </ul>
 <table>
 <tr><th></th><th>SI (10ⁿ)</th><th>Binary (2ⁿ)</th></tr>
@@ -939,15 +952,15 @@ Transmit: 101011 110</pre>
 <tr><td>1 GB</td><td>10⁹ B</td><td>2³⁰ B</td></tr>
 <tr><td>1 TB</td><td>10¹² B</td><td>2⁴⁰ B</td></tr>
 </table>
-<p class="mini">Networking usually uses <b>SI (base-10)</b>. Storage often uses binary.</p>
+<p class="mini">Networking uses <b>SI (base-10)</b>. Storage often binary.</p>
 </section>
 
 <section>
-<h2>Bandwidth (bits/sec)</h2>
+<h2>Bandwidth</h2>
 <table>
 <tr><th>Unit</th><th>bps</th></tr>
 <tr><td>1 bps</td><td>1</td></tr>
-<tr><td>1 Kbps</td><td>10³ = 1000</td></tr>
+<tr><td>1 Kbps</td><td>10³</td></tr>
 <tr><td>1 Mbps</td><td>10⁶</td></tr>
 <tr><td>1 Gbps</td><td>10⁹</td></tr>
 <tr><td>1 Tbps</td><td>10¹²</td></tr>
@@ -959,7 +972,7 @@ Transmit: 101011 110</pre>
 </section>
 
 <section>
-<h2>Bytes ↔ Bits Quick</h2>
+<h2>Bytes ↔ Bits Quickref</h2>
 <table>
 <tr><th>Bytes</th><th>Bits</th></tr>
 <tr><td>1 KB</td><td>8 Kb</td></tr>
@@ -984,18 +997,6 @@ Transmit: 101011 110</pre>
 </section>
 
 <section>
-<h2>Speed Constants</h2>
-<table>
-<tr><th>Medium</th><th>Speed</th></tr>
-<tr><td>Light (vacuum/fiber)</td><td>3·10⁸ m/s = 3·10⁵ km/s</td></tr>
-<tr><td>Copper signal</td><td>~2·10⁸ m/s (~⅔ c)</td></tr>
-<tr><td>Sound (water)</td><td>1500 m/s = 1.5 km/s</td></tr>
-<tr><td>Sound (air)</td><td>343 m/s ≈ 0.34 km/s</td></tr>
-</table>
-<p class="mini">Mid Q4 uses 1.5 km/s for acoustic, 3·10⁸ m/s for cellular.</p>
-</section>
-
-<section>
 <h2>Propagation Quickref</h2>
 <ul>
 <li>Light: 1 m → <b>3.3 ns</b></li>
@@ -1008,7 +1009,7 @@ Transmit: 101011 110</pre>
 </section>
 
 <section>
-<h2>Transmission Quickref (1 packet)</h2>
+<h2>Transmission Quickref</h2>
 <ul>
 <li>1 Kb @ 1 Mbps → 1 ms</li>
 <li>1 Kb @ 1 Gbps → 1 μs</li>
@@ -1057,7 +1058,7 @@ Transmit: 101011 110</pre>
 </section>
 
 <section>
-<h2>Subnet Quickref (/x → hosts)</h2>
+<h2>Subnet /x → hosts</h2>
 <table>
 <tr><th>/x</th><th>Hosts (2^(32−x))</th><th>Notes</th></tr>
 <tr><td>/8</td><td>2²⁴ ≈ 16M</td><td>old Class A</td></tr>
@@ -1109,11 +1110,11 @@ Transmit: 101011 110</pre>
 <tr><td>C</td><td>1100</td></tr>
 <tr><td>F</td><td>1111</td></tr>
 </table>
-<p class="mini">e.g. MAC 00-15-C5 = 0x001 5C5</p>
+<p class="mini">e.g. MAC 00-15-C5 = 0x0015C5</p>
 </section>
 
 <section>
-<h2>Powers of 10 Prefixes</h2>
+<h2>SI Prefixes</h2>
 <table>
 <tr><th>Prefix</th><th>Symbol</th><th>Value</th></tr>
 <tr><td>nano</td><td>n</td><td>10⁻⁹</td></tr>
@@ -1139,13 +1140,13 @@ Transmit: 101011 110</pre>
 </section>
 
 <section>
-<h2>Common Frame / Packet Sizes</h2>
+<h2>Common Frame / Header Sizes</h2>
 <ul>
 <li>Min Ethernet: 64 B (w/ hdr+CRC)</li>
 <li>Max Ethernet (typical): 1518 B</li>
 <li>MTU (Internet typical): 1500 B</li>
 <li>TCP segment header: 20 B</li>
-<li>IPv4 header: 20 B</li>
+<li>IPv4 header: 20 B (no options)</li>
 <li>IPv6 header: 40 B fixed</li>
 <li>UDP header: 8 B</li>
 <li>TCP+IP overhead: 40 B/packet</li>

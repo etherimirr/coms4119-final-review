@@ -97,7 +97,70 @@ body {
   overflow: auto;
   padding: 18px;
 }
-.slide-pane img { max-width: 100%; height: auto; border-radius: 6px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
+.slide-pane img { max-width: 100%; height: auto; display: block; border-radius: 6px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
+
+/* slide-wrap is positioned container for overlay highlights */
+.slide-wrap { position: relative; display: inline-block; max-width: 100%; }
+.slide-overlay {
+  position: absolute; inset: 0;
+  pointer-events: none;
+}
+.slide-wrap.hl-drawing .slide-overlay {
+  pointer-events: auto;
+  cursor: crosshair;
+  background: rgba(0,0,0,0.04);
+}
+.imghl-box {
+  position: absolute;
+  border: 2px solid #f5c46e;
+  background: rgba(245, 196, 110, 0.25);
+  pointer-events: auto;
+  cursor: pointer;
+  box-sizing: border-box;
+  border-radius: 2px;
+}
+.imghl-box:hover { background: rgba(245, 196, 110, 0.45); border-color: #ff7a8a; }
+.imghl-box.ghost {
+  border-style: dashed;
+  background: rgba(245, 196, 110, 0.15);
+  pointer-events: none;
+}
+
+.slide-tools {
+  margin-top: 10px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.slide-tools button {
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 4px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 12px;
+}
+.slide-tools button:hover { background: #2d3346; color: #fff; }
+.slide-tools button.active {
+  background: linear-gradient(90deg, rgba(245,196,110,0.3), rgba(245,196,110,0.1));
+  border-color: var(--warn);
+  color: var(--warn);
+}
+
+/* 🔥 Important banner at top of explain pane */
+.important-banner {
+  background: linear-gradient(90deg, rgba(245,196,110,0.18), rgba(255,122,138,0.10));
+  border-left: 3px solid var(--warn);
+  padding: 10px 14px;
+  border-radius: 6px;
+  margin-bottom: 16px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #f9d896;
+}
+.important-banner b { color: var(--warn); }
 .explain-pane {
   flex: 1;
   background: var(--panel);

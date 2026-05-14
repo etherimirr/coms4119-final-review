@@ -400,11 +400,22 @@ function renderLecture(id) {
       </div>
     </div>
     <div class="split">
-      <div class="slide-pane"><img id="slide" alt=""></div>
+      <div class="slide-pane">
+        <div class="slide-wrap" id="slideWrap">
+          <img id="slide" alt="">
+          <div id="slideOverlay" class="slide-overlay"></div>
+        </div>
+        <div class="slide-tools">
+          <button id="hlImgToggle" onclick="toggleImgHL()" title="按下后在 PPT 上拖出黄色高亮框">🖍️ 划框</button>
+          <button onclick="clearImgHL()" title="清除本页所有图片高亮">🧹 清空框</button>
+          <span class="subtle hl-hint">拖鼠标画框 · 点框删除</span>
+        </div>
+      </div>
       <div class="explain-pane" id="explain"></div>
     </div>
   `;
   showPage();
+  setupImgHL();
 }
 
 function refreshStarBtn() {
@@ -437,23 +448,30 @@ function showPage() {
   document.getElementById('curp').textContent = currentPage;
   document.getElementById('goto').value = currentPage;
   const pad = String(currentPage).padStart(2,'0');
-  document.getElementById('slide').src = `pages/${currentTab}/p-${pad}.jpg`;
+  const img = document.getElementById('slide');
+  img.src = `pages/${currentTab}/p-${pad}.jpg`;
   // explanation
   const arr = EXPL[currentTab] || [];
   const e = arr[currentPage-1];
   renderExplain(e, currentTab, currentPage);
   refreshStarBtn();
+  // re-render image highlights for this page (image load event also covers this)
+  if (typeof renderImgHL === 'function') renderImgHL();
 }
 
 function renderExplain(e, fileId, pageNum) {
   const target = document.getElementById('explain');
   let aiHtml = '';
+  // 🔥 important banner at very top
+  if (e && e.important) {
+    aiHtml += `<div class="important-banner">🔥 <b>重点：</b> ${e.important}</div>`;
+  }
   if (!e) {
-    aiHtml = `<h2>AI 讲解</h2>
+    aiHtml += `<h2>AI 讲解</h2>
       <p class="skeleton">骨架未生成 — 这一页 AI 讲解还在生成中。</p>
       <p class="subtle">提示：键盘 ← / → 翻页 · S 收藏。</p>`;
   } else {
-    aiHtml = `<h2>${e.title || ''}</h2>`;
+    aiHtml += `<h2>${e.title || ''}</h2>`;
     if (e.topics) aiHtml += `<div>${e.topics.map(t=>`<span class="tag">${t}</span>`).join('')}</div>`;
     if (e.summary) aiHtml += `<p><b>这一页讲了什么 —</b> ${e.summary}</p>`;
     if (e.key_points && e.key_points.length) {
@@ -792,7 +810,6 @@ async function renderCheatSheet() {
   content.innerHTML = `<div class="toolbar">
       <div class="title"><b>🖨️ Cheat Sheet</b> <span class="subtle">直接点击编辑 · ✕ 删 section · 📷 加图 · 自动存</span></div>
       <div class="pager">
-        <button onclick="cheatInsertPreMid()" title="加一页期中前重点">📥 Pre-Mid</button>
         <button onclick="cheatInsertAuto()" title="拉取你的收藏 / 笔记 / Q&A / 高亮">📥 拉取笔记</button>
         <button onclick="cheatAddSection()">➕ Section</button>
         <button onclick="cheatReset()" title="丢弃所有编辑">↻ Reset</button>
@@ -1309,6 +1326,124 @@ function persistHighlights(fileId, pageNum) {
   if (!aiExplain) return;
   const marks = Array.from(aiExplain.querySelectorAll('mark')).map(m => m.textContent.trim()).filter(Boolean);
   setHighlightHtml(fileId, pageNum, aiExplain.innerHTML, marks);
+}
+
+// ============ Image Highlights (draw rects on PPT image) ============
+const KEY_IMGHL = '4119:imghl'; // map "fileId:page" -> [{x,y,w,h}] normalized 0-1
+
+function loadImgHLMap() {
+  try { return JSON.parse(localStorage.getItem(KEY_IMGHL) || '{}'); }
+  catch { return {}; }
+}
+function getImgHL(fileId, page) {
+  return loadImgHLMap()[`${fileId}:${page}`] || [];
+}
+function saveImgHL(fileId, page, list) {
+  const m = loadImgHLMap();
+  m[`${fileId}:${page}`] = list;
+  localStorage.setItem(KEY_IMGHL, JSON.stringify(m));
+}
+function clearImgHL() {
+  if (!confirm('清空这一页所有图片高亮框?')) return;
+  saveImgHL(currentTab, currentPage, []);
+  renderImgHL();
+}
+
+let _hlActive = false;
+function toggleImgHL() {
+  _hlActive = !_hlActive;
+  const btn = document.getElementById('hlImgToggle');
+  if (btn) {
+    btn.classList.toggle('active', _hlActive);
+    btn.innerHTML = _hlActive ? '✖ 退出划框' : '🖍️ 划框';
+  }
+  const wrap = document.getElementById('slideWrap');
+  if (wrap) wrap.classList.toggle('hl-drawing', _hlActive);
+}
+
+function renderImgHL() {
+  const overlay = document.getElementById('slideOverlay');
+  if (!overlay) return;
+  overlay.innerHTML = '';
+  const list = getImgHL(currentTab, currentPage);
+  list.forEach((r, idx) => {
+    const box = document.createElement('div');
+    box.className = 'imghl-box';
+    box.style.left = (r.x * 100) + '%';
+    box.style.top = (r.y * 100) + '%';
+    box.style.width = (r.w * 100) + '%';
+    box.style.height = (r.h * 100) + '%';
+    box.title = '点击删除';
+    box.onclick = (ev) => {
+      ev.stopPropagation();
+      const cur = getImgHL(currentTab, currentPage);
+      cur.splice(idx, 1);
+      saveImgHL(currentTab, currentPage, cur);
+      renderImgHL();
+    };
+    overlay.appendChild(box);
+  });
+}
+
+function setupImgHL() {
+  const overlay = document.getElementById('slideOverlay');
+  const img = document.getElementById('slide');
+  if (!overlay || !img) return;
+  // re-render highlights when image loads / changes
+  img.addEventListener('load', renderImgHL);
+  if (img.complete) renderImgHL();
+
+  let drawing = null;
+  overlay.addEventListener('mousedown', ev => {
+    if (!_hlActive) return;
+    ev.preventDefault();
+    const rect = overlay.getBoundingClientRect();
+    const x = (ev.clientX - rect.left) / rect.width;
+    const y = (ev.clientY - rect.top) / rect.height;
+    drawing = { startX: x, startY: y };
+    const ghost = document.createElement('div');
+    ghost.className = 'imghl-box ghost';
+    ghost.id = '__hlghost';
+    overlay.appendChild(ghost);
+  });
+  overlay.addEventListener('mousemove', ev => {
+    if (!drawing) return;
+    const rect = overlay.getBoundingClientRect();
+    const x = (ev.clientX - rect.left) / rect.width;
+    const y = (ev.clientY - rect.top) / rect.height;
+    const ghost = document.getElementById('__hlghost');
+    if (!ghost) return;
+    const left = Math.min(drawing.startX, x);
+    const top = Math.min(drawing.startY, y);
+    const w = Math.abs(x - drawing.startX);
+    const h = Math.abs(y - drawing.startY);
+    ghost.style.left = (left * 100) + '%';
+    ghost.style.top = (top * 100) + '%';
+    ghost.style.width = (w * 100) + '%';
+    ghost.style.height = (h * 100) + '%';
+  });
+  overlay.addEventListener('mouseup', ev => {
+    if (!drawing) return;
+    const rect = overlay.getBoundingClientRect();
+    const x = (ev.clientX - rect.left) / rect.width;
+    const y = (ev.clientY - rect.top) / rect.height;
+    const left = Math.min(drawing.startX, x);
+    const top = Math.min(drawing.startY, y);
+    const w = Math.abs(x - drawing.startX);
+    const h = Math.abs(y - drawing.startY);
+    drawing = null;
+    document.getElementById('__hlghost')?.remove();
+    if (w > 0.01 && h > 0.01) {
+      const list = getImgHL(currentTab, currentPage);
+      list.push({ x: left, y: top, w, h });
+      saveImgHL(currentTab, currentPage, list);
+      renderImgHL();
+    }
+  });
+  overlay.addEventListener('mouseleave', () => {
+    drawing = null;
+    document.getElementById('__hlghost')?.remove();
+  });
 }
 
 // Allow double-click on a mark to remove it

@@ -35,7 +35,8 @@
       "Multiplicative ×b 沿原点缩",
       "螺旋收敛到 x1=x2 ∩ x1+x2=1，即 (0.5, 0.5)"
     ],
-    "explanation": "### 直觉\n两用户从某起点出发：\n1. AI 阶段：(x1, x2) → (x1+a, x2+a)。沿 45° 走，碰效率线 x1+x2=1\n2. MD 阶段：(x1, x2) → (b·x1, b·x2)。沿原点缩，比例 x1/x2 不变。\n\n关键：MD 沿原点缩 + AI 走 45° → 两步交替的轨迹是『斜螺旋』，越来越靠近公平线。\n\n### 几何证明（简）\n令 D = x1 - x2 是差距。\nAI: D 不变（同时加 a）。\nMD: D' = b·x1 - b·x2 = b·D。\n\n所以每次 MD 后 D 缩小 b 倍（b<1）→ D 收敛到 0 → 公平。\n\n### 考法\n『为什么 AIMD 收敛公平？』必须画图 + 说出『加法走 45° + 乘法保比例 + 螺旋』。"
+    "explanation": "### 直觉\n两用户从某起点出发：\n1. AI 阶段：(x1, x2) → (x1+a, x2+a)。沿 45° 走，碰效率线 x1+x2=1\n2. MD 阶段：(x1, x2) → (b·x1, b·x2)。沿原点缩，比例 x1/x2 不变。\n\n关键：MD 沿原点缩 + AI 走 45° → 两步交替的轨迹是『斜螺旋』，越来越靠近公平线。\n\n### 几何证明（简）\n令 D = x1 - x2 是差距。\nAI: D 不变（同时加 a）。\nMD: D' = b·x1 - b·x2 = b·D。\n\n所以每次 MD 后 D 缩小 b 倍（b<1）→ D 收敛到 0 → 公平。\n\n### 考法\n『为什么 AIMD 收敛公平？』必须画图 + 说出『加法走 45° + 乘法保比例 + 螺旋』。",
+    "important": "🔥 AIMD 几何收敛——TCP 公平性的唯一保证；考前必懂为什么 AIMD 唯一"
   },
   "lec14:7": {
     "title": "TCP cwnd 工作机制",
@@ -50,7 +51,8 @@
   "lec14:8": {
     "title": "TCP 两种丢包 — 3 dup ACK vs Timeout ⭐",
     "summary": "丢一个 + 后续到 → 3 dup ACK（轻度）；丢一片 → timeout（重度）。反应力度不同。",
-    "explanation": "### 3 Dup ACK 的故事\n- Sender 发 1,2,3,4,5\n- 包 1 丢了，2,3,4,5 都到了\n- Receiver 收到 2 时：ACK 1（『我还在等 1』）\n- 收到 3 时：ACK 1（dup ACK #1）\n- 收到 4 时：ACK 1（dup ACK #2）\n- 收到 5 时：ACK 1（dup ACK #3）\n- Sender 收到 3 个 dup ACK → 确认 1 真的丢了 + 但 2-5 到了 → 网络还能传\n\n→ **轻度拥塞**：multiplicative decrease (cwnd/2)，但不重启 slow start。\n\n### Timeout 的故事\n- Sender 发完 cwnd bytes\n- 一个 ACK 都没回\n- 等到超时\n- 可能整窗都丢了 → 网络严重拥塞\n\n→ **重度拥塞**：cwnd 退回 1 MSS，重启 slow start。\n\n### 为什么两种处理\n直觉：网络还在传东西（有 dup ACK 回来）说明只是边缘拥塞，可以乐观；什么都收不到说明严重，必须保守。"
+    "explanation": "### 3 Dup ACK 的故事\n- Sender 发 1,2,3,4,5\n- 包 1 丢了，2,3,4,5 都到了\n- Receiver 收到 2 时：ACK 1（『我还在等 1』）\n- 收到 3 时：ACK 1（dup ACK #1）\n- 收到 4 时：ACK 1（dup ACK #2）\n- 收到 5 时：ACK 1（dup ACK #3）\n- Sender 收到 3 个 dup ACK → 确认 1 真的丢了 + 但 2-5 到了 → 网络还能传\n\n→ **轻度拥塞**：multiplicative decrease (cwnd/2)，但不重启 slow start。\n\n### Timeout 的故事\n- Sender 发完 cwnd bytes\n- 一个 ACK 都没回\n- 等到超时\n- 可能整窗都丢了 → 网络严重拥塞\n\n→ **重度拥塞**：cwnd 退回 1 MSS，重启 slow start。\n\n### 为什么两种处理\n直觉：网络还在传东西（有 dup ACK 回来）说明只是边缘拥塞，可以乐观；什么都收不到说明严重，必须保守。",
+    "important": "🔥 两种丢包反应不同——3 dup ACK = 切半续跑；timeout = 重启 slow start"
   },
   "lec14:9": {
     "title": "Timeout 处理",
@@ -59,7 +61,8 @@
   "lec14:10": {
     "title": "Slow Start → CA 切换 ⭐",
     "summary": "cwnd 指数增长 (每 RTT ×2) 到 ssthresh 切线性 (+1 MSS/RTT)。",
-    "explanation": "### Slow Start 实际是指数增\n名字误导。起点 cwnd=1 小，但增长速度 → 每收一个 ACK cwnd += MSS → 每 RTT cwnd 翻倍 → **指数**。\n\nRTT 0: cwnd = 1\nRTT 1: cwnd = 2\nRTT 2: cwnd = 4\nRTT 3: cwnd = 8 → 这是指数\n\n### 切换点\n- 起始 ssthresh = 64 KB（默认）\n- cwnd 增到 ssthresh 时切 CA（每 RTT +1 MSS，线性）\n- 丢包时 ssthresh = cwnd / 2（记忆『上次大约多少打爆了网络』）"
+    "explanation": "### Slow Start 实际是指数增\n名字误导。起点 cwnd=1 小，但增长速度 → 每收一个 ACK cwnd += MSS → 每 RTT cwnd 翻倍 → **指数**。\n\nRTT 0: cwnd = 1\nRTT 1: cwnd = 2\nRTT 2: cwnd = 4\nRTT 3: cwnd = 8 → 这是指数\n\n### 切换点\n- 起始 ssthresh = 64 KB（默认）\n- cwnd 增到 ssthresh 时切 CA（每 RTT +1 MSS，线性）\n- 丢包时 ssthresh = cwnd / 2（记忆『上次大约多少打爆了网络』）",
+    "important": "🔥 ssthresh 切换点——丢包前 cwnd 的一半"
   },
   "lec14:11": {
     "title": "Timeout 后重启 slow start",
@@ -74,7 +77,8 @@
       "**CA**: 3 dup ACK → fast recovery (cwnd=ssthresh+3, ssthresh=cwnd/2)",
       "**Fast recovery**: new ACK → CA (cwnd=ssthresh) ← 关键易错！"
     ],
-    "explanation": "### 完整 FSM\n```\n          slow_start\n          ↓ (cwnd>ssthresh)\n              CA ←─────────┐\n              ↓ 3 dup ACK   │ new ACK\n        fast_recovery ─────┘\n\n  任何状态 + timeout → slow_start (cwnd=1)\n```\n\n### 每个状态 cwnd 更新\n- slow start: new ACK → cwnd += MSS\n- CA: new ACK → cwnd += MSS × (MSS/cwnd)（平均每 RTT +1 MSS）\n- fast recovery: dup ACK → cwnd += MSS（人为膨胀维持 pipeline）；new ACK → CA, cwnd=ssthresh\n\n### 易错点\n**Fast recovery 收 new ACK 回 CA（不是 slow start）**。考试常考这个细节。\n\n### 考法\n给 timeline 画 cwnd 变化；判断当前在哪个状态。"
+    "explanation": "### 完整 FSM\n```\n          slow_start\n          ↓ (cwnd>ssthresh)\n              CA ←─────────┐\n              ↓ 3 dup ACK   │ new ACK\n        fast_recovery ─────┘\n\n  任何状态 + timeout → slow_start (cwnd=1)\n```\n\n### 每个状态 cwnd 更新\n- slow start: new ACK → cwnd += MSS\n- CA: new ACK → cwnd += MSS × (MSS/cwnd)（平均每 RTT +1 MSS）\n- fast recovery: dup ACK → cwnd += MSS（人为膨胀维持 pipeline）；new ACK → CA, cwnd=ssthresh\n\n### 易错点\n**Fast recovery 收 new ACK 回 CA（不是 slow start）**。考试常考这个细节。\n\n### 考法\n给 timeline 画 cwnd 变化；判断当前在哪个状态。",
+    "important": "🔥🔥 TCP CC FSM 必考——fast recovery + new ACK → CA，不是 slow start！"
   },
   "lec14:13": {
     "title": "TCP CUBIC — 直觉",
@@ -126,7 +130,8 @@
       "Receiver 收到 ECN=11 → 在 ACK 的 TCP header ECE bit = 1",
       "Sender 见 ECE=1 → cwnd /= 2（跟 dup ACK 反应一样），**但没真丢包**"
     ],
-    "explanation": "### 为什么需要 ECN\nLoss-based CC 必须等到 buffer 满 → 丢包 → 重传。这浪费：\n1. Queue 满了延迟已经很大\n2. 重传消耗带宽\n3. 反应时机晚\n\nECN 让 router 在 queue 长度超阈值时（还没满）就标记包。Receiver 通过 ACK 把信号传回 sender。Sender 提前减速 → 队列降回稳态。\n\n### IP + TCP 协作\n- IP 层：ECN 字段（2 bit on ToS）\n- TCP 层：ECE bit on ACK + CWR bit on next packet（确认收到 ECE）\n\n### 谈判\nECN 必须双方支持。建连时通过 SYN 协商：SYN 的 ECE+CWR 都设 1 表示 'I support ECN'。\n\n### 部署\nLinux 默认开 ECN（被动响应，主动协商在某些发行版关闭）。"
+    "explanation": "### 为什么需要 ECN\nLoss-based CC 必须等到 buffer 满 → 丢包 → 重传。这浪费：\n1. Queue 满了延迟已经很大\n2. 重传消耗带宽\n3. 反应时机晚\n\nECN 让 router 在 queue 长度超阈值时（还没满）就标记包。Receiver 通过 ACK 把信号传回 sender。Sender 提前减速 → 队列降回稳态。\n\n### IP + TCP 协作\n- IP 层：ECN 字段（2 bit on ToS）\n- TCP 层：ECE bit on ACK + CWR bit on next packet（确认收到 ECE）\n\n### 谈判\nECN 必须双方支持。建连时通过 SYN 协商：SYN 的 ECE+CWR 都设 1 表示 'I support ECN'。\n\n### 部署\nLinux 默认开 ECN（被动响应，主动协商在某些发行版关闭）。",
+    "important": "🔥 ECN——final Q1 的反向参考：没 ECN 时丢包 ≠ 拥塞"
   },
   "lec23:1": {
     "title": "Reflection（反射）— 三种传播现象之一",
@@ -185,7 +190,8 @@
       "Small-scale fading: 小范围内剧烈跳动（multipath 干涉）"
     ],
     "explanation": "### 为什么会这样？\n想象两个人同时朝水池里扔石头：水波相遇时，**波峰对波峰 → 加强**，**波峰对波谷 → 抵消**。电磁波一样。\n\n两条路径长度差 Δd → 信号到达接收端的时间差 Δt = Δd/c → 相位差 Δφ。如果 Δφ = π（半个波长差），两条路径的信号正好相消 → 接收端几乎收不到信号（深 fade）。\n\n### 大尺度 vs 小尺度\n**Large-scale fading**：随距离平均衰减（path loss 公式那一套）。距离从 1m 走到 10m，信号能衰 20 dB，这是『慢』变化。\n\n**Small-scale fading**：在一两个波长（10-20 cm）的范围内信号能跳动 30 dB。**接收端动 几 cm，信号强度可能瞬间从 -40 dBm 变 -70 dBm**。\n\n### Mobility 的角色\n你走路时，每个反射路径的长度都在变 → 相位关系实时改变 → 干涉模式动态变 → 信号波动。**这就是为什么开车时手机信号忽满格忽 1 格**。\n\n### 即使静止也会 fade\n你不动，但屋里有人走过、空调风扇转 → 反射体在动 → multipath 关系变 → 信号仍波动。\n\n### 考法\n『为什么静止节点接收信号还会随时间变化？』→ 环境物体动 → multipath 改变。\n\n『large vs small scale fade 的区别？』→ 时间/空间尺度 + 成因（pathloss 平均衰减 vs multipath 干涉）。",
-    "gotcha": "**Mobility 主要导致小尺度 fading**（不是大尺度，大尺度是距离决定的）。"
+    "gotcha": "**Mobility 主要导致小尺度 fading**（不是大尺度，大尺度是距离决定的）。",
+    "important": "🔥 Multipath fading——ISI + coherence time"
   },
   "lec23:6": {
     "title": "Multipath — Coherence Time（相干时间）",
@@ -211,7 +217,8 @@
     ],
     "formula": "$$\\mathrm{SNR}_{dB} = 10 \\log_{10}\\frac{S}{N}, \\quad \\mathrm{SINR}_{dB} = 10 \\log_{10}\\frac{S}{N+I}$$",
     "explanation": "### dB 是什么？为什么用它？\n信号强度跨度非常大（发射 1 W = 30 dBm，接收 1 nW = -60 dBm，比值 10⁹），用线性单位读不下来。dB 是对数刻度：\n- 比值 ×10 = +10 dB\n- 比值 ×2 ≈ +3 dB\n- 比值 ÷10 = −10 dB\n\n所以 SNR=20 dB 意味着信号比噪声大 100 倍。\n\n### SNR 怎么影响 bit rate\n香农极限：C = B·log₂(1+SNR)。**SNR 高 → 同样带宽下能传更多 bit**。\n\n实际中 WiFi/蜂窝用 **rate adaptation**：\n- SNR 高 → 用 64-QAM、5/6 码率 → 高数据率\n- SNR 中 → 用 QPSK、1/2 码率\n- SNR 低 → 用 BPSK、1/3 码率（保守，求别出错）\n\n### SNR vs SINR\nSNR 只考虑热噪声（背景），SINR 还加上 **邻居发射机的干扰**。\n- 单一发射场景 → SNR 够用\n- 密集部署（office、会议中心多 AP）→ 必须考虑 SINR\n\n### 例题\n信号 S = -50 dBm, 噪声 N = -90 dBm。\nSNR_dB = (-50) - (-90) = **40 dB**（dB 减法就是 dB 比值）。\n\n### 考法\n- 给数值算 SNR/SINR\n- 解释为什么 5GHz 比 2.4GHz 在远处 SNR 低（pathloss 更高）\n- 说明 SNR 跟 BER 的关系",
-    "gotcha": "dB 单位下不能直接『加』信号强度，要先转线性单位。但 **SNR_dB = S_dB − N_dB**（因为 dB 是对数，比值变减法）。"
+    "gotcha": "dB 单位下不能直接『加』信号强度，要先转线性单位。但 **SNR_dB = S_dB − N_dB**（因为 dB 是对数，比值变减法）。",
+    "important": "🔥 SNR/SINR——dB 计算 + rate adaptation"
   },
   "lec23:8": {
     "title": "Received Signal Over Time — 实际接收的信号到底什么样",
@@ -244,7 +251,8 @@
       "这两条决定了：需要 rate adaptation、需要 MAC 协议、需要错误恢复"
     ],
     "explanation": "### 为什么这页这么重要\n如果你能记住这两条，你能推出整个 wireless MAC 章节的设计动机：\n\n**1. Time-varying channel** → 需要 rate adaptation\n- 信号强度不停变 → modulation/code rate 也得跟着变\n- 接收端做 channel estimation 反馈给发送端\n\n**2. Broadcast 介质 → interference**\n- 一个频段同一时刻只能有一个发送（否则碰撞）\n- 必须有协议决定『谁发』→ MAC 协议\n- 而且接收端干扰由 sender 看不见的人造成（hidden terminal）→ MAC 设计很难\n\n### 跟有线对比\n| | 有线 | 无线 |\n|---|---|---|\n| 信道 | 稳定 | 时变 |\n| 介质 | 独占 | 广播 |\n| Bit error rate | 极低（~10⁻¹²） | 可能 10⁻³ |\n| 半 / 全双工 | 全双工 | 通常半双工 |\n| 碰撞检测 | 容易 | **不可能**（耳朵被自己淹）|\n\n### 这一页几乎一定考\n『为什么 wireless MAC 比 wired MAC 难设计？』→ 必答这两条：信道时变 + 广播干扰。\n\n『为什么无线下 TCP 表现差？』→ time-varying + bit error 高 → 丢包不一定意味着拥塞。",
-    "gotcha": "考试时『为什么 wireless 难』不要只答一条。**两条都要答到** + 各举一个具体后果。"
+    "gotcha": "考试时『为什么 wireless 难』不要只答一条。**两条都要答到** + 各举一个具体后果。",
+    "important": "🔥 Wireless ≠ Wired——两条根源驱动整章设计"
   },
   "lec23:11": {
     "title": "Wireless MAC Protocols — 章节封面",
@@ -286,7 +294,8 @@
       "三者关系：Transmission < Interference < Carrier sensing"
     ],
     "explanation": "### 为什么会有三个范围\n信号强度随距离衰减。在 sender 周围，距离从近到远：\n\n1. **近**（高 SNR）→ 能解码所有内容 = transmission range\n2. **中**（SNR 较低，解不出但能量明显）→ 干扰别人接收 = interference range\n3. **远**（SNR 更低，但能量还检测得到）→ carrier sense 能检测，但解不出 = carrier sensing range\n\n### 数值感觉\n典型 WiFi：\n- Transmission: 30 m\n- Interference: 70 m\n- Carrier sensing: 100 m\n\n### 为什么这页重要\n后面 **hidden / exposed terminal** 的判定就靠这三个范围：\n- **隐藏**：X 在 A 的 sensing range **外**，但在 B 的 interference range **内**\n- **暴露**：X 在 A 的 sensing range **内**，但自己目标在 A 的 interference range **外**\n\n### 考法\n给一张图（圆圈表示 sensing range），让你判断 X 是不是 hidden 或 exposed。",
-    "gotcha": "三个范围的层次：**carrier sensing 最大 > interference > transmission 最小**。别记反。"
+    "gotcha": "三个范围的层次：**carrier sensing 最大 > interference > transmission 最小**。别记反。",
+    "important": "🔥 三种 range——transmission/interference/sensing 的层次"
   },
   "lec23:16": {
     "title": "CSMA — Carrier Sense Multiple Access ⭐",
@@ -314,7 +323,8 @@
       "这就是 hidden terminal 的本质"
     ],
     "explanation": "### 这一页是 wireless MAC 的核心 insight\n\n**有线下**：A、B 通过电缆物理连接，A 处的载波检测 = B 处的载波检测（信号沿着电缆走）。所以 sender 听到 idle = 整条线 idle，能安全发。\n\n**无线下**：A 和 B 通过空气（不同的物理介质区域）。A 监听『A 周围』，B 接收时看『B 周围』。**两者范围可以完全不重叠**。\n\n```\n[A]---listens around A---     ---around B---[B]\n                            ^\n                这里有个 C 在发，A 听不到，但会干扰 B\n```\n\n### 解药：让 receiver 也参与协调\nCTS（Clear-to-Send）由 receiver 发出，**告诉自己周围的人『我接下来要收数据，请安静』**。这样即使 sender 听不到 C，C 听到 CTS 后也会安静。\n\n这就是 RTS/CTS 解隐藏终端的核心。\n\n### 考法\n『CSMA 在无线下为什么不够？』必须答到 sender vs receiver 的不对称。\n\n『RTS/CTS 怎么解决这个问题？』→ 让 receiver 主动广播自己附近的『安静』信号。",
-    "gotcha": "**别只说『因为隐藏终端』** — 老师要的是 deeper reason: sender-driven detection 跟 receiver-side interference 不匹配。"
+    "gotcha": "**别只说『因为隐藏终端』** — 老师要的是 deeper reason: sender-driven detection 跟 receiver-side interference 不匹配。",
+    "important": "🔥🔥 Sender-driven vs receiver-side——隐藏终端根源"
   },
   "lec23:19": {
     "title": "Hidden Terminal Problem（隐藏终端）⭐⭐⭐",
@@ -325,7 +335,8 @@
       "**解药**：CTS（B 发 CTS 给自己附近所有节点说『安静』）"
     ],
     "explanation": "### 场景\n```\n           A 的范围\n         ┌─────────┐\n         │   A───▶ B │\n         └─────────┘ \n                     C\n             ↑\n          C 在 A 范围外，听不到 A\n          但 C 能干扰 B\n```\n\n### 步骤还原\n1. A 想发数据给 B\n2. A 监听信道：idle（C 当前没发，没干扰 A）\n3. A 开始发\n4. **同时** C 监听信道：也是 idle（A 不在 C 范围内，C 听不到 A）\n5. C 觉得能发，开始发\n6. A 和 C 的信号在 B 处碰撞 → B 收不到\n7. A 不知道（自己听到的是 idle），以为发成功\n8. ACK 没回来，A 才知道丢了\n\n### 判定方法（必背）\n- X 在 sender A 的 sensing range **外**？✓ → 第一个条件\n- X 能干扰 receiver B（在 B 的 interference range 内）？✓ → 第二个条件\n- 两个都满足 → X 是 hidden\n\n### 解药 RTS/CTS\n- A 先发 RTS（Request-to-Send）给 B\n- B 回 CTS（Clear-to-Send），CTS 携带 NAV（接下来要占用多久）\n- **B 周围所有节点（包括 C）听到 CTS** → 在 NAV 时间内静默\n- 即使 C 听不到 A，也听得到 B 的 CTS，所以不会干扰\n\n### 期末样题 Q5 / final-preview\n4 节点 A、B、C、E，A→B 通信。C 和 E 都听不到 A 但能干扰 B → C 和 E 都是 hidden terminal。\n\n### 考法\n- 给一张图（圆圈表示范围），让你识别 hidden\n- 解释机制\n- 解释 RTS/CTS 怎么解",
-    "gotcha": "**判定方向**：sender 外 + receiver 内。**别记反**。考前默写一遍判定条件。"
+    "gotcha": "**判定方向**：sender 外 + receiver 内。**别记反**。考前默写一遍判定条件。",
+    "important": "🔥🔥🔥 Hidden Terminal——final Q5 直接考"
   },
   "lec23:20": {
     "title": "Exposed Terminal Problem（暴露终端）⭐⭐⭐",
@@ -337,7 +348,8 @@
       "**RTS/CTS 不能解暴露终端**"
     ],
     "explanation": "### 场景\n```\n         A 的范围\n       ┌────────────┐\n       │   C─▶D     │\n       │   ▲        │\n  E───▶│   │        │\n       │   A────▶B  │\n       └────────────┘\n                D 在 A 范围外\n```\n\n### 步骤还原\n1. A 正在发数据给 B\n2. C 监听信道：busy（C 在 A 范围内，听到 A）\n3. CSMA 让 C 退让\n4. **但是！** C 想发给 D，D 在 A 范围外，A 的发射根本到不了 D → C 和 A 同时发不会在任何 receiver 处碰撞\n5. C 退让等同于浪费并发机会\n\n### 判定方法（必背）\n- X 在 sender A 的 sensing range **内**？✓\n- X 的 receiver 在 A 的 sensing range **外**？✓\n- 两个都满足 → X 是 exposed\n\n### 为什么 RTS/CTS 不能解\nC 听到 A 的 RTS 仍然要静默（按协议）。即使 C 知道自己想发给 D（A 干扰不到的人），协议机械执行『听到 RTS 就静默 t_CTS』。\n\n### 对比记忆 hidden vs exposed\n| | Hidden | Exposed |\n|---|---|---|\n| X 跟 sender A 的关系 | 在 A 范围**外** | 在 A 范围**内** |\n| X 跟 receiver B 的关系 | 在 B 干扰范围**内** | X 自己的 receiver 在 A 范围**外** |\n| 症状 | 该停没停 → 碰撞 | 该发没发 → 浪费 |\n| 802.11 解法 | CTS 解 | 没解 |\n\n### 期末样题 Q5\nA→B 通信，C、E 节点。判定 C、E 都听不到 A（在 A 范围外）→ 都是 hidden。没节点同时满足『在 A 范围内 + 自己目标在外』→ **无暴露终端**。\n\n### 考法\n- 判断哪些节点是 hidden / exposed\n- 解释为什么 RTS/CTS 解 hidden 不解 exposed\n- 描述各自的『后果』（碰撞 vs 浪费）",
-    "gotcha": "**Hidden 和 exposed 的判定方向正好相反**。记忆抓手：『隐藏 = 隐身没看见，该停没停 → 撞』；『暴露 = 暴露在视野里，该发不敢发 → 亏』。"
+    "gotcha": "**Hidden 和 exposed 的判定方向正好相反**。记忆抓手：『隐藏 = 隐身没看见，该停没停 → 撞』；『暴露 = 暴露在视野里，该发不敢发 → 亏』。",
+    "important": "🔥🔥🔥 Exposed Terminal——final Q5 直接考；与隐藏相反方向"
   },
   "lec23:21": {
     "title": "如何应对 hidden terminal — 两条思路",
@@ -365,7 +377,8 @@
       "听到 CTS 的人静默 NAV 时长（保护数据）"
     ],
     "explanation": "### 完整序列\n```\n A → RTS → B          ← 听到 RTS 的人静默到 CTS 之后\n B ← CTS ← A          ← 听到 CTS 的人静默整个 data 时间（NAV）\n A → DATA → B\n B ← ACK ← A\n```\n\n### 为什么 RTS 之后还要 CTS\n仅 RTS 不够：只有听到 A 的人会静默，但 hidden terminal 听不到 A（这正是 hidden 的定义）。\n\n所以靠 CTS：CTS 由 B 发，B 周围所有节点（包括 hidden）都听得到。\n\n### 为什么用『短包』RTS/CTS 而不是直接发数据\n如果 RTS 跟别人碰撞，损失的只是 RTS 这点字节；数据本身没浪费。先用短包试水。\n\n### 缺点\n- RTS/CTS 本身有开销（短包，但每次都得发）\n- **不能解 exposed terminal**\n- 短帧场景（如 ACK）反而 RTS/CTS 开销大于收益，所以可选\n\n### 802.11 默认\nRTS/CTS 是 **optional**。一些实现只在帧 > 阈值时启用。\n\n### 考法\n- 解释 RTS/CTS 流程\n- 为什么 CTS 由 receiver 发（不是 sender 直接广播）\n- 为什么 RTS/CTS 解 hidden 不解 exposed",
-    "gotcha": "CTS 必须由 receiver 发，不能由 sender 发。如果 sender 自己『预告』，隐藏终端听不到照样无效。"
+    "gotcha": "CTS 必须由 receiver 发，不能由 sender 发。如果 sender 自己『预告』，隐藏终端听不到照样无效。",
+    "important": "🔥 MACA RTS/CTS——解 hidden 不解 exposed"
   },
   "lec23:24": {
     "title": "RTS / CTS 实例",
@@ -395,7 +408,8 @@
       "**Virtual CS**：解析 RTS/CTS 包内的 NAV 字段",
       "**Collision Avoidance**：random backoff"
     ],
-    "explanation": "### 物理载波检测\n直接测信道能量，超过阈值就认为忙。\n\n### 虚拟载波检测 NAV\n RTS 和 CTS 的 header 里有 Duration 字段，说『接下来要占用多久』。其他节点解析这个字段，**自己维护一个倒数计时器 NAV (Network Allocation Vector)**。NAV > 0 时即使能量检测显示 idle，也认为忙。\n\n### 完整判断\n```\n物理 CS busy 或 NAV > 0 → 忙\n物理 CS idle 且 NAV = 0 → 闲\n```\n\n### 考法\n『CSMA/CA 有几种载波检测？』→ 物理 + 虚拟两种。\n『NAV 是什么？怎么维护？』→ 听到 RTS/CTS 后从 Duration 字段读，倒数到 0。"
+    "explanation": "### 物理载波检测\n直接测信道能量，超过阈值就认为忙。\n\n### 虚拟载波检测 NAV\n RTS 和 CTS 的 header 里有 Duration 字段，说『接下来要占用多久』。其他节点解析这个字段，**自己维护一个倒数计时器 NAV (Network Allocation Vector)**。NAV > 0 时即使能量检测显示 idle，也认为忙。\n\n### 完整判断\n```\n物理 CS busy 或 NAV > 0 → 忙\n物理 CS idle 且 NAV = 0 → 闲\n```\n\n### 考法\n『CSMA/CA 有几种载波检测？』→ 物理 + 虚拟两种。\n『NAV 是什么？怎么维护？』→ 听到 RTS/CTS 后从 Duration 字段读，倒数到 0。",
+    "important": "🔥 CSMA/CA 三大机制——物理 CS + 虚拟 CS + collision avoidance"
   },
   "lec23:28": {
     "title": "Random Backoff（随机退避）⭐",
@@ -419,7 +433,8 @@
       "SIFS < DIFS 保证『回复』优先于『新对话』",
       "失败（无 CTS）→ CW × 2"
     ],
-    "explanation": "### 详细步骤\n```\n1. 信道闲？\n     是 → 等 DIFS\n     否 → 等 idle\n\n2. 等 DIFS 后还闲？\n     是 → 发\n     否 → 启 random backoff\n\n3. 回复（CTS, ACK）：\n     等 SIFS（更短）直接发，不参与 contention\n```\n\n### 为什么 SIFS 短\n如果回复也等 DIFS，那别人在等的同时已经超过 DIFS 也开始竞争 → 回复跟新流量混在一起。**SIFS 故意比 DIFS 短**，保证一次对话内的所有回复优先级最高。\n\n### Timeline\n```\nA: --DIFS--RTS-----------DATA------\nB:        --SIFS--CTS--SIFS--ACK\nC:        ────── 静默 (NAV) ──────\n```\n\n### 考法\n看到题目里『DIFS vs SIFS 区别』→ 先问是不是回复包（CTS/ACK）。\n时间间隔分析题：能不能从 timeline 上看出哪个是 SIFS、哪个是 DIFS。"
+    "explanation": "### 详细步骤\n```\n1. 信道闲？\n     是 → 等 DIFS\n     否 → 等 idle\n\n2. 等 DIFS 后还闲？\n     是 → 发\n     否 → 启 random backoff\n\n3. 回复（CTS, ACK）：\n     等 SIFS（更短）直接发，不参与 contention\n```\n\n### 为什么 SIFS 短\n如果回复也等 DIFS，那别人在等的同时已经超过 DIFS 也开始竞争 → 回复跟新流量混在一起。**SIFS 故意比 DIFS 短**，保证一次对话内的所有回复优先级最高。\n\n### Timeline\n```\nA: --DIFS--RTS-----------DATA------\nB:        --SIFS--CTS--SIFS--ACK\nC:        ────── 静默 (NAV) ──────\n```\n\n### 考法\n看到题目里『DIFS vs SIFS 区别』→ 先问是不是回复包（CTS/ACK）。\n时间间隔分析题：能不能从 timeline 上看出哪个是 SIFS、哪个是 DIFS。",
+    "important": "🔥 CSMA/CA 完整流程——DIFS vs SIFS 优先级"
   },
   "lec23:30": {
     "title": "怎么选 backoff CW 大小 — trade-off",
@@ -442,7 +457,8 @@
       "n 次连续失败 → CW = min(CWmin · 2ⁿ, CWmax)"
     ],
     "explanation": "### 为什么 binary 指数增\n失败多 = 拥挤 → CW 应该大，让大家分散。Doubling 增长速度合适：\n- 失败 1 次 CW=63\n- 失败 2 次 CW=127\n- 失败 5 次 CW=1023\n\n### 问题：太激进重置\n一旦成功就立刻回 CWmin → 振荡 + 不公平：\n- 节点 A 经历多次失败 CW=1023，刚成功一次回到 31\n- 节点 B 一直成功，CW 始终 31\n- 平均看 A 等的时间是 B 的 16 倍 → 不公平\n\n### MACAW 改进\nMACAW: A Media Access Protocol for Wireless LAN's (SIGCOMM '94)\n- 成功 → CW −1（线性减）\n- 跟 binary exponential 类比 TCP AIMD\n\n### 考法\n- 给失败次数算当前 CW\n- 解释为什么 binary backoff 不公平\n- MACAW 怎么改进",
-    "gotcha": "**别把 backoff 跟 cwnd 搞混**。Backoff 是 MAC 层的退避计数（slot 数），cwnd 是 TCP 层的滑动窗口（字节）。两个是不同层的概念，虽然都用 AIMD 思想。"
+    "gotcha": "**别把 backoff 跟 cwnd 搞混**。Backoff 是 MAC 层的退避计数（slot 数），cwnd 是 TCP 层的滑动窗口（字节）。两个是不同层的概念，虽然都用 AIMD 思想。",
+    "important": "🔥 Binary exponential backoff——CW × 2 / 复位"
   },
   "lec23:33": {
     "title": "MACAW Solution — 指数增 + 线性减",
@@ -502,7 +518,8 @@
       "AP 部署常用三色规划 (1/6/11 交错)"
     ],
     "explanation": "### 为什么只有 3 个不重叠\n信道编号 1, 2, 3, ... 11 每个中心频率相差 5 MHz，但每个信道 22 MHz 宽。所以：\n- Ch 1 占 2401-2423 MHz\n- Ch 2 占 2406-2428 MHz → 跟 1 大量重叠\n- Ch 6 占 2426-2448 MHz → 跟 1 不重叠（差 25 MHz）\n- Ch 11 占 2451-2473 MHz → 跟 6 不重叠\n\n所以只有 1、6、11 三个不会互相干扰。\n\n### 5 GHz 优势\n5 GHz 有 20+ 个不重叠信道，所以高密度场景（写字楼、机场）优先用 5 GHz。\n\n### 考法\n『为什么 WiFi AP 部署常用 1/6/11？』→ 因为只有这 3 个不重叠。",
-    "gotcha": "其他国家信道数量不同（欧洲 13 个，日本 14 个），但都遵循『3 个不重叠』的工程实践。"
+    "gotcha": "其他国家信道数量不同（欧洲 13 个，日本 14 个），但都遵循『3 个不重叠』的工程实践。",
+    "important": "🔥 802.11 channels 1/6/11 不重叠"
   },
   "lec22:1": {
     "title": "Quiz — Bandwidth-Delay Product 计算",
@@ -516,7 +533,8 @@
       "BDP = 30 Kbps × 80 ms = 2400 bits"
     ],
     "explanation": "### BDP 是什么\n**Bandwidth-Delay Product** = 带宽 × RTT = 『管道里能塞多少 bit』。这个数告诉你：sender 一次性能发多少 bit 才能把管道填满（不浪费、不溢出）。\n\n### 直觉\n想象一根又细又长的管子。\n- 流量是 30 Kbps（细）\n- RTT 是 80 ms（长）\n- 你能在管子里同时塞 2400 bit\n\n滑动窗口大小要 ≥ BDP 才能填满管道（否则带宽利用不足）。\n\n### 计算步骤（必练）\n1. **瓶颈带宽**：min(各段带宽)\n2. **传播延迟**：每段算 d/v，速度看介质（光速 / 声速）\n3. **RTT** = 2 × 单程（来回各一次）\n4. **BDP** = 瓶颈带宽 × RTT\n\n### 这题的具体数\n- 30 Kbps + 40 ms（段1）+ 4 Mbps + 0.01 ms（段2）\n- 单程 = 40 + 0.01 ≈ 40 ms（段2 propagation 几乎可忽略）\n- RTT = 80 ms\n- BDP = 30,000 × 0.08 = 2400 bits\n\n### 期中已经考过\n期中 Q4 (4) 让你算 cellular link utilization，本质就是 BDP 思维：sender 推得多快、receiver 看到多快、利用率多少。",
-    "gotcha": "**RTT 是 2 倍单程延迟**，不要忘了乘 2。题目给的『distance』通常是单程。"
+    "gotcha": "**RTT 是 2 倍单程延迟**，不要忘了乘 2。题目给的『distance』通常是单程。",
+    "important": "🔥 BDP 计算——期中考过"
   },
   "lec22:2": {
     "title": "Who Am I — DHCP 拿 IP 地址",
@@ -533,7 +551,8 @@
       "Subnet mask（用来判断目的是不是本子网）",
       "Lease 时长（到期前续约或释放）"
     ],
-    "explanation": "### 这几个为什么必须\n- **IP** 不用说\n- **DNS server**：你打开浏览器输 google.com，必须问 DNS server 解析\n- **Gateway**：跨网包要交给 router\n- **Netmask**：判断目的 IP 是否在本子网 → 决定 ARP 谁\n\n→ 没这几个，host 根本上不了网。\n\n### 考法\n『DHCP server 还返回什么除了 IP？』必背 4 样。"
+    "explanation": "### 这几个为什么必须\n- **IP** 不用说\n- **DNS server**：你打开浏览器输 google.com，必须问 DNS server 解析\n- **Gateway**：跨网包要交给 router\n- **Netmask**：判断目的 IP 是否在本子网 → 决定 ARP 谁\n\n→ 没这几个，host 根本上不了网。\n\n### 考法\n『DHCP server 还返回什么除了 IP？』必背 4 样。",
+    "important": "🔥 DHCP 返回 4 样"
   },
   "lec22:4": {
     "title": "Need of Address Resolution — 为什么要 ARP",
@@ -566,7 +585,8 @@
       "Router IP 通过 DHCP 拿到（lec22:3）"
     ],
     "explanation": "### 为什么不能直接 ARP 终点 IP\nARP 是 L2 协议，广播只在 **本 LAN** 内有效。终点 IP 在别的子网（甚至别的国家），广播过不去。\n\n所以 host 把包『交给 router』，router 再做下一跳决策。要把包交给 router，必须知道 router 的 MAC → ARP router 的 IP。\n\n### Frame 沿路 MAC 变化\n```\nHost A (1.2.3.48) → Router → ... → Host B (5.6.7.8)\n```\n\n| 段 | Src MAC | Dst MAC | Src IP | Dst IP |\n|---|---|---|---|---|\n| A → R | A 的 MAC | R 的 MAC | A 的 IP | B 的 IP |\n| R → B | R 的下游 MAC | B 的 MAC | A 的 IP | B 的 IP |\n\n**注意**：IP 始终不变（端到端语义），但 MAC 每一跳都变（链路层 hop-by-hop）。\n\n### Host 怎么知道目的不在本子网\n用 netmask：`(dst_IP AND netmask) == (my_IP AND netmask)`？\n- 是 → 同子网，ARP 终点 IP\n- 否 → 跨子网，ARP 自己 default gateway\n\n### 考法（高频）\n『1.2.3.48 要发包给 5.6.7.8，它 ARP 谁？』\n答：先用 netmask 算出 5.6.7.8 不在本子网，所以 ARP **自己 default gateway**（比如 1.2.3.19）的 MAC，不是 5.6.7.8 的 MAC。",
-    "gotcha": "**典型错误**：以为 ARP 直接找终点 IP 的 MAC。永远记得 ARP 是 L2，跨 L2 必须经 router。"
+    "gotcha": "**典型错误**：以为 ARP 直接找终点 IP 的 MAC。永远记得 ARP 是 L2，跨 L2 必须经 router。",
+    "important": "🔥🔥 ARP 跨子网——必考的陷阱：找的是网关 MAC"
   },
   "lec22:8": {
     "title": "ARP & DHCP 三大设计思想",
@@ -626,7 +646,8 @@
       "Plug-and-play"
     ],
     "explanation": "### 完整时序例（必须能复述）\n\n初始 switch table 空。Host A 第一次发给 A'（端口约定：A 在 port 1, A' 在 port 4）：\n\n```\n时刻 1: A 发 frame (src=A, dst=A')\n  Switch 看到 frame 从 port 1 进来 → 记 (A, 1, TTL=60)\n  查 dst=A'，没找到 → flood 到 port 2, 3, 4, 5, 6\n\n时刻 2: A' 收到，回 frame (src=A', dst=A)\n  Switch 看到 frame 从 port 4 进来 → 记 (A', 4, TTL=60)\n  查 dst=A，找到在 port 1 → 单口发到 port 1\n\n时刻 3+: A → A' 的 frame 都能直接 port 4，不再 flood\n```\n\n### 为什么能 self-learn\n关键观察：**frame 的 src MAC 是免费信息**。Switch 看到 frame 从 port 1 进来，就知道 src 那个 host 通过 port 1 可达。\n\n### TTL\nMAC table entry 自然老化，比如几分钟没看到流量就清除。这样换接口 / 新设备进来都能自动更新。\n\n### 考法\n给 timeline 帧序列，问每一步 switch table 长什么样。一定要会画。",
-    "gotcha": "**flooding 不发到入口 port**（否则就回环了）。Switch 永远不会把 frame 从它进来的那个 port 再发出去。"
+    "gotcha": "**flooding 不发到入口 port**（否则就回环了）。Switch 永远不会把 frame 从它进来的那个 port 再发出去。",
+    "important": "🔥 Switch 自学习——流程必会，给 frame 序列画 table"
   },
   "lec22:14": {
     "title": "VLAN — Virtual LAN 动机",
@@ -654,7 +675,8 @@
       "**Dynamic membership**：port 随时可以重分配 VLAN",
       "**跨 VLAN** → 必须走 router（不只 switch）"
     ],
-    "explanation": "### 为什么跨 VLAN 必须 router\nVLAN 划分在 L2，router 在 L3。Switch 看到 frame 的 VLAN tag 后只在同 tag 内转发；跨 VLAN 等于 frame 进到一个新的 L2 域，需要 L3 设备（router）解包 → 重新 frame → 发到新 VLAN。\n\n### VLAN trunk\n两台 switch 之间的链路要承载多个 VLAN 的流量时，frame 加 VLAN tag（802.1Q），叫 trunk 链路。\n\n### 考法\n『为什么 VLAN？』→ 隔离 + 安全 + 灵活。\n『跨 VLAN 怎么通？』→ router。"
+    "explanation": "### 为什么跨 VLAN 必须 router\nVLAN 划分在 L2，router 在 L3。Switch 看到 frame 的 VLAN tag 后只在同 tag 内转发；跨 VLAN 等于 frame 进到一个新的 L2 域，需要 L3 设备（router）解包 → 重新 frame → 发到新 VLAN。\n\n### VLAN trunk\n两台 switch 之间的链路要承载多个 VLAN 的流量时，frame 加 VLAN tag（802.1Q），叫 trunk 链路。\n\n### 考法\n『为什么 VLAN？』→ 隔离 + 安全 + 灵活。\n『跨 VLAN 怎么通？』→ router。",
+    "important": "VLAN——traffic isolation + 跨 VLAN 需 router"
   },
   "lec22:18": {
     "title": "Router vs Switch — 对比表 ⭐⭐",
@@ -665,7 +687,8 @@
       "Router 跨网络，switch 单 LAN",
       "Router 减 TTL，switch 不动"
     ],
-    "explanation": "### 完整对比表（必须能默写）\n\n| | Router | Switch |\n|---|---|---|\n| **层** | L3 (网络层) | L2 (数据链路层) |\n| **看什么** | dst IP | dst MAC |\n| **表来源** | 路由协议（OSPF/BGP）或 SDN | **自学习**（src MAC → in-port）|\n| **范围** | 跨网（router connects networks） | 单 LAN（switch within one network）|\n| **TTL** | 每跳 −1，0 就丢 | 不碰 IP 字段 |\n| **packet 视角** | 拆 frame → 解 IP → 重新封 frame | 转发整个 frame |\n| **目的找不到** | drop（带 ICMP） | flood |\n| **失败重传** | ICMP destination unreachable | 不负责 |\n\n### 一句话区分\n『看到 IP 段不同（跨子网）→ router；同一 LAN 内点对点 → switch。』\n\n### 考法（高频）\n给一个网络拓扑，问『这一跳该用 router 还是 switch？』看是否跨子网。"
+    "explanation": "### 完整对比表（必须能默写）\n\n| | Router | Switch |\n|---|---|---|\n| **层** | L3 (网络层) | L2 (数据链路层) |\n| **看什么** | dst IP | dst MAC |\n| **表来源** | 路由协议（OSPF/BGP）或 SDN | **自学习**（src MAC → in-port）|\n| **范围** | 跨网（router connects networks） | 单 LAN（switch within one network）|\n| **TTL** | 每跳 −1，0 就丢 | 不碰 IP 字段 |\n| **packet 视角** | 拆 frame → 解 IP → 重新封 frame | 转发整个 frame |\n| **目的找不到** | drop（带 ICMP） | flood |\n| **失败重传** | ICMP destination unreachable | 不负责 |\n\n### 一句话区分\n『看到 IP 段不同（跨子网）→ router；同一 LAN 内点对点 → switch。』\n\n### 考法（高频）\n给一个网络拓扑，问『这一跳该用 router 还是 switch？』看是否跨子网。",
+    "important": "🔥🔥 Router vs Switch 对比表——必背全行"
   },
   "lec22:19": {
     "title": "Wireless Physical Layer & MAC（章节封面）",
@@ -720,7 +743,8 @@
       "f 大 → λ 小 → loss 大"
     ],
     "explanation": "### 直觉\n点光源把光均匀辐射到一个球面上。球面积 = 4πd²，所以单位面积接收到的功率 ∝ 1/d² → 距离加倍，功率 ÷4 = **−6 dB / 加倍距离**。\n\n### 为什么频率高 loss 大\n看公式，f 在分子。物理上：高频 → 短波长 → 天线有效面积 ∝ λ² → 接收同样能量需要更大天线（或牺牲距离）。\n\n### 频段对比\n| 频段 | λ | 特点 |\n|---|---|---|\n| 900 MHz | 33 cm | 远距 + 穿墙好 + 带宽窄 |\n| 2.4 GHz | 12 cm | 中距 + 中等穿墙 + 带宽 83.5 MHz |\n| 5 GHz | 6 cm | 近距 + 穿墙差 + 带宽 200 MHz |\n\n这是为什么 5 GHz WiFi 速度快但需要靠近路由器，2.4 GHz 在屋外也能用但慢。\n\n### 考法\n- 给 d、f 算 loss（dB 单位下：10·log(loss)）\n- 解释 5GHz vs 2.4GHz 哪个穿墙好",
-    "gotcha": "实际环境 loss 比公式快得多（α=2 只在外太空准确），实际用 PL(d) = PL(d₀) + 10α·log(d/d₀)。下页讲。"
+    "gotcha": "实际环境 loss 比公式快得多（α=2 只在外太空准确），实际用 PL(d) = PL(d₀) + 10α·log(d/d₀)。下页讲。",
+    "important": "🔥 Pathloss 公式——频率与衰减关系"
   },
   "lec22:29": {
     "title": "Pathloss — 频段表",
@@ -742,7 +766,8 @@
       "室内阻挡 α = 4 - 6",
       "工厂 α = 2 - 3"
     ],
-    "explanation": "### α 的物理意义\n衡量信号衰减速度。α=2 表示『每加倍距离 −6 dB』。α=4 表示『每加倍 −12 dB』，衰得快。\n\n### 实际 vs 理论\n自由空间公式假设无障碍。现实有墙、地面、家具，每经过一次反射 / 衍射都吃掉一些能量 → α 比 2 大很多。\n\n### 怎么用 α 算实际 loss\nPL(d) = PL(d₀) + 10α · log(d/d₀) + X\n- PL(d₀): 参考距离的 loss（如 1 m 处）\n- α: 环境决定\n- X: 阴影随机项（log-normal）\n\n### 例\n参考 1 m 处 loss = 40 dB，α=3，d=10 m：\nPL = 40 + 10×3×log(10/1) = 40 + 30 = **70 dB**（再加随机阴影项）。\n\n### 考法\n给 α、d 算 loss；判断环境对应哪个 α。"
+    "explanation": "### α 的物理意义\n衡量信号衰减速度。α=2 表示『每加倍距离 −6 dB』。α=4 表示『每加倍 −12 dB』，衰得快。\n\n### 实际 vs 理论\n自由空间公式假设无障碍。现实有墙、地面、家具，每经过一次反射 / 衍射都吃掉一些能量 → α 比 2 大很多。\n\n### 怎么用 α 算实际 loss\nPL(d) = PL(d₀) + 10α · log(d/d₀) + X\n- PL(d₀): 参考距离的 loss（如 1 m 处）\n- α: 环境决定\n- X: 阴影随机项（log-normal）\n\n### 例\n参考 1 m 处 loss = 40 dB，α=3，d=10 m：\nPL = 40 + 10×3×log(10/1) = 40 + 30 = **70 dB**（再加随机阴影项）。\n\n### 考法\n给 α、d 算 loss；判断环境对应哪个 α。",
+    "important": "Real pathloss with α——环境系数"
   },
   "lec22:31": {
     "title": "Physics of Radio Propagation — 进入反射 / 衍射 / 散射",
@@ -787,7 +812,8 @@
       "**Medium access control (MAC)**: 谁能在什么时候发",
       "**Reliable delivery**: 本地重传（有线常省略，无线必备）"
     ],
-    "explanation": "### 为什么 reliable delivery 在有线常省略\n有线 BER ≈ 10⁻¹²（极低），跑个文件几乎不会丢。让 TCP 端到端管就够。\n\n### 无线必须 reliable\n无线 BER 可能 10⁻³，每发 1000 个 bit 就可能错 1 个。如果都让 TCP 端到端重传，性能极差（每错一个就 RTT 级别的等待）。\n\n所以 802.11 在 MAC 层用 ACK + 重传做 link-level reliability。\n\n### 考法\n『Link layer 提供哪些服务？』必背 4 个。\n『为什么有线常省 reliable delivery？』→ BER 低。"
+    "explanation": "### 为什么 reliable delivery 在有线常省略\n有线 BER ≈ 10⁻¹²（极低），跑个文件几乎不会丢。让 TCP 端到端管就够。\n\n### 无线必须 reliable\n无线 BER 可能 10⁻³，每发 1000 个 bit 就可能错 1 个。如果都让 TCP 端到端重传，性能极差（每错一个就 RTT 级别的等待）。\n\n所以 802.11 在 MAC 层用 ACK + 重传做 link-level reliability。\n\n### 考法\n『Link layer 提供哪些服务？』必背 4 个。\n『为什么有线常省 reliable delivery？』→ BER 低。",
+    "important": "🔥 Link layer 4 件事——必背"
   },
   "lec21:6": {
     "title": "Two Types of Link Media",
@@ -812,7 +838,8 @@
       "**CDMA**: 用扩频码区分（手机系统）",
       "**优点**：无碰撞；**缺点**：静态分配 → 轻负载时浪费"
     ],
-    "explanation": "### 直觉\n像排队上厕所：每人固定 5 分钟一次。如果当前没人想去（轻负载），那 5 分钟也没人能用 → 浪费。\n\n### 现代应用\n- 4G/5G LTE 用 TDMA + FDMA 混合（OFDMA）\n- GSM 早期用 TDMA\n- 蓝牙某种程度上用 TDMA\n\n### 不适合什么场景\n突发流量（bursty）。WiFi 流量极度突发（一会大文件下载，一会闲），TDMA 会大量浪费 → 所以 WiFi 用 random access (CSMA/CA)。"
+    "explanation": "### 直觉\n像排队上厕所：每人固定 5 分钟一次。如果当前没人想去（轻负载），那 5 分钟也没人能用 → 浪费。\n\n### 现代应用\n- 4G/5G LTE 用 TDMA + FDMA 混合（OFDMA）\n- GSM 早期用 TDMA\n- 蓝牙某种程度上用 TDMA\n\n### 不适合什么场景\n突发流量（bursty）。WiFi 流量极度突发（一会大文件下载，一会闲），TDMA 会大量浪费 → 所以 WiFi 用 random access (CSMA/CA)。",
+    "important": "Channel partition——TDMA/FDMA/CDMA"
   },
   "lec21:9": {
     "title": "MAC #2: Taking Turns",
@@ -855,7 +882,8 @@
   },
   "lec21:14": {
     "title": "Slotted ALOHA Timeline 例",
-    "summary": "图示节点在不同 slot 发 frame，碰撞 → 重试。"
+    "summary": "图示节点在不同 slot 发 frame，碰撞 → 重试。",
+    "important": "Slotted ALOHA 假设和操作"
   },
   "lec21:15": {
     "title": "Slotted ALOHA 效率推导 ⭐⭐",
@@ -868,7 +896,8 @@
     ],
     "formula": "$$S(p) = N p (1-p)^{N-1}, \\quad p^*=\\tfrac{1}{N}, \\quad S^* \\to \\tfrac{1}{e} \\approx 0.368$$",
     "explanation": "### 推导步骤（必会）\n\n**第一步**：P(节点 i 在某个 slot 成功)\n= P(i 发) × P(其他 N-1 个都不发)\n= p × (1-p)^(N-1)\n\n**第二步**：P(任何一个节点成功) = N × p × (1-p)^(N-1)\n（N 个节点独立，加起来）\n\n**第三步**：求 S 对 p 的最大值\ndS/dp = N · [(1-p)^(N-1) + p · (N-1)(1-p)^(N-2) · (-1)]\n     = N · (1-p)^(N-2) · [(1-p) - p(N-1)]\n     = N · (1-p)^(N-2) · [1 - Np]\n\n令 = 0 → p* = 1/N\n\n**第四步**：代回\nS* = N · (1/N) · (1 - 1/N)^(N-1) = (1 - 1/N)^(N-1)\n\n当 N → ∞：(1 - 1/N)^N → 1/e，所以 (1 - 1/N)^(N-1) ≈ 1/e\n\n→ **S_max ≈ 1/e ≈ 0.368** = 36.8%\n\n### Pure ALOHA（不对齐 slot）\n碰撞窗口翻倍（一个 packet 在『发完前』或『发完后 [-T, +T]』都可能碰），效率减半到 1/(2e) ≈ 0.184 = 18.4%。\n\n### 物理意义\nSlotted ALOHA 信道利用率最高 37% → 一大半时间在浪费（碰撞 + 空 slot）。所以后面要 CSMA（先听后说）。\n\n### 考法（高频）\n- 推导 1/e（必须手推 (1-1/N)^N → 1/e）\n- 选择题：max efficiency 多少？\n- Pure vs slotted 谁更优？为什么差 2 倍？",
-    "gotcha": "(1 - 1/N)^N → 1/e 这个极限要会推。可用 Taylor 展开或直接记。"
+    "gotcha": "(1 - 1/N)^N → 1/e 这个极限要会推。可用 Taylor 展开或直接记。",
+    "important": "🔥🔥 ALOHA 效率 1/e 推导——必会数学"
   },
   "lec21:16": {
     "title": "Slotted ALOHA — 优缺点",
@@ -890,7 +919,8 @@
       "Idle → 发；Busy → 等",
       "仍可能碰：propagation delay 期间多人都觉得 idle"
     ],
-    "explanation": "### CSMA 改进 ALOHA 在哪\n至少避免明显的碰撞（看见别人在发就不抢）。\n\n### 但还会碰\n**传播延迟**：A 在 t=0 发，信号到 B 处需要 d/c 秒。这 d/c 秒内 B 监听信道仍 idle，于是 B 也开始发 → 在中间某处碰撞。\n\n所以 CSMA 减少但不能消除碰撞 → 需要 CSMA/CD 或 CSMA/CA 进一步处理。\n\n### 直觉数字\n10 Mbps 链路 100 m 长，传播延迟 ≈ 500 ns，但一个 frame 也就几 μs，所以 vulnerable window 占比不小。"
+    "explanation": "### CSMA 改进 ALOHA 在哪\n至少避免明显的碰撞（看见别人在发就不抢）。\n\n### 但还会碰\n**传播延迟**：A 在 t=0 发，信号到 B 处需要 d/c 秒。这 d/c 秒内 B 监听信道仍 idle，于是 B 也开始发 → 在中间某处碰撞。\n\n所以 CSMA 减少但不能消除碰撞 → 需要 CSMA/CD 或 CSMA/CA 进一步处理。\n\n### 直觉数字\n10 Mbps 链路 100 m 长，传播延迟 ≈ 500 ns，但一个 frame 也就几 μs，所以 vulnerable window 占比不小。",
+    "important": "🔥 CSMA 为什么仍碰撞——propagation delay"
   },
   "lec21:19": {
     "title": "CSMA/CD — Collision Detection ⭐",
@@ -902,7 +932,8 @@
       "Binary exponential backoff",
       "**无线做不到 CD**（自己发的时候耳朵被淹）"
     ],
-    "explanation": "### CSMA/CD 的核心改进\nALOHA 等到 ACK 超时才知道碰了，浪费整个包时间。CSMA/CD 边发边检测，**碰了立刻停**，省下后面的传输时间。\n\n### 怎么检测碰撞（有线）\nNIC 同时听自己的发射信号 + 监听到的总信号。如果两者不一致（叠加了别人的信号）→ 碰撞。\n\n### Jam signal\nDetect 到碰撞后发 32-48 bit 的 jam（噪声）→ 确保所有人都察觉。然后大家 backoff。\n\n### Binary exponential backoff\n第 n 次碰撞，从 [0, 2^n − 1] 选随机 slot 数等待，再试。指数增加避免反复碰。\n\n### 为什么无线不能 CD\n自己天线发射的功率比接收到的别人信号大几亿倍 → 自己的耳朵被自己淹了。\n\n所以无线只能用 collision avoidance（提前避碰，而非 detect 后处理）= CSMA/CA。\n\n### 考法\n- 解释 CD 怎么实现\n- 为什么有线行无线不行\n- min frame size 推导（下页）"
+    "explanation": "### CSMA/CD 的核心改进\nALOHA 等到 ACK 超时才知道碰了，浪费整个包时间。CSMA/CD 边发边检测，**碰了立刻停**，省下后面的传输时间。\n\n### 怎么检测碰撞（有线）\nNIC 同时听自己的发射信号 + 监听到的总信号。如果两者不一致（叠加了别人的信号）→ 碰撞。\n\n### Jam signal\nDetect 到碰撞后发 32-48 bit 的 jam（噪声）→ 确保所有人都察觉。然后大家 backoff。\n\n### Binary exponential backoff\n第 n 次碰撞，从 [0, 2^n − 1] 选随机 slot 数等待，再试。指数增加避免反复碰。\n\n### 为什么无线不能 CD\n自己天线发射的功率比接收到的别人信号大几亿倍 → 自己的耳朵被自己淹了。\n\n所以无线只能用 collision avoidance（提前避碰，而非 detect 后处理）= CSMA/CA。\n\n### 考法\n- 解释 CD 怎么实现\n- 为什么有线行无线不行\n- min frame size 推导（下页）",
+    "important": "🔥 CSMA/CD——有线 detect + abort + binary backoff"
   },
   "lec21:20": {
     "title": "CSMA/CD Collision Detection 例",
@@ -918,7 +949,8 @@
       "碰撞信号传回 A 还需 d/c",
       "→ A 最坏 2d 才检测到碰撞"
     ],
-    "explanation": "### 详细 timeline\n```\nt=0:   A 开始发\nt=d:   信号到 B；B 在 t=d-ε 那一刻也以为信道闲开始发\nt=d:   B 处碰撞发生\nt=2d:  碰撞 echo 回到 A\n→ A 在 t=2d 时刻才发现自己发的包碰了\n```\n\n### Min frame size 的含义\n如果 A 的 frame 只持续 1d 秒就发完了，那 A 在 t=1d 已经结束发送，根本来不及在 t=2d 那一刻还在『发同一个 frame』→ collision detection 失效。\n\n所以要求：**frame 持续时间 ≥ 2d → frame size / R ≥ 2d → frame size ≥ 2d·R**\n\n### 10Mbps Ethernet 的具体数\n- Max prop delay 2d = 51.2 μs（标准规定）\n- Min frame = 2d × R = 51.2 μs × 10 Mbps = **512 bit = 64 byte**\n- 由此推出 max cable ≈ 100 m（再长 2d 会超 51.2 μs）"
+    "explanation": "### 详细 timeline\n```\nt=0:   A 开始发\nt=d:   信号到 B；B 在 t=d-ε 那一刻也以为信道闲开始发\nt=d:   B 处碰撞发生\nt=2d:  碰撞 echo 回到 A\n→ A 在 t=2d 时刻才发现自己发的包碰了\n```\n\n### Min frame size 的含义\n如果 A 的 frame 只持续 1d 秒就发完了，那 A 在 t=1d 已经结束发送，根本来不及在 t=2d 那一刻还在『发同一个 frame』→ collision detection 失效。\n\n所以要求：**frame 持续时间 ≥ 2d → frame size / R ≥ 2d → frame size ≥ 2d·R**\n\n### 10Mbps Ethernet 的具体数\n- Max prop delay 2d = 51.2 μs（标准规定）\n- Min frame = 2d × R = 51.2 μs × 10 Mbps = **512 bit = 64 byte**\n- 由此推出 max cable ≈ 100 m（再长 2d 会超 51.2 μs）",
+    "important": "🔥 CSMA/CD 2d 推导——min frame size 来源"
   },
   "lec21:22": {
     "title": "CSMA/CD — Min frame 推导 + 数值 ⭐",
@@ -930,7 +962,8 @@
       "100Mbps Fast Ethernet: 同样 min frame，max cable 缩到 10 m？现代 switched 后这个不重要",
       "1Gbps Ethernet: 用 carrier extension 维持 min frame"
     ],
-    "explanation": "### 推导直接套公式\n10 Mbps × 51.2 μs = 512 bit\n\n### 这条规则在现代还有意义吗\n现代 Ethernet 全部 switched + 点对点 + 全双工 → 没有碰撞 → 无需 CSMA/CD。**Min frame 64 byte 仍保留** 是为了向后兼容老的协议。\n\n### 考法\n- 给 R 和 d，算 min frame\n- 给 frame 和 d，判断是否能检测碰撞"
+    "explanation": "### 推导直接套公式\n10 Mbps × 51.2 μs = 512 bit\n\n### 这条规则在现代还有意义吗\n现代 Ethernet 全部 switched + 点对点 + 全双工 → 没有碰撞 → 无需 CSMA/CD。**Min frame 64 byte 仍保留** 是为了向后兼容老的协议。\n\n### 考法\n- 给 R 和 d，算 min frame\n- 给 frame 和 d，判断是否能检测碰撞",
+    "important": "🔥 Min frame 64 B 数字 + max cable 100 m"
   },
   "lec21:23": {
     "title": "Random Access 三件套",
@@ -962,7 +995,8 @@
       "**Payload**: 46 - 1500 byte",
       "**CRC**: 4 byte（错检）"
     ],
-    "explanation": "### 字段顺序记忆\n『PADSTPC』= Preamble, (Add) Dst, (Add) Src, Type, Payload, CRC\n\n### Payload 46-1500\n- 上限 1500: MTU（IP datagram 一般不超 1500）\n- 下限 46: 加上 header (14B) + CRC (4B) = 64B（min frame size 来自 CSMA/CD 推导）\n- 如果 payload < 46，必须 pad 到 46\n\n### Type 字段重要性\nReceiver 收到 frame 后，根据 type 决定交给哪个上层协议处理：\n- 0x0800 → IPv4 → 交给 IP 处理\n- 0x0806 → ARP → 交给 ARP\n- 0x86DD → IPv6\n\n### MAC 地址过滤\nNIC 收到 frame，第一件事看 dst MAC：\n- 是自己的 → 解析\n- 是广播 FF:FF:FF:FF:FF:FF → 解析\n- 都不是 → 直接丢（除非 promiscuous mode）"
+    "explanation": "### 字段顺序记忆\n『PADSTPC』= Preamble, (Add) Dst, (Add) Src, Type, Payload, CRC\n\n### Payload 46-1500\n- 上限 1500: MTU（IP datagram 一般不超 1500）\n- 下限 46: 加上 header (14B) + CRC (4B) = 64B（min frame size 来自 CSMA/CD 推导）\n- 如果 payload < 46，必须 pad 到 46\n\n### Type 字段重要性\nReceiver 收到 frame 后，根据 type 决定交给哪个上层协议处理：\n- 0x0800 → IPv4 → 交给 IP 处理\n- 0x0806 → ARP → 交给 ARP\n- 0x86DD → IPv6\n\n### MAC 地址过滤\nNIC 收到 frame，第一件事看 dst MAC：\n- 是自己的 → 解析\n- 是广播 FF:FF:FF:FF:FF:FF → 解析\n- 都不是 → 直接丢（除非 promiscuous mode）",
+    "important": "🔥 Ethernet frame 格式——必背字段"
   },
   "lec21:27": {
     "title": "MAC Address — 详细",
@@ -975,7 +1009,8 @@
       "Broadcast = FF:FF:FF:FF:FF:FF",
       "**MAC vs IP 区别**：MAC 烧硬件、扁平、L2、单 LAN；IP 软件配、层级、L3、全网"
     ],
-    "explanation": "### MAC vs IP 区别（必考）\n\n| | MAC | IP |\n|---|---|---|\n| 层 | L2 | L3 |\n| 长度 | 6 B | 4 B (v4) |\n| 分配 | 厂商烧网卡 | 用户/DHCP 配置 |\n| 结构 | 扁平（不指示位置）| 层级（前缀指示子网）|\n| 范围 | 单 LAN | 全网 |\n| 改变 | 跟着网卡 | 跟着位置 |\n\n### 类比\n- MAC 像身份证号（一辈子不变，跟着你）\n- IP 像家庭住址（搬家就变）\n\n### MAC 怎么知道目的不在本子网？\n通过 netmask 判断目的 IP 是否在本子网（netmask 由 DHCP 给）。"
+    "explanation": "### MAC vs IP 区别（必考）\n\n| | MAC | IP |\n|---|---|---|\n| 层 | L2 | L3 |\n| 长度 | 6 B | 4 B (v4) |\n| 分配 | 厂商烧网卡 | 用户/DHCP 配置 |\n| 结构 | 扁平（不指示位置）| 层级（前缀指示子网）|\n| 范围 | 单 LAN | 全网 |\n| 改变 | 跟着网卡 | 跟着位置 |\n\n### 类比\n- MAC 像身份证号（一辈子不变，跟着你）\n- IP 像家庭住址（搬家就变）\n\n### MAC 怎么知道目的不在本子网？\n通过 netmask 判断目的 IP 是否在本子网（netmask 由 DHCP 给）。",
+    "important": "🔥 MAC address vs IP——必备对比"
   },
   "lec21:28": {
     "title": "MAC 两种：Burned-in vs Effective",
@@ -1007,7 +1042,8 @@
       "平均 throughput = 平均 cwnd / RTT = 3W/(4·RTT)"
     ],
     "explanation": "### 推导（必会）\n\n忽略 slow start，只看 congestion avoidance 阶段：\n\ncwnd 在丢包后从 W（峰值）切半到 W/2，然后每 RTT +1 MSS 线性增长，直到再次丢包到 W → 又切半...\n\n**几何上**：cwnd 是一条锯齿，从 W/2 上升到 W，循环。\n\n**平均高度** = (最小 + 最大) / 2 = (W/2 + W) / 2 = **3W/4**\n\n**每 RTT 发送字节数** ≈ cwnd（满 window 推完一次）\n\n**平均吞吐量** = 3W/4 bytes/RTT = **3W / (4·RTT)**\n\n### 完整 throughput 公式（更准的）\n包括包大小 MSS 和 loss event rate p：\nB ≈ MSS / (RTT · √p)（Mathis formula）\n\n但 4119 范围只需 3W/(4·RTT) 这个版本。\n\n### 例\nW = 16 KB, RTT = 100 ms：\nthroughput = 3 × 16 KB / (4 × 100 ms) = 12 KB / 100 ms = **120 KB/s = 960 kbps**\n\n### 考法（高频）\n- 给 W 和 RTT，算 throughput\n- 反过来：给 throughput，估 W\n- 解释为什么是 3W/4 而不是 W/2 或 W",
-    "gotcha": "不要写成 W/(2·RTT) 或 W/RTT —— 必须是 **3W/(4·RTT)**。"
+    "gotcha": "不要写成 W/(2·RTT) 或 W/RTT —— 必须是 **3W/(4·RTT)**。",
+    "important": "🔥🔥 TCP throughput = 3W/(4·RTT)——公式 + 推导"
   },
   "lec20:2": {
     "title": "Network Layer: SDN — 章节封面",
@@ -1022,7 +1058,8 @@
       "**Priority**：多条匹配时选最高",
       "**Counters**：字节 + 包数统计"
     ],
-    "explanation": "### 传统 vs 通用 forwarding\n传统 router 只按 dst IP 做最长前缀匹配 → 单一行为模式。\n\nGeneralized forwarding 让一个表能表达：\n- Router：match dst IP\n- Firewall：match dst port\n- Switch：match dst MAC\n- NAT：match (src IP, src port)，action rewrite\n\n→ 所有 box 都能用同一抽象。这是 SDN 革命的基础。\n\n### 一个 Match 例\n```\nmatch: src IP = 10.3.*.*, dst IP = 10.2.*.*\naction: forward to port 3\npriority: 1000\n```\n\n### 多个 Action 可以组合\n- 同时 modify + forward（NAT 重写）\n- 同时 forward + count（监控）\n- 还可以 send-to-controller（让 controller 决策）\n\n### 考法\n- 解释 match+action 抽象\n- 给场景写 flow table entry"
+    "explanation": "### 传统 vs 通用 forwarding\n传统 router 只按 dst IP 做最长前缀匹配 → 单一行为模式。\n\nGeneralized forwarding 让一个表能表达：\n- Router：match dst IP\n- Firewall：match dst port\n- Switch：match dst MAC\n- NAT：match (src IP, src port)，action rewrite\n\n→ 所有 box 都能用同一抽象。这是 SDN 革命的基础。\n\n### 一个 Match 例\n```\nmatch: src IP = 10.3.*.*, dst IP = 10.2.*.*\naction: forward to port 3\npriority: 1000\n```\n\n### 多个 Action 可以组合\n- 同时 modify + forward（NAT 重写）\n- 同时 forward + count（监控）\n- 还可以 send-to-controller（让 controller 决策）\n\n### 考法\n- 解释 match+action 抽象\n- 给场景写 flow table entry",
+    "important": "🔥 Generalized forwarding——match + action 抽象"
   },
   "lec20:4": {
     "title": "Flow Table Abstraction ⭐",
@@ -1065,7 +1102,8 @@
       "**Switch**: match dst MAC → forward",
       "**NAT**: match (IP, port) → rewrite"
     ],
-    "explanation": "### 这页是 SDN 的核心思想\n\n以前每个网络盒子都是『专门设备』：\n- Router 公司卖路由器\n- Firewall 公司卖防火墙\n- NAT 单独硬件\n- ...\n\n各自封闭、专用 OS（Cisco IOS、Juniper Junos）、贵。\n\n**SDN/OpenFlow 说**：所有这些行为都能用 match+action 表达。那硬件可以统一成 generic switch，行为由 controller 下发的 flow table 决定。\n\n→ 硬件商品化，软件开源，价格暴跌。\n\n### 类比 mainframe → PC\n- 以前：每种应用一套封闭专用机\n- PC 革命：硬件标准化，OS 通用，应用层百花齐放\n\nSDN 把这套搬到网络。"
+    "explanation": "### 这页是 SDN 的核心思想\n\n以前每个网络盒子都是『专门设备』：\n- Router 公司卖路由器\n- Firewall 公司卖防火墙\n- NAT 单独硬件\n- ...\n\n各自封闭、专用 OS（Cisco IOS、Juniper Junos）、贵。\n\n**SDN/OpenFlow 说**：所有这些行为都能用 match+action 表达。那硬件可以统一成 generic switch，行为由 controller 下发的 flow table 决定。\n\n→ 硬件商品化，软件开源，价格暴跌。\n\n### 类比 mainframe → PC\n- 以前：每种应用一套封闭专用机\n- PC 革命：硬件标准化，OS 通用，应用层百花齐放\n\nSDN 把这套搬到网络。",
+    "important": "🔥 OpenFlow 抽象——router/firewall/switch/NAT 统一"
   },
   "lec20:10": {
     "title": "OpenFlow 跨多 switch — Network-wide 行为",
@@ -1122,7 +1160,8 @@
       "**集中算容易**：直接全局 Dijkstra；分布式算复杂（要同步 + 容错）",
       "**开放**：非私有，鼓励 100 朵花齐放"
     ],
-    "explanation": "### 集中 vs 分布的 tradeoff\n**分布优点**：自然容错（一个节点挂另一个还能跑）。\n**分布缺点**：算法复杂（同步、收敛、消息开销）、配置碎片化、难全局优化。\n\nSDN 选集中是因为现代 controller 也可以做成分布式（多副本 + 一致性协议），单点故障可以通过工程手段缓解，换来管理简化和算法简化的收益。\n\n### Google B4 案例\nGoogle 用 SDN 控制 B4（连接所有 datacenter 的 WAN）。流量工程让链路利用率从 30-40% 提到 90%+。"
+    "explanation": "### 集中 vs 分布的 tradeoff\n**分布优点**：自然容错（一个节点挂另一个还能跑）。\n**分布缺点**：算法复杂（同步、收敛、消息开销）、配置碎片化、难全局优化。\n\nSDN 选集中是因为现代 controller 也可以做成分布式（多副本 + 一致性协议），单点故障可以通过工程手段缓解，换来管理简化和算法简化的收益。\n\n### Google B4 案例\nGoogle 用 SDN 控制 B4（连接所有 datacenter 的 WAN）。流量工程让链路利用率从 30-40% 提到 90%+。",
+    "important": "SDN 集中控制动机——4 大动机"
   },
   "lec20:18": {
     "title": "SDN 类比 — Mainframe → PC 革命",
@@ -1138,7 +1177,8 @@
       "**3. Control plane 在 data plane 外部，可编程**",
       "**4. 应用层（外部）写 control logic**"
     ],
-    "explanation": "### 4 个特征的来源\n\n1. Match+action 替代私有路由表\n2. Control plane（决策）跟 data plane（执行）解耦\n3. Controller 在远程，可统一升级\n4. App 写 control logic（routing, firewall, LB），不需要改 switch 软件\n\n### 考法\n『SDN 关键架构特征是什么？』必背 4 点。"
+    "explanation": "### 4 个特征的来源\n\n1. Match+action 替代私有路由表\n2. Control plane（决策）跟 data plane（执行）解耦\n3. Controller 在远程，可统一升级\n4. App 写 control logic（routing, firewall, LB），不需要改 switch 软件\n\n### 考法\n『SDN 关键架构特征是什么？』必背 4 点。",
+    "important": "🔥 SDN 三大设计原则"
   },
   "lec20:20": {
     "title": "SDN — Data Plane Switches",
@@ -1256,7 +1296,8 @@
       "**只能检测奇数个 bit 错**（偶数翻转互相抵消）",
       "简单但弱"
     ],
-    "explanation": "### 例\n数据 0101011（7 bit，4 个 1）\n- Odd parity：加 1 让总 1 = 5（奇）→ 01010111\n- Even parity：加 0 让总 1 = 4（偶）→ 01010110\n\n### 弱点\n如果传输时翻转 2 个 bit（偶数次），奇偶性不变，检测失败。\n\n→ Parity 只能可靠检测单 bit 错。下一页讲 2D parity 改进。"
+    "explanation": "### 例\n数据 0101011（7 bit，4 个 1）\n- Odd parity：加 1 让总 1 = 5（奇）→ 01010111\n- Even parity：加 0 让总 1 = 4（偶）→ 01010110\n\n### 弱点\n如果传输时翻转 2 个 bit（偶数次），奇偶性不变，检测失败。\n\n→ Parity 只能可靠检测单 bit 错。下一页讲 2D parity 改进。",
+    "important": "Parity 1D + 2D——基础错检"
   },
   "lec20:40": {
     "title": "Parity Check — 2D",
@@ -1283,7 +1324,8 @@
       "Sender 发 (D, R)",
       "Receiver 算 (D·2^r XOR R) mod G == 0 ？"
     ],
-    "explanation": "### 直觉\n把数据看成大整数，找一个余数 R 让『D 左移 r 位 + R』正好被 G 整除。\n\nReceiver 收到后做同样的除法，余数应为 0。任何 bit 错会让余数 ≠ 0。\n\n### 模 2 运算\n不是真除法。**减法 = XOR**（无借位，无进位）。所以 CRC 用 XOR 实现，硬件极简。\n\n### 检错能力\nCRC 能检测 **所有 ≤ r 位的突发错**。例如 r=16 的 CRC-16 能检测所有 16 bit 以内的连续错。强于 parity 和 checksum。\n\n### 用途\n- Ethernet frame 末尾 4 byte CRC\n- 各种链路层协议\n- 文件存储 (CRC-32)"
+    "explanation": "### 直觉\n把数据看成大整数，找一个余数 R 让『D 左移 r 位 + R』正好被 G 整除。\n\nReceiver 收到后做同样的除法，余数应为 0。任何 bit 错会让余数 ≠ 0。\n\n### 模 2 运算\n不是真除法。**减法 = XOR**（无借位，无进位）。所以 CRC 用 XOR 实现，硬件极简。\n\n### 检错能力\nCRC 能检测 **所有 ≤ r 位的突发错**。例如 r=16 的 CRC-16 能检测所有 16 bit 以内的连续错。强于 parity 和 checksum。\n\n### 用途\n- Ethernet frame 末尾 4 byte CRC\n- 各种链路层协议\n- 文件存储 (CRC-32)",
+    "important": "🔥 CRC 概念——D·2^r mod G = R"
   },
   "lec20:43": {
     "title": "CRC — 计算例 ⭐",
@@ -1294,7 +1336,8 @@
       "余数 R（r 位）= CRC",
       "发 (D, R) = 101011 + R"
     ],
-    "explanation": "### 详细手算\n```\nD = 101011, r = 3, G = 1001\nD · 2^3 = 101011000\n\n长除法（XOR 替代减法）：\n\n  101011000\n  1001       ← 第 1 位是 1，XOR G\n  ────\n   01101                              \n    1001     ← 第 2 位是 0 跳过；第 3 位是 1，XOR G（左对齐到这位）\n    ────\n    01001\n     1001    ← 第 4 位是 1，XOR\n     ────\n     00001000\n         1001 ← 第 7 位是 1，XOR\n         ────\n          110  ← 这就是余数 R（3 bit）\n```\n\n注意：实际算法中『当前最高位是 1 就 XOR G，0 就跳过，逐位右移』。\n\n### 验证\nReceiver 收到 (D=101011, R=110)：\n- 算 D·2^3 XOR R = 101011000 XOR 110 = 101011110\n- 用 G=1001 长除 101011110\n- 如果传输无错，余数应为 0\n\n### 考法\n- 给 G、D 让你算 R\n- 给 (D, R) 让你验证有没有错"
+    "explanation": "### 详细手算\n```\nD = 101011, r = 3, G = 1001\nD · 2^3 = 101011000\n\n长除法（XOR 替代减法）：\n\n  101011000\n  1001       ← 第 1 位是 1，XOR G\n  ────\n   01101                              \n    1001     ← 第 2 位是 0 跳过；第 3 位是 1，XOR G（左对齐到这位）\n    ────\n    01001\n     1001    ← 第 4 位是 1，XOR\n     ────\n     00001000\n         1001 ← 第 7 位是 1，XOR\n         ────\n          110  ← 这就是余数 R（3 bit）\n```\n\n注意：实际算法中『当前最高位是 1 就 XOR G，0 就跳过，逐位右移』。\n\n### 验证\nReceiver 收到 (D=101011, R=110)：\n- 算 D·2^3 XOR R = 101011000 XOR 110 = 101011110\n- 用 G=1001 长除 101011110\n- 如果传输无错，余数应为 0\n\n### 考法\n- 给 G、D 让你算 R\n- 给 (D, R) 让你验证有没有错",
+    "important": "🔥🔥 CRC 计算例——手算长除法必会"
   },
   "lec20:44": {
     "title": "Quiz — DV 3 节点收敛（接 lec21）",
@@ -1323,7 +1366,8 @@
       "Inter-AS：AS 之间（统一 BGP）",
       "Gateway router：AS 边界，跑两种协议"
     ],
-    "explanation": "### 真实例子\n- AS 7922 = Comcast\n- AS 14618 = Amazon\n- AS 15169 = Google\n- AS 8075 = Microsoft\n- AS 36 = Columbia University\n\n互联网有 ~10 万个活跃 AS。\n\n### Intra-AS 各家自选\n- Columbia 可能用 OSPF\n- Google 内部用 SDN\n- 小公司用 RIP\n- 各 AS 内随便\n\n### Inter-AS 必须统一\n所有 AS 之间必须能互相 advertise 可达性 → 大家都跑 BGP。这是 Internet 互通的『黏合剂』。\n\n### 考法\n『为什么把 router 分到 AS？』答 3 点：scale + 管理自治 + policy。"
+    "explanation": "### 真实例子\n- AS 7922 = Comcast\n- AS 14618 = Amazon\n- AS 15169 = Google\n- AS 8075 = Microsoft\n- AS 36 = Columbia University\n\n互联网有 ~10 万个活跃 AS。\n\n### Intra-AS 各家自选\n- Columbia 可能用 OSPF\n- Google 内部用 SDN\n- 小公司用 RIP\n- 各 AS 内随便\n\n### Inter-AS 必须统一\n所有 AS 之间必须能互相 advertise 可达性 → 大家都跑 BGP。这是 Internet 互通的『黏合剂』。\n\n### 考法\n『为什么把 router 分到 AS？』答 3 点：scale + 管理自治 + policy。",
+    "important": "🔥 AS 分区原因——scale + 管理自治"
   },
   "lec19:4": {
     "title": "Interconnected ASes — 转发表的来源",
@@ -1360,7 +1404,8 @@
       "消息认证（防伪造）",
       "**层级**：area + backbone"
     ],
-    "explanation": "### 工作流程\n1. 每个 router 监听自己的接口状态\n2. 状态变（link up/down/cost 变）→ 生成 LSA (Link State Advertisement)\n3. Flood LSA 给整个 area 内所有 router\n4. 每个 router 维护完整 LS DB\n5. 跑 Dijkstra 算最短路径，填 FT\n\n### LSA 直接走 IP 是什么意思\n大多数协议跑在 TCP（如 BGP）或 UDP 上，但 OSPF 直接用 IP 协议号 89，**自己处理 reliable delivery**。原因：路由协议本身要决定『怎么走』，依赖 TCP 会有鸡生蛋问题。\n\n### Authentication\n防止恶意 router 伪造 LSA 把流量引到自己。早期 plaintext password，现在 HMAC。"
+    "explanation": "### 工作流程\n1. 每个 router 监听自己的接口状态\n2. 状态变（link up/down/cost 变）→ 生成 LSA (Link State Advertisement)\n3. Flood LSA 给整个 area 内所有 router\n4. 每个 router 维护完整 LS DB\n5. 跑 Dijkstra 算最短路径，填 FT\n\n### LSA 直接走 IP 是什么意思\n大多数协议跑在 TCP（如 BGP）或 UDP 上，但 OSPF 直接用 IP 协议号 89，**自己处理 reliable delivery**。原因：路由协议本身要决定『怎么走』，依赖 TCP 会有鸡生蛋问题。\n\n### Authentication\n防止恶意 router 伪造 LSA 把流量引到自己。早期 plaintext password，现在 HMAC。",
+    "important": "🔥 OSPF——Open + LS + Dijkstra + area 层级"
   },
   "lec19:8": {
     "title": "Hierarchical OSPF — 分层 ⭐",
@@ -1393,7 +1438,8 @@
       "**承诺**：advertise = 我会 forward",
       "决策基于 reachability info + policy"
     ],
-    "explanation": "### BGP ≠ DV / LS\nBGP 不是简单的 DV 或 LS：\n- 它传 **完整 AS 路径**（path vector，防环）\n- 它考虑 **policy**（不一定走最短路径）\n- 它跑在 **TCP** 上（不像 OSPF 自己处理 reliable）\n\n### Advertise 的语义\nAS3 advertise『我能到前缀 X，路径 AS3-X』给 AS2 → AS3 **承诺** 收到去 X 的包它会 forward。这是合同关系，不只是信息共享。"
+    "explanation": "### BGP ≠ DV / LS\nBGP 不是简单的 DV 或 LS：\n- 它传 **完整 AS 路径**（path vector，防环）\n- 它考虑 **policy**（不一定走最短路径）\n- 它跑在 **TCP** 上（不像 OSPF 自己处理 reliable）\n\n### Advertise 的语义\nAS3 advertise『我能到前缀 X，路径 AS3-X』给 AS2 → AS3 **承诺** 收到去 X 的包它会 forward。这是合同关系，不只是信息共享。",
+    "important": "🔥🔥 BGP——'胶水协议'，path vector，跨 AS 必考"
   },
   "lec19:12": {
     "title": "eBGP / iBGP ⭐",
@@ -1403,7 +1449,8 @@
       "**iBGP**: 同 AS 内 router 之间（传播 eBGP 学到的外部路径）",
       "Gateway 同时跑两种"
     ],
-    "explanation": "### 为什么需要 iBGP\nGateway 1c 从 eBGP 学到『去 X 经 AS3』。但 AS1 内部其他 router (1a, 1b, 1d) 不知道这条。它们必须知道才能正确转发外部目的的包。\n\n→ 1c 通过 iBGP 告诉所有 AS1 内 router：『去 X 经我（1c）出去』。\n\n### iBGP vs intra-AS routing\nIBGP 只传 **目的可达性**（『X 经 1c 可达』），不算最短路径。最短路径由 intra-AS（如 OSPF）算（『到 1c 走 interface 2』）。\n\n两个一起组成完整的 forwarding decision。"
+    "explanation": "### 为什么需要 iBGP\nGateway 1c 从 eBGP 学到『去 X 经 AS3』。但 AS1 内部其他 router (1a, 1b, 1d) 不知道这条。它们必须知道才能正确转发外部目的的包。\n\n→ 1c 通过 iBGP 告诉所有 AS1 内 router：『去 X 经我（1c）出去』。\n\n### iBGP vs intra-AS routing\nIBGP 只传 **目的可达性**（『X 经 1c 可达』），不算最短路径。最短路径由 intra-AS（如 OSPF）算（『到 1c 走 interface 2』）。\n\n两个一起组成完整的 forwarding decision。",
+    "important": "🔥 eBGP vs iBGP 分工"
   },
   "lec19:13": {
     "title": "BGP Session — TCP 长连接",
@@ -1435,7 +1482,8 @@
       "**NEXT-HOP**: 到下一 AS 的具体 IP（哪个 router 接口）",
       "**Policy**: import 决定接不接；export 决定 advertise 给谁"
     ],
-    "explanation": "### AS-PATH 的两个作用\n1. **防环**：如果自己 AS 在 AS-PATH 里，reject（说明这条路径已经回到了自己）\n2. **路径长度比较**：用 AS-PATH 长度（hop count）做 tie-break\n\n### NEXT-HOP 的细微\n不是『下一个 AS 的边界 router』那么简单。是『去那个目的，AS 内应该走的下一跳 IP』。iBGP 把 NEXT-HOP 传到 AS 内所有 router 后，每个 router 通过 OSPF 算到 NEXT-HOP 怎么走。\n\n### Policy 的实际配置\n```\nimport policy: \n  accept from neighbor X if AS-PATH 不含 Y\n  reject from Z all\nexport policy:\n  advertise to customer all\n  advertise to peer only own prefixes\n  advertise to provider only own prefixes\n```\n\n### 考法\n『BGP advertisement 包含什么？』→ AS-PATH + NEXT-HOP + prefix。"
+    "explanation": "### AS-PATH 的两个作用\n1. **防环**：如果自己 AS 在 AS-PATH 里，reject（说明这条路径已经回到了自己）\n2. **路径长度比较**：用 AS-PATH 长度（hop count）做 tie-break\n\n### NEXT-HOP 的细微\n不是『下一个 AS 的边界 router』那么简单。是『去那个目的，AS 内应该走的下一跳 IP』。iBGP 把 NEXT-HOP 传到 AS 内所有 router 后，每个 router 通过 OSPF 算到 NEXT-HOP 怎么走。\n\n### Policy 的实际配置\n```\nimport policy: \n  accept from neighbor X if AS-PATH 不含 Y\n  reject from Z all\nexport policy:\n  advertise to customer all\n  advertise to peer only own prefixes\n  advertise to provider only own prefixes\n```\n\n### 考法\n『BGP advertisement 包含什么？』→ AS-PATH + NEXT-HOP + prefix。",
+    "important": "🔥🔥 BGP path attributes——AS-PATH + NEXT-HOP 必背"
   },
   "lec19:16": {
     "title": "BGP Path Advertisement — 单条路径",
@@ -1465,7 +1513,8 @@
       "选 **intra-AS 代价最小的 gateway**（最快扔出去）",
       "不管出 AS 后路径长短"
     ],
-    "explanation": "### 直觉\n烫手山芋赶紧扔。这个例子里 2d 学到去 X 可以经 2a 或 2c，即使经 2a 后整体 AS-PATH 更长，2d 仍选 2a（因为 2d 到 2a 的 OSPF cost 比 2d 到 2c 小）。\n\n### 经济动机\nCarry traffic on your own network costs money（电费、带宽、SLA）。能让别人扛就让别人扛。\n\n### 反之 — Cold potato\n有些 ISP 反过来：流量在自己网内多 carry 一段，目标是把流量送到最优的对外出口（性能最好）。代价是自己网多扛流量，但客户体验好。\n\n### 考法\n『hot potato 是什么？为什么这么做？』必答 2 点：选 intra-AS 最便宜出口 + 经济动机。"
+    "explanation": "### 直觉\n烫手山芋赶紧扔。这个例子里 2d 学到去 X 可以经 2a 或 2c，即使经 2a 后整体 AS-PATH 更长，2d 仍选 2a（因为 2d 到 2a 的 OSPF cost 比 2d 到 2c 小）。\n\n### 经济动机\nCarry traffic on your own network costs money（电费、带宽、SLA）。能让别人扛就让别人扛。\n\n### 反之 — Cold potato\n有些 ISP 反过来：流量在自己网内多 carry 一段，目标是把流量送到最优的对外出口（性能最好）。代价是自己网多扛流量，但客户体验好。\n\n### 考法\n『hot potato 是什么？为什么这么做？』必答 2 点：选 intra-AS 最便宜出口 + 经济动机。",
+    "important": "🔥 Hot Potato——intra-AS 最便宜出口"
   },
   "lec19:21": {
     "title": "BGP Policy via Advertisements (1) ⭐",
@@ -1476,7 +1525,8 @@
       "B 选择 **不 advertise『C 经 B 经 A 到 w』**",
       "C 学不到这条路径，不会经 B 到 w"
     ],
-    "explanation": "### Policy 通过 advertise/不-advertise 实现\n你 advertise 什么，邻居才知道什么；你不 advertise，对方根本不知道这条路存在。\n\n### 经济原因\nB 跟 C 是 peering（互发对方 customer 流量免费）。如果 B 让 C 经过 B 到 A（另一个 ISP）的客户 w，B 替别人扛流量却拿不到钱 → 拒绝。\n\n### Final Q3 — Columbia/CERN/NYU\n完全同样的模式：\n- Columbia 有 customer『Columbia 自己人』\n- Columbia 有 peer『NYU』\n- Columbia 到 CERN 的链路是为自己 customer 用的\n- Columbia **不向 NYU advertise** 这条路径\n- NYU 看不到 → 不会用 Columbia 转去 CERN\n\n→ 政策完全通过 BGP advertisement 控制实现，不需要 firewall 或显式 deny。"
+    "explanation": "### Policy 通过 advertise/不-advertise 实现\n你 advertise 什么，邻居才知道什么；你不 advertise，对方根本不知道这条路存在。\n\n### 经济原因\nB 跟 C 是 peering（互发对方 customer 流量免费）。如果 B 让 C 经过 B 到 A（另一个 ISP）的客户 w，B 替别人扛流量却拿不到钱 → 拒绝。\n\n### Final Q3 — Columbia/CERN/NYU\n完全同样的模式：\n- Columbia 有 customer『Columbia 自己人』\n- Columbia 有 peer『NYU』\n- Columbia 到 CERN 的链路是为自己 customer 用的\n- Columbia **不向 NYU advertise** 这条路径\n- NYU 看不到 → 不会用 Columbia 转去 CERN\n\n→ 政策完全通过 BGP advertisement 控制实现，不需要 firewall 或显式 deny。",
+    "important": "🔥🔥 BGP Policy——final Q3 完全一样的题"
   },
   "lec19:22": {
     "title": "BGP Policy (2) — Customer 视角",
@@ -1492,7 +1542,8 @@
       "**3. Closest NEXT-HOP**: hot potato（intra-AS 最便宜出口）",
       "**4. Tie-breakers**: e.g. router ID 最小"
     ],
-    "explanation": "### 这个顺序决定一切\n当 BGP 学到多条到同一前缀的路径，按这个顺序逐级 tie-break。**Local pref 永远第一**，因为它代表 policy（policy 高于路径短）。\n\n### 例\n两条路径：\n- 路径 A：AS-PATH=[AS2, AS3]，local pref=100\n- 路径 B：AS-PATH=[AS3]，local pref=200\n\n按 step 1：local pref 200 > 100 → 选 B？等等，路径 A 写错了，应该是 local pref 配置的优先级。**Local pref 大的赢**。\n\n### 考法\n『BGP 多条路径怎么选？』按 4 步顺序答。"
+    "explanation": "### 这个顺序决定一切\n当 BGP 学到多条到同一前缀的路径，按这个顺序逐级 tie-break。**Local pref 永远第一**，因为它代表 policy（policy 高于路径短）。\n\n### 例\n两条路径：\n- 路径 A：AS-PATH=[AS2, AS3]，local pref=100\n- 路径 B：AS-PATH=[AS3]，local pref=200\n\n按 step 1：local pref 200 > 100 → 选 B？等等，路径 A 写错了，应该是 local pref 配置的优先级。**Local pref 大的赢**。\n\n### 考法\n『BGP 多条路径怎么选？』按 4 步顺序答。",
+    "important": "🔥 BGP 路由选择优先级——4 步必背"
   },
   "lec19:24": {
     "title": "Why Different Intra vs Inter? ⭐",
@@ -1502,7 +1553,8 @@
       "**Scale**: 分层路由表显著缩小 + 更新流量减少",
       "**Performance**: intra-AS 可以为性能优化；inter-AS 政策第一"
     ],
-    "explanation": "### 三个原因的具体含义\n\n**Policy**：\n- inter: ISP 不愿 carry transit、不愿走某 AS、收不同价钱 → BGP 必须能配 policy\n- intra: Columbia 内部就一家管，policy 不重要\n\n**Scale**：\n- 不分层：整网 1 亿条 host 路由\n- 分层：每个 AS 自己几千-几万条，AS 之间几十万 BGP 前缀\n- 路由表小好几个数量级\n\n**Performance**：\n- intra-AS 节点都信任，可以为最短路径全力优化\n- inter-AS 不可能让 ISP A 替 ISP B 优化性能（B 自己掂量）\n\n### 考法（高频简答）\n『为什么不用一个统一的协议处理 intra 和 inter？』必答 3 点。"
+    "explanation": "### 三个原因的具体含义\n\n**Policy**：\n- inter: ISP 不愿 carry transit、不愿走某 AS、收不同价钱 → BGP 必须能配 policy\n- intra: Columbia 内部就一家管，policy 不重要\n\n**Scale**：\n- 不分层：整网 1 亿条 host 路由\n- 分层：每个 AS 自己几千-几万条，AS 之间几十万 BGP 前缀\n- 路由表小好几个数量级\n\n**Performance**：\n- intra-AS 节点都信任，可以为最短路径全力优化\n- inter-AS 不可能让 ISP A 替 ISP B 优化性能（B 自己掂量）\n\n### 考法（高频简答）\n『为什么不用一个统一的协议处理 intra 和 inter？』必答 3 点。",
+    "important": "🔥 Why intra ≠ inter——三大原因（policy/scale/perf）"
   },
   "lec19:25": {
     "title": "Quiz — TCP Throughput（接 lec20）",
@@ -1516,7 +1568,8 @@
       "**额外动机**：40 字节固定 header 加速路由器处理",
       "**额外**：flow label 给 QoS / 流区分"
     ],
-    "explanation": "### IPv4 不够用的根本原因\n32 位地址理论上 2³² ≈ 43 亿。看似很多，但：\n- 历史上分配低效（Class A 给了一家公司 1600 万地址）\n- 移动设备每个都要 IP\n- IoT 上 PB 级别设备数\n\n→ 2011 年 IANA 把最后一段 IPv4 给了区域注册商，从此官方层面 IPv4 用完了。NAT 暂时缓解了痛苦。\n\n### IPv6 不只是『更多地址』\n顺便重新设计：\n- 去掉 IPv4 的累赘（checksum, fragmentation, options）\n- 加 flow label 支持流级别处理\n- 加固定 40 byte header，硬件路由器更好处理\n\n### 部署慢的原因\nIPv4 + NAT 的方案太好用，缺乏强动力换 IPv6。2026 年 Google 统计客户端 IPv6 比例 ~49%。"
+    "explanation": "### IPv4 不够用的根本原因\n32 位地址理论上 2³² ≈ 43 亿。看似很多，但：\n- 历史上分配低效（Class A 给了一家公司 1600 万地址）\n- 移动设备每个都要 IP\n- IoT 上 PB 级别设备数\n\n→ 2011 年 IANA 把最后一段 IPv4 给了区域注册商，从此官方层面 IPv4 用完了。NAT 暂时缓解了痛苦。\n\n### IPv6 不只是『更多地址』\n顺便重新设计：\n- 去掉 IPv4 的累赘（checksum, fragmentation, options）\n- 加 flow label 支持流级别处理\n- 加固定 40 byte header，硬件路由器更好处理\n\n### 部署慢的原因\nIPv4 + NAT 的方案太好用，缺乏强动力换 IPv6。2026 年 Google 统计客户端 IPv6 比例 ~49%。",
+    "important": "IPv6 动机——32 位不够 + 简化 header"
   },
   "lec18:2": {
     "title": "IPv6 Datagram 格式 ⭐",
@@ -1529,7 +1582,8 @@
       "Src/Dst 128 bit",
       "**Payload**"
     ],
-    "explanation": "### vs IPv4 的关键变化\n\n| | IPv4 | IPv6 |\n|---|---|---|\n| 地址 | 32 b | 128 b |\n| Header | 20-60 B 变长 | **40 B 固定** |\n| Header checksum | 有 | **无** |\n| Fragmentation by router | 是 | **否**（只在端） |\n| Options | header 内 | next-header 链 |\n| Flow label | 无 | 有 |\n\n### 为什么去掉 header checksum\n- TCP/UDP 已有 checksum\n- Ethernet/数据链路有 CRC\n- IPv4 的 checksum 每跳要重算（因为 TTL 变了），耗 CPU\n→ 重复了，去掉省事\n\n### 为什么禁止路由器分片\n碎片化让中间路由器干太多事，违反 end-to-end principle。改成 sender 自己确保不超过 MTU（用 path MTU discovery）。"
+    "explanation": "### vs IPv4 的关键变化\n\n| | IPv4 | IPv6 |\n|---|---|---|\n| 地址 | 32 b | 128 b |\n| Header | 20-60 B 变长 | **40 B 固定** |\n| Header checksum | 有 | **无** |\n| Fragmentation by router | 是 | **否**（只在端） |\n| Options | header 内 | next-header 链 |\n| Flow label | 无 | 有 |\n\n### 为什么去掉 header checksum\n- TCP/UDP 已有 checksum\n- Ethernet/数据链路有 CRC\n- IPv4 的 checksum 每跳要重算（因为 TTL 变了），耗 CPU\n→ 重复了，去掉省事\n\n### 为什么禁止路由器分片\n碎片化让中间路由器干太多事，违反 end-to-end principle。改成 sender 自己确保不超过 MTU（用 path MTU discovery）。",
+    "important": "🔥 IPv6 datagram——128 b 地址、40 B 固定头、去 checksum/fragmentation"
   },
   "lec18:3": {
     "title": "IPv6 Design Philosophy — End-to-End Principle",
@@ -1562,7 +1616,8 @@
       "B→E 段：IPv6 packet 作为 IPv4 payload",
       "C、D 完全不知道里面装的是 IPv6"
     ],
-    "explanation": "### Header 嵌套\nA→F 通信，B→E 段的实际 packet 长这样：\n\n```\n[IPv4 header: src=B, dst=E][IPv6 header: src=A, dst=F][TCP/UDP][data]\n```\n\nC、D 路由器只看外层 IPv4 header，对它来说就是个普通 IPv4 包。E 收到后剥掉 IPv4 header，看到 IPv6 packet，再交给 IPv6 处理。\n\n### 类比\n你寄一个真包裹给纽约的朋友，但邮政只到曼哈顿，所以你把它装进一个曼哈顿的包裹寄到中转站。中转站员工不知道里面是什么，照样按曼哈顿地址投递。"
+    "explanation": "### Header 嵌套\nA→F 通信，B→E 段的实际 packet 长这样：\n\n```\n[IPv4 header: src=B, dst=E][IPv6 header: src=A, dst=F][TCP/UDP][data]\n```\n\nC、D 路由器只看外层 IPv4 header，对它来说就是个普通 IPv4 包。E 收到后剥掉 IPv4 header，看到 IPv6 packet，再交给 IPv6 处理。\n\n### 类比\n你寄一个真包裹给纽约的朋友，但邮政只到曼哈顿，所以你把它装进一个曼哈顿的包裹寄到中转站。中转站员工不知道里面是什么，照样按曼哈顿地址投递。",
+    "important": "Tunneling——逻辑 vs 物理视图，header 嵌套"
   },
   "lec18:8": {
     "title": "IPv6 采用率",
@@ -1606,7 +1661,8 @@
   "lec18:18": {
     "title": "Graph Abstraction — 节点、边、cost ⭐",
     "summary": "G = (N, E)，c(a,b) = 直连代价；不连 = ∞。",
-    "explanation": "### 抽象\n- N = 节点（router）\n- E = 边（链路）\n- c(a, b) = 链路代价（admin 定义：可基于距离、带宽、cost、congestion 等）\n\n### Cost 的语义\nCost 可以是任何 admin 想优化的指标：\n- 跳数（每条 = 1）\n- 链路延迟\n- 链路带宽倒数\n- 经济成本（跨大西洋链路贵）\n\n### 重要假设\n- 对称（c(a, b) = c(b, a)）？不一定，可能有向\n- 非负？路由算法通常假设（Dijkstra 要求）"
+    "explanation": "### 抽象\n- N = 节点（router）\n- E = 边（链路）\n- c(a, b) = 链路代价（admin 定义：可基于距离、带宽、cost、congestion 等）\n\n### Cost 的语义\nCost 可以是任何 admin 想优化的指标：\n- 跳数（每条 = 1）\n- 链路延迟\n- 链路带宽倒数\n- 经济成本（跨大西洋链路贵）\n\n### 重要假设\n- 对称（c(a, b) = c(b, a)）？不一定，可能有向\n- 非负？路由算法通常假设（Dijkstra 要求）",
+    "important": "🔥 Graph 抽象——cost 来源 + 非负权假设"
   },
   "lec18:19": {
     "title": "两种方法论 — Big Mouth vs Whisper ⭐",
@@ -1615,7 +1671,8 @@
       "**LS**: 每节点广播 (flood) 自己的 link state → 所有节点知道全图 → 跑 Dijkstra",
       "**DV**: 每节点只跟邻居交换 DV → 渐进收敛 → 跑 Bellman-Ford"
     ],
-    "explanation": "### 记忆抓手\n- **LS 大嘴**: 把自己知道的（链路状态）告诉所有人\n- **DV 悄悄话**: 只跟身边邻居说自己的『到各处的距离估计』\n\n### 各自的视角\n- LS: 每节点持有完整 graph → 自己算最短路径\n- DV: 每节点只持有『我到每个目的的最短距离估计』，靠邻居交换迭代收敛\n\n### 代表协议\n- LS: OSPF, IS-IS\n- DV: RIP (已废)，BGP（path vector 是 DV 变种）"
+    "explanation": "### 记忆抓手\n- **LS 大嘴**: 把自己知道的（链路状态）告诉所有人\n- **DV 悄悄话**: 只跟身边邻居说自己的『到各处的距离估计』\n\n### 各自的视角\n- LS: 每节点持有完整 graph → 自己算最短路径\n- DV: 每节点只持有『我到每个目的的最短距离估计』，靠邻居交换迭代收敛\n\n### 代表协议\n- LS: OSPF, IS-IS\n- DV: RIP (已废)，BGP（path vector 是 DV 变种）",
+    "important": "🔥 LS 大嘴 vs DV 悄悄话——两种方法论"
   },
   "lec18:20": {
     "title": "路由算法分类",
@@ -1666,7 +1723,8 @@
       "Until N' = all nodes"
     ],
     "formula": "$$D(v) = \\min(D(v), D(w) + c(w, v))$$",
-    "explanation": "### 工作原理（intuition）\nDijkstra 是『波纹扩散』：\n- 从 source 出发，每次扩展到『最近但还没加入的节点』\n- 加入后，看是否能通过它更新到其他节点的距离\n- 重复\n\n### 关键不变量\n**一旦加入 N'，到它的最短距离就定了**。后面更新不再改它。\n\n这要求 **链路代价非负**（负权会让后到的路径反而更短，破坏不变量）。\n\n### 复杂度\n- 朴素：每轮找 min O(n)，n 轮 → O(n²)\n- Heap 实现：每次 extract-min O(log n)，n 轮 + m 次 relax → O((n+m) log n)\n- 对稠密图 O(n²) 更好；稀疏图 heap 版更好\n\n### 跟 BF 对比\nDijkstra 假设非负权 + 贪心；BF 允许负权（但 4119 没用过），所有边 relax n-1 轮。"
+    "explanation": "### 工作原理（intuition）\nDijkstra 是『波纹扩散』：\n- 从 source 出发，每次扩展到『最近但还没加入的节点』\n- 加入后，看是否能通过它更新到其他节点的距离\n- 重复\n\n### 关键不变量\n**一旦加入 N'，到它的最短距离就定了**。后面更新不再改它。\n\n这要求 **链路代价非负**（负权会让后到的路径反而更短，破坏不变量）。\n\n### 复杂度\n- 朴素：每轮找 min O(n)，n 轮 → O(n²)\n- Heap 实现：每次 extract-min O(log n)，n 轮 + m 次 relax → O((n+m) log n)\n- 对稠密图 O(n²) 更好；稀疏图 heap 版更好\n\n### 跟 BF 对比\nDijkstra 假设非负权 + 贪心；BF 允许负权（但 4119 没用过），所有边 relax n-1 轮。",
+    "important": "🔥🔥 Dijkstra 伪代码必背——6 节点演示必练手算"
   },
   "lec18:27": {
     "title": "Dijkstra 例 — Step 0 (Init)",
@@ -1720,7 +1778,8 @@
       "Forwarding table：到每个目的，下一跳走哪个邻居（即第一条边）",
       "u 到 v 直连 → next hop = (u, v)",
       "u 到其他全部经 x → next hop = (u, x)"
-    ]
+    ],
+    "important": "Dijkstra 最短路径树 + forwarding table 产出"
   },
   "lec18:39": {
     "title": "Dijkstra 复杂度 ⭐",
@@ -1729,7 +1788,8 @@
       "时间：每轮检查 n 节点，n 轮 → O(n²)",
       "Heap 实现 O((n+m) log n)",
       "消息：每节点 flood 一次 link state，每次 O(n) 链路传 → 总 O(n²)"
-    ]
+    ],
+    "important": "Dijkstra 复杂度 O(n²) + 消息复杂度"
   },
   "lec18:40": {
     "title": "Dijkstra 震荡问题",
@@ -1755,7 +1815,8 @@
       "Iterative：邻居发新 DV → 自己更新 → 自己 DV 变了告诉邻居",
       "**异步、自停**：稳定后没新 update 就不再发"
     ],
-    "explanation": "### 直觉\n『我到 y 多远？』= 『先到任意邻居 v 的代价，加上 v 自己估算的到 y 的代价，取最小』。\n\n这条公式是动态规划的经典应用（Bellman-Ford 的核心）。\n\n### 例\n邻居 B 告诉 x：『我到 y 是 5』。\nc(x, B) = 2。\n那么经 B 到 y = 2 + 5 = 7。\n\n邻居 C 告诉 x：『我到 y 是 4』。\nc(x, C) = 4。\n经 C 到 y = 4 + 4 = 8。\n\nx 取 min(7, 8) = 7 → 把这个值放进自己的 DV。如果跟自己原来的值不同 → 告诉所有邻居。\n\n### 跟 Dijkstra 的关系\nDijkstra 集中式贪心；BF 分布式迭代。两者最优路径相同（前提是非负权）。BF 的优势：不需要全图，每节点只跟邻居说话。"
+    "explanation": "### 直觉\n『我到 y 多远？』= 『先到任意邻居 v 的代价，加上 v 自己估算的到 y 的代价，取最小』。\n\n这条公式是动态规划的经典应用（Bellman-Ford 的核心）。\n\n### 例\n邻居 B 告诉 x：『我到 y 是 5』。\nc(x, B) = 2。\n那么经 B 到 y = 2 + 5 = 7。\n\n邻居 C 告诉 x：『我到 y 是 4』。\nc(x, C) = 4。\n经 C 到 y = 4 + 4 = 8。\n\nx 取 min(7, 8) = 7 → 把这个值放进自己的 DV。如果跟自己原来的值不同 → 告诉所有邻居。\n\n### 跟 Dijkstra 的关系\nDijkstra 集中式贪心；BF 分布式迭代。两者最优路径相同（前提是非负权）。BF 的优势：不需要全图，每节点只跟邻居说话。",
+    "important": "🔥🔥 Bellman-Ford 方程——final Q4 核心"
   },
   "lec18:44": {
     "title": "Distance Vector Table — 数据结构 ⭐",
@@ -1764,7 +1825,8 @@
       "Distance table dist_v(x, y) = x 经邻居 v 到 y 的代价",
       "DV = 每行的 min（最优经哪个邻居）",
       "邻居发来的『我到 y 是多少』就是它的 DV[y]"
-    ]
+    ],
+    "important": "🔥 DV 距离表数据结构——每节点表 + 行 min"
   },
   "lec18:45": {
     "title": "DV — 初始化",
@@ -1781,7 +1843,8 @@
   "lec18:48": {
     "title": "DV — 邻居用 BF 更新 ⭐",
     "summary": "邻居 v 发来 DV：x 用 BF 算 dist_v(x, y) = c(x, v) + D_v(y)，更新自己的表。",
-    "explanation": "### 例\nB 发自己的 DV 给 A：『B 到 C = 1, B 到 D = ∞, B 到 A = 5』\n\nA 用 BF 更新：\n- A 经 B 到 C = c(A,B) + D_B(C) = 5 + 1 = **6**\n- A 经 B 到 D = c(A,B) + D_B(D) = 5 + ∞ = ∞\n\nA 自己的 distance_table 经 B 列更新：(C=6, D=∞)\nA 的 DV: 每行 min。"
+    "explanation": "### 例\nB 发自己的 DV 给 A：『B 到 C = 1, B 到 D = ∞, B 到 A = 5』\n\nA 用 BF 更新：\n- A 经 B 到 C = c(A,B) + D_B(C) = 5 + 1 = **6**\n- A 经 B 到 D = c(A,B) + D_B(D) = 5 + ∞ = ∞\n\nA 自己的 distance_table 经 B 列更新：(C=6, D=∞)\nA 的 DV: 每行 min。",
+    "important": "🔥 DV 邻居更新例——必会手推"
   },
   "lec18:49": {
     "title": "DV Algorithm — 核心 loop",
@@ -1806,7 +1869,8 @@
       "Y 把 6 告诉 Z；Z 把 5 告诉 Y；互相参考过期信息",
       "每轮代价 +1 +1 ... 直到达到 max (RIP 用 16=∞)"
     ],
-    "explanation": "### 完整故事\n\n场景：网络 X-Y-Z-...-W，原本 X-Y cost = 4，X 到 W 的最短路径经过 Y。\n\nT=0: Z 的 DV 说『我到 X = 5（经 Y）』；Y 的 DV 说『我到 X = 4（直连）』。\n\nT=1: X-Y 链路代价从 4 变成 60。Y 检测到，更新自己：『直连 X = 60』。但 Y 也看到 Z 之前发的『Z 到 X = 5』，所以 Y 算『经 Z 到 X = c(Y,Z) + 5 = 1 + 5 = 6』。Y 选 min(60, 6) = **6**。Y 把『Y 到 X = 6』告诉 Z。\n\nT=2: Z 收到『Y 到 X = 6』。Z 之前是『Z 经 Y 到 X = 1+4 = 5』，现在变成『Z 经 Y 到 X = 1+6 = 7』。Z 更新自己 DV: 『Z 到 X = 7』。告诉 Y。\n\nT=3: Y 看到『Z 到 X = 7』。重算『Y 经 Z 到 X = 1+7 = 8』。Y 的 DV：min(60, 8) = 8。告诉 Z。\n\nT=4: Z 算『Z 经 Y 到 X = 1+8 = 9』...\n\n每轮 +2，直到达到某个上限（比如 60，意识到直连 60 也比绕圈强）。RIP 用 16 表示 ∞，所以 RIP 网络直径不能超过 15。\n\n### 为什么慢\n核心问题：Y 和 Z 互相用对方过期的信息推自己 → 形成局部环 → 每轮缓慢逼近真实代价。\n\n### 解药\nPoison reverse（下页）+ split horizon。"
+    "explanation": "### 完整故事\n\n场景：网络 X-Y-Z-...-W，原本 X-Y cost = 4，X 到 W 的最短路径经过 Y。\n\nT=0: Z 的 DV 说『我到 X = 5（经 Y）』；Y 的 DV 说『我到 X = 4（直连）』。\n\nT=1: X-Y 链路代价从 4 变成 60。Y 检测到，更新自己：『直连 X = 60』。但 Y 也看到 Z 之前发的『Z 到 X = 5』，所以 Y 算『经 Z 到 X = c(Y,Z) + 5 = 1 + 5 = 6』。Y 选 min(60, 6) = **6**。Y 把『Y 到 X = 6』告诉 Z。\n\nT=2: Z 收到『Y 到 X = 6』。Z 之前是『Z 经 Y 到 X = 1+4 = 5』，现在变成『Z 经 Y 到 X = 1+6 = 7』。Z 更新自己 DV: 『Z 到 X = 7』。告诉 Y。\n\nT=3: Y 看到『Z 到 X = 7』。重算『Y 经 Z 到 X = 1+7 = 8』。Y 的 DV：min(60, 8) = 8。告诉 Z。\n\nT=4: Z 算『Z 经 Y 到 X = 1+8 = 9』...\n\n每轮 +2，直到达到某个上限（比如 60，意识到直连 60 也比绕圈强）。RIP 用 16 表示 ∞，所以 RIP 网络直径不能超过 15。\n\n### 为什么慢\n核心问题：Y 和 Z 互相用对方过期的信息推自己 → 形成局部环 → 每轮缓慢逼近真实代价。\n\n### 解药\nPoison reverse（下页）+ split horizon。",
+    "important": "🔥 Count-to-Infinity——坏消息慢传 + 互推现象"
   },
   "lec18:53": {
     "title": "DV — Poison Reverse ⭐",
@@ -1817,7 +1881,8 @@
       "破 2 节点环",
       "**不能破 3+ 节点环**"
     ],
-    "explanation": "### 工作机制\n回到上一页的例子：Z 当前路径『经 Y 到 X』。Z 主动告诉 Y：『Z 到 X = ∞』（说谎，但有目的）。\n\n这样当 Y 算『Y 经 Z 到 X』时，得到 1 + ∞ = ∞，不会选 Z。Y 只能用『Y 直连 X = 60』，正确收敛。\n\n### 局限\n3 节点环：Y, Z, W 都互相 poison reverse 处理，但 4 个节点的环就破不掉。这是 DV 的根本局限。\n\n### Split horizon\n弱版 poison reverse：『从你那学到的，不告诉你』。不主动说 ∞，但也不会把循环信息传回去。\n\n### 考法\n『poison reverse 解决什么？』『能完全解决 CTI 吗？』必答：不能，只解 2 节点环。"
+    "explanation": "### 工作机制\n回到上一页的例子：Z 当前路径『经 Y 到 X』。Z 主动告诉 Y：『Z 到 X = ∞』（说谎，但有目的）。\n\n这样当 Y 算『Y 经 Z 到 X』时，得到 1 + ∞ = ∞，不会选 Z。Y 只能用『Y 直连 X = 60』，正确收敛。\n\n### 局限\n3 节点环：Y, Z, W 都互相 poison reverse 处理，但 4 个节点的环就破不掉。这是 DV 的根本局限。\n\n### Split horizon\n弱版 poison reverse：『从你那学到的，不告诉你』。不主动说 ∞，但也不会把循环信息传回去。\n\n### 考法\n『poison reverse 解决什么？』『能完全解决 CTI 吗？』必答：不能，只解 2 节点环。",
+    "important": "🔥 Poison Reverse——半解 CTI，只破 2 节点环"
   },
   "lec17:1": {
     "title": "Midterm Grades — 这次成绩分布",
@@ -1848,7 +1913,8 @@
       "**options**（可变）",
       "**payload**（典型 TCP/UDP segment）"
     ],
-    "explanation": "### 重点字段逐个看\n\n**Version (4 bit)**：0100 = IPv4，0110 = IPv6。Router 看这个决定怎么解。\n\n**HLEN (4 bit)**：以 4 字节为单位。没 options 时 hlen=5 → header 20 B。最大 hlen=15 → 60 B。\n\n**ToS (8 bit)**：分两部分：高 6 位 diffserv（QoS 标记）；低 2 位 ECN（拥塞通知）。\n\n**Total length (16 bit)**：包括 header + payload，单位字节。最大 64 KB。实际通常 ≤ MTU (1500)。\n\n**Identifier + Flags + Frag Offset**：分片用。MTU 大的 IP 包要切成几小段，每段同 identifier，flags 标 'more fragments'，offset 说位置。\n\n**TTL (8 bit)**：每跳 -1，到 0 路由器 drop。防环 + 防包永远循环。初始通常 64 或 128。\n\n**Protocol (8 bit)**：6 = TCP, 17 = UDP, 1 = ICMP, 89 = OSPF。Receiver 用这个 demux 到上层协议。\n\n**Header Checksum (16 bit)**：只对 header（不含 payload）。每跳 TTL 变 → checksum 也得重算。IPv6 去掉了这个字段省 CPU。\n\n**Src/Dst IP (32 bit each)**：端到端不变。\n\n### TCP/IP overhead\nTCP header 20 B + IP header 20 B = 40 B overhead/packet（不含 application 数据）。所以小包（如 DNS 查询）效率低。\n\n### 考法\n- 选择题问字段含义\n- TTL 计算（traceroute 原理）\n- 算 overhead"
+    "explanation": "### 重点字段逐个看\n\n**Version (4 bit)**：0100 = IPv4，0110 = IPv6。Router 看这个决定怎么解。\n\n**HLEN (4 bit)**：以 4 字节为单位。没 options 时 hlen=5 → header 20 B。最大 hlen=15 → 60 B。\n\n**ToS (8 bit)**：分两部分：高 6 位 diffserv（QoS 标记）；低 2 位 ECN（拥塞通知）。\n\n**Total length (16 bit)**：包括 header + payload，单位字节。最大 64 KB。实际通常 ≤ MTU (1500)。\n\n**Identifier + Flags + Frag Offset**：分片用。MTU 大的 IP 包要切成几小段，每段同 identifier，flags 标 'more fragments'，offset 说位置。\n\n**TTL (8 bit)**：每跳 -1，到 0 路由器 drop。防环 + 防包永远循环。初始通常 64 或 128。\n\n**Protocol (8 bit)**：6 = TCP, 17 = UDP, 1 = ICMP, 89 = OSPF。Receiver 用这个 demux 到上层协议。\n\n**Header Checksum (16 bit)**：只对 header（不含 payload）。每跳 TTL 变 → checksum 也得重算。IPv6 去掉了这个字段省 CPU。\n\n**Src/Dst IP (32 bit each)**：端到端不变。\n\n### TCP/IP overhead\nTCP header 20 B + IP header 20 B = 40 B overhead/packet（不含 application 数据）。所以小包（如 DNS 查询）效率低。\n\n### 考法\n- 选择题问字段含义\n- TTL 计算（traceroute 原理）\n- 算 overhead",
+    "important": "🔥 IPv4 datagram 字段——填空题/解释每字段含义"
   },
   "lec17:5": {
     "title": "IP Addressing 介绍",
@@ -1878,7 +1944,8 @@
       "Host 部分 = 不同低位",
       "Subnet mask 决定『高位多长』"
     ],
-    "explanation": "### 直觉\n类比地址：『纽约 - 哥大 - 408 号房』，前两个相同是同一栋楼（同子网），房间号区分。\n\n### 为什么需要子网概念\n- 同子网内可以直接 L2 通信（ARP + Ethernet）\n- 跨子网必须 L3 经 router\n- Routing 表大幅缩小（不需要每台主机一条规则，只需要每个子网一条）"
+    "explanation": "### 直觉\n类比地址：『纽约 - 哥大 - 408 号房』，前两个相同是同一栋楼（同子网），房间号区分。\n\n### 为什么需要子网概念\n- 同子网内可以直接 L2 通信（ARP + Ethernet）\n- 跨子网必须 L3 经 router\n- Routing 表大幅缩小（不需要每台主机一条规则，只需要每个子网一条）",
+    "important": "Subnet 概念 + IP = 接口（不是 host）"
   },
   "lec17:9": {
     "title": "Subnets — 分子网食谱",
@@ -1898,7 +1965,8 @@
       "Mask = x 个 1 + (32-x) 个 0",
       "Prefix = IP AND mask"
     ],
-    "explanation": "### 老的 class 系统\n- Class A: /8 (16M 个地址)\n- Class B: /16 (65K)\n- Class C: /24 (256)\n\n固定边界导致浪费：要 500 个地址只能拿一个 Class B（65K，浪费 99%）。\n\n### CIDR 让 mask 长度任意\n要 500 个地址 → /23 (512 个) 刚刚好。\n\n### 路由聚合\nISP 拿 /20（4096 个），切给 8 个组织 /23（512 个）。对外只 advertise /20，路由表大幅缩小。"
+    "explanation": "### 老的 class 系统\n- Class A: /8 (16M 个地址)\n- Class B: /16 (65K)\n- Class C: /24 (256)\n\n固定边界导致浪费：要 500 个地址只能拿一个 Class B（65K，浪费 99%）。\n\n### CIDR 让 mask 长度任意\n要 500 个地址 → /23 (512 个) 刚刚好。\n\n### 路由聚合\nISP 拿 /20（4096 个），切给 8 个组织 /23（512 个）。对外只 advertise /20，路由表大幅缩小。",
+    "important": "🔥🔥 CIDR——final Q2 直接考；二进制 AND 必练"
   },
   "lec17:12": {
     "title": "IP 地址获取 — 两个问题",
@@ -1921,7 +1989,8 @@
       "**Request** (client 选择候选 IP)",
       "**Ack** (server 确认绑定)"
     ],
-    "explanation": "### 为什么全部广播\nClient 还没有 IP，无法 unicast。只能广播让任何在 LAN 上的 DHCP server 听到。\n\n### 为什么需要 4 步而不是 2 步\n- 多 server 场景：一个 LAN 可能有多个 DHCP server（冗余）。Client 可能收到多个 offer，必须用 Request 明确选一个 → 其他 server 释放保留的 IP。\n- 一个 server 场景下也保留 4 步流程（统一）。\n\n### 短路：续租\nRFC 2131 允许 client 跳过 Discover/Offer，直接 Request 上次用过的 IP。Server ACK 就续上。\n\n### 字段\nyiaddr (your IP address) = server 给 client 的 IP。\ntransaction ID 让 client 匹配 reply。\n\n### 考法\n『DHCP 4 步是什么？』必背 DORA 顺序。\n『为什么 Discover 用广播？』→ client 没 IP，无法 unicast。"
+    "explanation": "### 为什么全部广播\nClient 还没有 IP，无法 unicast。只能广播让任何在 LAN 上的 DHCP server 听到。\n\n### 为什么需要 4 步而不是 2 步\n- 多 server 场景：一个 LAN 可能有多个 DHCP server（冗余）。Client 可能收到多个 offer，必须用 Request 明确选一个 → 其他 server 释放保留的 IP。\n- 一个 server 场景下也保留 4 步流程（统一）。\n\n### 短路：续租\nRFC 2131 允许 client 跳过 Discover/Offer，直接 Request 上次用过的 IP。Server ACK 就续上。\n\n### 字段\nyiaddr (your IP address) = server 给 client 的 IP。\ntransaction ID 让 client 匹配 reply。\n\n### 考法\n『DHCP 4 步是什么？』必背 DORA 顺序。\n『为什么 Discover 用广播？』→ client 没 IP，无法 unicast。",
+    "important": "🔥 DHCP DORA——必背 4 步广播"
   },
   "lec17:16": {
     "title": "DHCP 还给什么 ⭐",
@@ -1933,7 +2002,8 @@
       "**Subnet mask** (用来判断目的是否本子网)",
       "**Lease time**"
     ],
-    "explanation": "### 为什么这几个必须\n这四样一起决定 host 能不能正常上网：\n\n1. **IP**：自己的身份，没它发不出包\n2. **Gateway**：跨网包要交给 router；如果不知道 router IP，跨子网完全废\n3. **DNS server**：打开浏览器输 google.com 要解析\n4. **Netmask**：判断目的是不是同子网 → 决定 ARP 谁\n\n### 没 mask 会怎样\nHost 看到目的 IP 1.2.3.4，不知道是不是本子网。试图 ARP 1.2.3.4 → 如果不在本子网 LAN 上广播没人回 → 永远连不上。\n\n### 考法\n『DHCP server 还能返回什么？』必背 4 个加 lease。"
+    "explanation": "### 为什么这几个必须\n这四样一起决定 host 能不能正常上网：\n\n1. **IP**：自己的身份，没它发不出包\n2. **Gateway**：跨网包要交给 router；如果不知道 router IP，跨子网完全废\n3. **DNS server**：打开浏览器输 google.com 要解析\n4. **Netmask**：判断目的是不是同子网 → 决定 ARP 谁\n\n### 没 mask 会怎样\nHost 看到目的 IP 1.2.3.4，不知道是不是本子网。试图 ARP 1.2.3.4 → 如果不在本子网 LAN 上广播没人回 → 永远连不上。\n\n### 考法\n『DHCP server 还能返回什么？』必背 4 个加 lease。",
+    "important": "🔥 DHCP 返回 4 样：IP + gateway + DNS + mask"
   },
   "lec17:17": {
     "title": "DHCP 例 (1) — 协议栈封装",
@@ -1956,7 +2026,8 @@
       "对 Internet 只 advertise /20（一条规则）",
       "**省路由表 + 省 BGP 更新流量**"
     ],
-    "explanation": "### 没聚合 vs 有聚合\n没聚合：ISP 把 8 个 /23 都向外 advertise → Internet 路由表多 8 条。\n聚合：ISP 只 advertise 1 个 /20 → 外面路由表只多 1 条。\n\n外网路由器知道『去 200.23.16.0/20 走 ISP A』就够了，不需要管内部细分。包到 ISP A 后再用更具体的 /23 决定到哪个 Org。\n\n### 路由表条目数\nInternet 现在 BGP 全表 ~100 万条。如果没聚合可能要 1 亿条 → 路由器内存撑不住。\n\n### 考法\n『为什么 hierarchical addressing？』必答路由聚合 + scalable。"
+    "explanation": "### 没聚合 vs 有聚合\n没聚合：ISP 把 8 个 /23 都向外 advertise → Internet 路由表多 8 条。\n聚合：ISP 只 advertise 1 个 /20 → 外面路由表只多 1 条。\n\n外网路由器知道『去 200.23.16.0/20 走 ISP A』就够了，不需要管内部细分。包到 ISP A 后再用更具体的 /23 决定到哪个 Org。\n\n### 路由表条目数\nInternet 现在 BGP 全表 ~100 万条。如果没聚合可能要 1 亿条 → 路由器内存撑不住。\n\n### 考法\n『为什么 hierarchical addressing？』必答路由聚合 + scalable。",
+    "important": "🔥 路由聚合——为什么 hierarchical addressing 可扩展"
   },
   "lec17:21": {
     "title": "IP Addressing — Last Words",
@@ -1975,7 +2046,8 @@
       "NAT router 改 src 字段 + 记 NAT 表",
       "回程改回 dst 字段"
     ],
-    "explanation": "### 历史背景\n2000 年代 IPv4 地址不够用，但每户家庭/小公司都要联网 → NAT 让一个公网 IP 服务整个家。\n\n### 私有 IP 段\n- 10.0.0.0/8（大型企业）\n- 172.16.0.0/12（中型）\n- 192.168.0.0/16（家用最常见）\n\n这些 IP 在公网上是不可路由的（路由器看到这些 src/dst 会直接 drop）。\n\n### 工作流程\n```\n[10.0.0.1:3345] → [NAT 138.76.29.7:5001] → [128.119.40.186:80]\n                       ↑\n                NAT 改 src，记表\n```\n\n回程：\n```\n[128.119.40.186:80] → [138.76.29.7:5001] → 查 NAT 表 → [10.0.0.1:3345]\n```"
+    "explanation": "### 历史背景\n2000 年代 IPv4 地址不够用，但每户家庭/小公司都要联网 → NAT 让一个公网 IP 服务整个家。\n\n### 私有 IP 段\n- 10.0.0.0/8（大型企业）\n- 172.16.0.0/12（中型）\n- 192.168.0.0/16（家用最常见）\n\n这些 IP 在公网上是不可路由的（路由器看到这些 src/dst 会直接 drop）。\n\n### 工作流程\n```\n[10.0.0.1:3345] → [NAT 138.76.29.7:5001] → [128.119.40.186:80]\n                       ↑\n                NAT 改 src，记表\n```\n\n回程：\n```\n[128.119.40.186:80] → [138.76.29.7:5001] → 查 NAT 表 → [10.0.0.1:3345]\n```",
+    "important": "🔥 NAT 实现 + 优缺点"
   },
   "lec17:24": {
     "title": "NAT — 优点",
@@ -2016,7 +2088,8 @@
       "规则 3: 1010.11xx.xxxx.xxxx (/6) → Port 3"
     ],
     "explanation": "### 解题步骤\n\n包 dst = `1010.1000.0100.1000`（用 . 分组方便看）\n\n**对比规则 1** (1010.xxxx, /4)：前 4 位 1010 == 1010 ✓ → 匹配\n\n**对比规则 2** (10xx.xxxx, /2)：前 2 位 10 == 10 ✓ → 匹配\n\n**对比规则 3** (1010.11xx, /6)：前 4 位 1010 == 1010 ✓；位 5-6 应该是 11，但包是 1000.xxxx 的前 2 位 = **10**，不是 11 ✗ → 不匹配\n\n**匹配的规则**：1 (/4) 和 2 (/2)。\n\n**最长**：/4 > /2 → 选规则 1 → **Port 2**\n\n### 必练这种题\n期末样题里就有 LPM 题。做题套路：\n1. 数清每条规则的前缀位数\n2. 逐位比对，看哪些匹配\n3. 选最长的（即前缀位数最多的）",
-    "gotcha": "**1010.11 ≠ 1010.10**：注意位的具体值。位 5、6 必须是 11 才匹配规则 3。"
+    "gotcha": "**1010.11 ≠ 1010.10**：注意位的具体值。位 5、6 必须是 11 才匹配规则 3。",
+    "important": "🔥 LPM Quiz——必练这种题；位级对比规则"
   },
   "lec16:1": {
     "title": "ECN（lec14 末尾复习）",
@@ -2030,7 +2103,8 @@
   "lec16:3": {
     "title": "TCP 公平不公平？⭐",
     "summary": "AIMD + 相同 RTT + 长期 CA → 理论上收敛到公平。",
-    "explanation": "### 完整论证\nAIMD 的几何收敛：加法走 45°（向效率线），乘法沿原点缩（保比例 + 向公平线靠）。两步交替 → 螺旋收敛到 fair line × efficiency line 交点。\n\n### 前提（必须强调）\n1. 相同 RTT（不然短 RTT 的赢）\n2. 都长期在 CA（不是反复 slow start）\n3. Session 数固定（动态加入 / 退出会扰动）\n4. AIMD（不是 AIAD / MIMD）"
+    "explanation": "### 完整论证\nAIMD 的几何收敛：加法走 45°（向效率线），乘法沿原点缩（保比例 + 向公平线靠）。两步交替 → 螺旋收敛到 fair line × efficiency line 交点。\n\n### 前提（必须强调）\n1. 相同 RTT（不然短 RTT 的赢）\n2. 都长期在 CA（不是反复 slow start）\n3. Session 数固定（动态加入 / 退出会扰动）\n4. AIMD（不是 AIAD / MIMD）",
+    "important": "TCP 公平性 + AIMD 前提条件"
   },
   "lec16:4": {
     "title": "公平性 — UDP / 并行 TCP 破坏 ⭐",
@@ -2076,7 +2150,8 @@
       "**Forwarding**: input port → output port，本地",
       "**Routing**: 跨整网决定路径",
       "类比 开车：forwarding = 过路口；routing = 行前规划"
-    ]
+    ],
+    "important": "Forwarding vs Routing 核心对比"
   },
   "lec16:12": {
     "title": "Data Plane vs Control Plane ⭐⭐",
@@ -2147,11 +2222,13 @@
   "lec16:24": {
     "title": "Longest Prefix Matching — 概念 ⭐",
     "summary": "查 FT 时选『匹配前缀最长』的条目。",
-    "explanation": "### 为什么 LPM 不是 first-match\n层级 IP 寻址下，一个目的 IP 可能匹配多条规则（一条粗的 /20，一条细的 /23）。粗的覆盖大段，细的覆盖小段。**包应该走更具体（细）的那条**。\n\n→ 最长前缀匹配。"
+    "explanation": "### 为什么 LPM 不是 first-match\n层级 IP 寻址下，一个目的 IP 可能匹配多条规则（一条粗的 /20，一条细的 /23）。粗的覆盖大段，细的覆盖小段。**包应该走更具体（细）的那条**。\n\n→ 最长前缀匹配。",
+    "important": "🔥 LPM——IP 层最常考的查表"
   },
   "lec16:25": {
     "title": "LPM 例 1",
-    "summary": "11001000 00010111 00010110 10100001 匹配 00010***。"
+    "summary": "11001000 00010111 00010110 10100001 匹配 00010***。",
+    "important": "LPM 例 1 - 位级匹配"
   },
   "lec16:26": {
     "title": "LPM 例 1 — 匹配标注",
@@ -2214,7 +2291,8 @@
       "**HOL blocking**: 队头 packet 出口冲突，后面包都等",
       "解药: VOQ (virtual output queue) — 每个 output 一个 input 队列"
     ],
-    "explanation": "### 例\nInput port 1 队列：[红→outputA, 绿→outputB, 蓝→outputC]\nInput port 2 同时想发到 outputA。\n\n如果只一个 fabric 通道，只能选一个发，比如红色去 outputA。\n\n**问题**：input 1 的绿色和蓝色其实可以同时发到 B 和 C（不冲突），但它们卡在队头红色后面动不了 → **HOL blocking**。\n\n### VOQ 解法\nInput port 维护多个队列，每个对应一个 output port。这样不同 output 不互相阻塞。"
+    "explanation": "### 例\nInput port 1 队列：[红→outputA, 绿→outputB, 蓝→outputC]\nInput port 2 同时想发到 outputA。\n\n如果只一个 fabric 通道，只能选一个发，比如红色去 outputA。\n\n**问题**：input 1 的绿色和蓝色其实可以同时发到 B 和 C（不冲突），但它们卡在队头红色后面动不了 → **HOL blocking**。\n\n### VOQ 解法\nInput port 维护多个队列，每个对应一个 output port。这样不同 output 不互相阻塞。",
+    "important": "HOL blocking 概念"
   },
   "lec16:37": {
     "title": "Output Port Queuing",
@@ -2245,7 +2323,8 @@
     "title": "Weighted Fair Queueing (WFQ) ⭐",
     "summary": "Class i 得 w_i / Σw_j 份额服务时间。保证每个 class 最小带宽。",
     "formula": "$$\\text{class } i \\text{ share} = \\frac{w_i}{\\sum_j w_j}$$",
-    "explanation": "### 直觉\nWFQ 是 RR 的泛化：每轮服务每个 class 但量不一样大。\n\n例：3 个 class，w = [1, 2, 3]。每个循环 class 1 发 1 个 packet，class 2 发 2 个，class 3 发 3 个。\n\n→ 长期看 class i 占 w_i / 6 的带宽。\n\n### Min BW 保证\n只要 class i 有流量，它至少拿到 w_i/Σw_j 的带宽。\n\n### 考法\n给 weights 算 share。"
+    "explanation": "### 直觉\nWFQ 是 RR 的泛化：每轮服务每个 class 但量不一样大。\n\n例：3 个 class，w = [1, 2, 3]。每个循环 class 1 发 1 个 packet，class 2 发 2 个，class 3 发 3 个。\n\n→ 长期看 class i 占 w_i / 6 的带宽。\n\n### Min BW 保证\n只要 class i 有流量，它至少拿到 w_i/Σw_j 的带宽。\n\n### 考法\n给 weights 算 share。",
+    "important": "WFQ 公式 + min-BW 保证"
   },
   "lec16:44": {
     "title": "Sidebar: Network Neutrality (1)",
@@ -2413,6 +2492,7 @@
       "**收敛**: LS 快但可能震荡；DV 慢且可能 CTI",
       "**错传**: LS 错只影响本地；DV 错全网传染（黑洞效应）"
     ],
-    "explanation": "### 完整对比表（必须能默写）\n\n|  | LS | DV |\n|---|---|---|\n| 视角 | 全局 | 局部 |\n| 算法 | Dijkstra | Bellman-Ford |\n| 消息 | O(n²) flood | 邻居间 |\n| 收敛 | 快 | 慢、可能 CTI |\n| 震荡 | 可能（流量依赖时）| 较少 |\n| 错误鲁棒 | 本地化（一个 router 报错代价只影响计算）| **全网传染**（一个 router 报错距离，其他 router 受影响）|\n| 例 | OSPF, IS-IS | RIP (废)，BGP 是变种 |\n\n### 黑洞效应\nDV 下，一个 router 谎报『我到 X 是 1』（其实是 ∞）→ 其他 router 学到『经它 1 跳到 X』→ 大量流量过它 → 它直接 drop → 流量黑洞。\n\nLS 下，单个 router 错报 link state 也会影响别人，但**它只能错报自己的链路**（不能假装别人的链路），影响范围有限。\n\n### 考法（高频）\n『LS 和 DV 各自优缺点？』必背全 6 行。\n\n『为什么 BGP 用 path vector 不用 LS？』→ Inter-AS 不能让别人看到自己内部拓扑（隐私 + 安全 + scale）。"
+    "explanation": "### 完整对比表（必须能默写）\n\n|  | LS | DV |\n|---|---|---|\n| 视角 | 全局 | 局部 |\n| 算法 | Dijkstra | Bellman-Ford |\n| 消息 | O(n²) flood | 邻居间 |\n| 收敛 | 快 | 慢、可能 CTI |\n| 震荡 | 可能（流量依赖时）| 较少 |\n| 错误鲁棒 | 本地化（一个 router 报错代价只影响计算）| **全网传染**（一个 router 报错距离，其他 router 受影响）|\n| 例 | OSPF, IS-IS | RIP (废)，BGP 是变种 |\n\n### 黑洞效应\nDV 下，一个 router 谎报『我到 X 是 1』（其实是 ∞）→ 其他 router 学到『经它 1 跳到 X』→ 大量流量过它 → 它直接 drop → 流量黑洞。\n\nLS 下，单个 router 错报 link state 也会影响别人，但**它只能错报自己的链路**（不能假装别人的链路），影响范围有限。\n\n### 考法（高频）\n『LS 和 DV 各自优缺点？』必背全 6 行。\n\n『为什么 BGP 用 path vector 不用 LS？』→ Inter-AS 不能让别人看到自己内部拓扑（隐私 + 安全 + scale）。",
+    "important": "🔥🔥 LS vs DV 三大维度对比——必背全表"
   }
 }
