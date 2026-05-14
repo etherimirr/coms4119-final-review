@@ -1,4 +1,4 @@
-<!-- CHEATSHEET_VERSION: 39 -->
+<!-- CHEATSHEET_VERSION: 40 -->
 <!--
   COMS 4119 FINAL CHEAT SHEET
   4 sheets organized by course chapter (Kurose-Ross order):
@@ -246,33 +246,21 @@
 <li><b>Routing</b>: src → dst path planning&nbsp;</li>
 </ul>
 </section>
-<section data-key="network-service-model">
-<h2>Network Service Model</h2>
-<table>
-<tr><th>Arch</th><th>BW</th><th>Loss</th><th>Order</th><th>Timing</th></tr>
-<tr><td>Internet</td><td>best-effort</td><td>no</td><td>no</td><td>no</td></tr>
-<tr><td>ATM CBR</td><td>const</td><td>yes</td><td>yes</td><td>yes</td></tr>
-<tr><td>ATM ABR</td><td>min guar</td><td>no</td><td>yes</td><td>no</td></tr>
-<tr><td>IntServ</td><td>yes</td><td>yes</td><td>yes</td><td>yes</td></tr>
-<tr><td>DiffServ</td><td>maybe</td><td>maybe</td><td>maybe</td><td>no</td></tr>
-</table>
-<p class="mini">Best-effort won: simple → widely deployed · packet-switching efficient for bursty · survives failures.</p>
-</section>
-<section data-key="internet-structure-as">
+
+<section data-key="internet-structure-as" data-wired="1" contenteditable="true" spellcheck="false">
 <h2>Internet Structure (AS)</h2>
 <ul>
-<li>~100 K Autonomous Systems (AS) = "domains"</li>
-<li><b>Tier-1</b>: global backbones · <b>Tier-2</b>: regional, peer w/ tier-1 · <b>Tier-3</b>: end-user access</li>
+<li><b style="font-size: 7.5pt;">Tier-1</b><span style="font-size: 7.5pt;">: global backbones · </span><b style="font-size: 7.5pt;">Tier-2</b><span style="font-size: 7.5pt;">: regional, peer w/ tier-1 · </span><b style="font-size: 7.5pt;">Tier-3</b><span style="font-size: 7.5pt;">: end-user access</span></li>
 <li><b>IXP</b>: where ASes peer</li>
 <li>Same AS → same intra-domain proto; diff ASes can differ</li>
 <li><b>Gateway router</b>: AS edge, runs both inter-domain (BGP) + intra</li>
 </ul>
 </section>
-<section data-key="router-architecture">
+<section data-key="router-architecture" data-wired="1" contenteditable="true" spellcheck="false">
 <h2>Router Architecture</h2>
 <ul>
 <li>Input: link → LPM → queue</li>
-<li>Fabric: memory / bus / crossbar / Clos</li>
+<li>Fabric: memory / bus / crossbar&nbsp;</li>
 <li>Output: queue → scheduler → link</li>
 <li><b>HOL blocking</b>: head stuck → rest waits. Fix: <b>VOQ</b></li>
 <li>Fabric needs N·R speed for full line-rate</li>
@@ -281,36 +269,15 @@
 <section data-key="packet-scheduling" data-wired="1" contenteditable="true" spellcheck="false">
 <h2>Packet Scheduling</h2>
 <ul>
-<li><b>FCFS/FIFO</b>;<b style="font-size: 7.5pt;">Priority</b><span style="font-size: 7.5pt;">: classes by header; high first; FCFS within</span></li>
-<li><b>RR</b>: 1 pkt per class per round</li>
-<li><b>WFQ</b>: class i gets w_i / Σw_j share → min-BW guarantee</li>
+<li><b>FCFS/FIFO</b>;<b style="font-size: 7.5pt;">Priority</b><span style="font-size: 7.5pt;">: classes by header; high first;&nbsp;</span><b style="font-size: 7.5pt;">RR</b><span style="font-size: 7.5pt;">: 1 pkt per class per round</span><b style="font-size: 7.5pt;">WFQ</b><span style="font-size: 7.5pt;">: class i gets w_i / Σw_j share → min-BW guarantee</span></li>
 </ul>
 </section>
-<section data-key="buffer-management">
-<h2>Buffer Management</h2>
-<ul>
-<li>Drop: tail / priority</li>
-<li>Mark: ECN · RED (early detect)</li>
-</ul>
-</section>
-<section data-key="ipv4-datagram">
-<h2>IPv4 Datagram</h2>
-<ul>
-<li>ver(4) | hlen(4) | <b>ToS</b>(8, ECN low 2 b) | total len(16)</li>
-<li>id | flags(3) | frag offset(13) → fragmentation</li>
-<li><b>TTL</b>(8): −1/hop, 0 → drop (prevents loops)</li>
-<li><b>protocol</b>(8): 6=TCP, 17=UDP, 1=ICMP</li>
-<li>header checksum(16) — header only!</li>
-<li>src/dst IP (32 b each)</li>
-<li>options + payload. Hdr ≥20 B, max 64 KB</li>
-</ul>
-</section>
-<section data-key="longest-prefix-matching-exam">
+
+
+<section data-key="longest-prefix-matching-exam" data-wired="1" contenteditable="true" spellcheck="false">
 <h2>Longest Prefix Matching <span class="tag">exam</span></h2>
 <ul>
-<li>Pick rule with <b>longest</b> matching prefix</li>
-<li>TCAM = ternary CAM, O(1) lookup w/ wildcards</li>
-<li>Ex: 1010.1000.0100.1000 vs /4=1010.xxxx, /2=10xx, /6=1010.11xx → matches /4, /2 (NOT /6 since 10 ≠ 11) → <b>/4 wins → port 2</b></li>
+<li>Pick rule with <b>longest</b> matching prefix；TCAM = ternary CAM, O(1) lookup w/ wildcards</li>
 </ul>
 </section>
 <section data-key="subnet-concept">
@@ -454,7 +421,7 @@
 <li><b>Route select</b>: 1) local pref → 2) shortest AS-PATH → 3) closest NEXT-HOP (hot potato) → 4) others</li>
 </ul>
 </section>
-<section data-key="bgp-policy-final-q3">
+<section data-key="bgp-policy-final-q3" data-wired="1" contenteditable="true" spellcheck="false">
 <h2>BGP Policy</h2>
 <p class="mini"><span class="red">⚠️ Trap</span>: BGP <b>does NOT always</b> pick shortest AS-PATH — it is policy-based. If a neighbor AS refuses to forward, traffic must take a longer path.</p>
 <ul>
@@ -462,9 +429,7 @@
 <li><b>Import</b>: choose whose route to accept</li>
 <li>Provider only carries traffic to/from <b>customers</b>; refuses transit between other ISPs</li>
 <li><b>Columbia-CERN example</b>: don't advertise CERN path to NYU → NYU can't route via Columbia</li>
-<li>Customer-of-provider always gets advertised</li>
-</ul>
-<div class="my-note" data-note-key="final:2:gotcha"><span class="my-note-tag">⚠️</span> <b>final Q3 易错:</b> 考试看到『policy』『control who can traverse my network』关键词 → 一定是 BGP advertisement policy，不是 OSPF / Dijkstra / cost。OSPF 是 intra-AS（一个 AS 内部），BGP 才管 AS 之间的策略。</div></section>
+<li>Customer-of-provider always gets advertised</li></ul></section>
 <section data-key="hot-potato-routing">
 <h2>Hot Potato Routing</h2>
 <p class="mini"><b>Def</b>: For a packet headed to another AS, the router forwards it to the border router with <b>minimum intra-AS cost</b> ("throw the hot potato out fast"). <br><b>Why</b>: each AS only minimizes <b>its own</b> traffic cost, ignoring how far the packet travels in other ASes.</p>

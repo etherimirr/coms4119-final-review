@@ -937,8 +937,11 @@ body {
 }
 .sheet .img-row img { flex: 1 1 0; min-width: 0; }
 
+/* Safe-margin A4: 5mm all around. Sheet content is 200mm × 287mm (210−10 × 297−10).
+   Most printers/PDF gen need ~3-5mm safe zone to avoid clipping. */
+@page { size: A4; margin: 5mm; }
+.sheet { width: 200mm; }  /* native A4 width minus safe margins, matches print */
 @media print {
-  @page { size: A4; margin: 0; }
   body { background: white !important; }
   .sidebar, .toolbar, .pager, .subtle { display: none !important; }
   .content, .cheat-host { overflow: visible !important; padding: 0 !important; background: white !important; }
