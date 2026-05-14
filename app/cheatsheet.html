@@ -1,4 +1,4 @@
-<!-- CHEATSHEET_VERSION: 11 -->
+<!-- CHEATSHEET_VERSION: 13 -->
 <!--
   COMS 4119 FINAL CHEAT SHEET
   4 sheets organized by course chapter (Kurose-Ross order):
@@ -732,14 +732,25 @@
 <h2>SDN + OpenFlow</h2>
 <ul>
 <li>Controller computes FTs, ships to switches via <b>OpenFlow</b></li>
-<li><b>Match + Action</b> generalizes router/firewall/switch/NAT</li>
-<li>Match: any L2/L3/L4 fields w/ wildcards</li>
+<li><b>Match + Action</b> 统一替代 router / switch / firewall / NAT / load-balancer 等专用设备</li>
+<li>Match: <b>11 个字段</b>（L1 in-port · L2 src/dst MAC, Ethertype, VLAN id+priority · L3 src/dst IP, IP proto, IP ToS · L4 src/dst port）— 都可 wildcard</li>
 <li>Action: forward / drop / modify / to-controller</li>
 <li>Priority resolves overlaps; counters track stats</li>
 <li>Msgs C→S: features, configure, modify-state, packet-out</li>
 <li>Msgs S→C: packet-in, flow-removed, port-status</li>
 <li>Northbound API for apps, southbound for switches</li>
 </ul>
+</section>
+
+<section data-key="sdn-4-principles">
+<h2>SDN 4 大设计原则</h2>
+<ul>
+<li><b>① Flow-based forwarding</b>: 按 11 元组而不是只 dst IP（generalized match）</li>
+<li><b>② DP/CP 分离</b>: switch 只做 dumb fast 转发；controller 做所有 routing 决策</li>
+<li><b>③ CP 从设备搬到外部</b>: 集中式 controller 跑在专门 server 上</li>
+<li><b>④ Programmable network</b>: app 通过 northbound API 编程网络行为</li>
+</ul>
+<p class="mini">→ 把 traditional 网络的『黑盒路由器』变成『可编程通用 switch + 软件大脑』。</p>
 </section>
 
 </div></div>
@@ -855,12 +866,18 @@ Transmit: 101011 110</pre>
 </section>
 
 <section data-key="mac-address">
-<h2>MAC Address</h2>
+<h2>MAC Address vs IP Address</h2>
+<table>
+<tr><th></th><th>MAC</th><th>IP</th></tr>
+<tr><td>层</td><td>L2</td><td>L3</td></tr>
+<tr><td>长度</td><td>48 b (6 B)</td><td>32 b (v4) / 128 b (v6)</td></tr>
+<tr><td>分配</td><td>厂商烧入 NIC (OUI+serial)</td><td>DHCP / 管理员配</td></tr>
+<tr><td>范围</td><td>同 LAN 内唯一</td><td>全局唯一（除 NAT）</td></tr>
+<tr><td>是否换</td><td><b>每跳改</b>（rewrite src/dst MAC）</td><td><b>端到端不变</b></td></tr>
+<tr><td>类比</td><td>身份证号</td><td>邮政地址</td></tr>
+</table>
 <ul>
-<li>6 B; first 3 B = OUI (vendor)</li>
-<li>Broadcast: FF:FF:FF:FF:FF:FF</li>
-<li>OS can override (MAC spoofing)</li>
-<li>Not used for security</li>
+<li>MAC 6 B；首 3 B = OUI (vendor) · broadcast = FF:FF:FF:FF:FF:FF · OS 可改 (MAC spoofing) · 不用于安全</li>
 </ul>
 </section>
 
@@ -983,6 +1000,18 @@ Transmit: 101011 110</pre>
 
 
 <!-- ============ Ch 6b: Wireless — MAC ============ -->
+
+<section data-key="csma-sender-driven-problem">
+<h2>CSMA 的根本缺陷（无线下）</h2>
+<p class="mini"><b>关键洞察</b>：CSMA 让 <b>sender</b> 听信道 — 但碰撞发生在 <b>receiver</b>。</p>
+<ul>
+<li>Sender 听到信道空 ≠ receiver 收得到</li>
+<li>无线信号随距离衰减 → sender / receiver 看到的信道状态完全不一样</li>
+<li>→ 直接派生出 <b>Hidden Terminal</b>（sender 觉得空但 receiver 在碰撞）</li>
+<li>→ 也派生出 <b>Exposed Terminal</b>（sender 觉得忙但 receiver 其实闲）</li>
+</ul>
+<p class="mini">解法（无线场景）：把决定权从 sender 移到 receiver — <b>显式 ACK</b>（CSMA/CA）+ <b>RTS/CTS</b>（让 receiver 说话占信道）。</p>
+</section>
 
 <section data-key="hidden-terminal-exam">
 <h2>Hidden Terminal <span class="tag">exam</span></h2>
