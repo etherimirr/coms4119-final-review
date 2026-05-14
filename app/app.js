@@ -1303,27 +1303,29 @@ const KEY_CHEAT = '4119:cheatsheet:html';
 
 async function renderCheatSheet() {
   const content = document.getElementById('content');
-  const saved = localStorage.getItem(KEY_CHEAT);
-  let bodyHtml;
-  if (saved) {
-    bodyHtml = saved;
-  } else {
-    bodyHtml = await fetch('cheatsheet.html').then(r=>r.text()).catch(()=>'<p>cheatsheet.html not found</p>');
+  // ALWAYS load from source file (file is source of truth, edits go there via /api/patch-cheatsheet)
+  let bodyHtml = '';
+  try {
+    bodyHtml = await fetch('cheatsheet.html?t=' + Date.now()).then(r => r.text());
+  } catch (e) {
+    // fallback to localStorage cache if server unreachable
+    bodyHtml = localStorage.getItem(KEY_CHEAT) || '<p>cheatsheet.html 加载失败，server 在跑吗？</p>';
   }
+  // legacy: clear any stale full-HTML cache (we only need it for offline fallback above)
+  localStorage.removeItem(KEY_CHEAT);
   content.innerHTML = `<div class="cheat-floatbar" title="点击编辑 · ⠿ 拖动 · ⌘Z 撤回 · 自动保存到文件">
       <span id="cheatSavedIndicator" class="cheat-saved-ind"></span>
       <button id="cheatUndoBtn" onclick="cheatUndo()" title="撤回（⌘Z）" disabled>↩️</button>
       <button id="cheatRedoBtn" onclick="cheatRedo()" title="重做（⌘⇧Z）" disabled>↪️</button>
-      <button onclick="cheatSyncTemplate()" title="➕ 仅拉取模板新增 section（绝不改你已有的内容）">🔄</button>
-      <button onclick="cheatPullAllSections()" title="🆕🆕 强制全部刷新所有 section 到源文件最新版（笔记会自动重新合并）">🆕</button>
-      <button onclick="cheatInsertAuto()" title="📥 拉取笔记">📥</button>
+      <button onclick="cheatInsertAuto()" title="📥 拉取你的收藏 / Q&A / 高亮笔记进对应 section">📥</button>
       <button onclick="cheatAddSection()" title="➕ 加 Section">➕</button>
       <button onclick="window.print()" title="🖨️ 打印">🖨️</button>
     </div>
     <div class="cheat-host" id="cheatHost">${bodyHtml}</div>`;
   attachCheatHandlers();
+  // auto-merge stars / QA / highlights / midterm-takeaways into sections (silent on load)
+  cheatInsertAuto(true);
   cheatHistoryInit();
-  cheatCheckTemplateVersion();
   if (window.renderMathInElement) {
     renderMathInElement(content, { delimiters: [
       {left:'$$',right:'$$',display:true},
@@ -2140,7 +2142,7 @@ function ensureFallbackSection(host, sheetTitle='APP & TRANSPORT') {
   return fb;
 }
 
-function cheatInsertAuto() {
+function cheatInsertAuto(quiet=false) {
   const host = document.getElementById('cheatHost');
   if (!host) return;
 
@@ -2233,10 +2235,10 @@ function cheatInsertAuto() {
   attachCheatHandlers();
   saveCheatSheet();
 
+  if (quiet) return;
   const msg = inserted > 0
     ? `已合并 ${inserted} 条笔记到对应章节${skipped>0?`（${skipped} 条已存在跳过）`:''}${unmatched>0?`，${unmatched} 条无匹配章节进入 📌 其它笔记`:''}`
     : (skipped > 0 ? `所有 ${skipped} 条笔记之前已合并，无新内容` : '还没有可拉取的内容。先去收藏 / 高亮 / 提问。');
-  // toast-style feedback (non-blocking)
   if (inserted === 0 && skipped === 0) alert(msg);
   else {
     const t = document.createElement('div');
