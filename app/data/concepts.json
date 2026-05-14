@@ -1141,6 +1141,18 @@
       "label": "Socket Programming",
       "group": "pre_mid",
       "desc": "**TCP**: server `bind()` + `listen()` + `accept()`; client `connect()`\n每个 `accept()` 返回一个新 socket，原 listening socket 继续监听。\n**UDP**: 单个 socket `sendto(addr)` / `recvfrom()`。\n→ 这就是为什么 N 客户端时 TCP server 有 N+1 sockets，UDP 只有 1。"
+    },
+    {
+      "id": "sdn_principles",
+      "label": "SDN 4 大设计原则",
+      "group": "network",
+      "desc": "**① Flow-based forwarding**（11 元组而不只 dst IP）· **② DP/CP 分离**（switch dumb fast / controller 决策）· **③ CP 集中外部**（专用 server 跑 controller）· **④ Programmable**（northbound API）"
+    },
+    {
+      "id": "csma_problem",
+      "label": "CSMA sender-driven 根本缺陷",
+      "group": "wireless",
+      "desc": "CSMA 让 **sender** 听信道 — 但碰撞发生在 **receiver**。无线衰减让 sender/receiver 看到的信道状态不一样 → 直接派生出 **Hidden Terminal**（sender 觉得空但 receiver 在碰撞）+ **Exposed Terminal**（sender 觉得忙但 receiver 其实闲）。解法：把决定权从 sender 移到 receiver（显式 ACK + RTS/CTS）。"
     }
   ],
   "edges": [
@@ -1599,6 +1611,30 @@
     {
       "from": "ip_in_app",
       "to": "socket"
+    },
+    {
+      "from": "sdn",
+      "to": "sdn_principles"
+    },
+    {
+      "from": "openflow",
+      "to": "sdn_principles"
+    },
+    {
+      "from": "csma",
+      "to": "csma_problem"
+    },
+    {
+      "from": "csma_problem",
+      "to": "hidden"
+    },
+    {
+      "from": "csma_problem",
+      "to": "exposed"
+    },
+    {
+      "from": "csma_problem",
+      "to": "rts_cts"
     }
   ]
 }

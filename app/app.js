@@ -719,9 +719,15 @@ function showMidterm() {
 function renderConcepts() {
   const content = document.getElementById('content');
   content.innerHTML = `<div class="toolbar">
-      <div class="title"><b>🧠 概念知识库</b> <span class="subtle">点击节点查看说明 · ▶️ 自动播放按顺序逐个长出来</span></div>
+      <div class="title"><b>🧠 概念知识库</b> <span class="subtle">点击节点查看说明 · ▶️ BFS 树遍历，从一个根节点逐层展开</span></div>
       <div class="pager">
-        <button id="autoplayBtn" onclick="toggleConceptAutoplay()" title="自动播放：按 group 顺序逐个显示节点 + 右下角说明">▶️ 自动播放</button>
+        <label style="font-size:12px;color:var(--subtle)">从</label>
+        <select id="autoplayRoot" title="从哪个节点开始 BFS 展开" style="background:var(--panel-2);border:1px solid var(--border);color:var(--text);padding:5px 8px;border-radius:6px;font-size:13px;max-width:160px">
+          <option value="">最连通节点（默认）</option>
+          ${(CONCEPTS?.nodes || []).slice().sort((a,b)=>(a.label||'').localeCompare(b.label||'')).map(n=>`<option value="${n.id}">${n.label}</option>`).join('')}
+        </select>
+        <button id="autoplayBtn" onclick="toggleConceptAutoplay()" title="▶️ 开始 / ⏸️ 暂停（继续从当前位置）">▶️ 自动播放</button>
+        <button onclick="stopConceptAutoplay()" title="⏹️ 停止并恢复所有节点显示">⏹️</button>
         <select id="autoplaySpeed" onchange="conceptAutoplayState.delay = parseInt(this.value)" title="每个节点显示时间" style="background:var(--panel-2);border:1px solid var(--border);color:var(--text);padding:5px 8px;border-radius:6px;font-size:13px;margin-left:6px">
           <option value="1500">快 1.5s</option>
           <option value="2500" selected>中 2.5s</option>
@@ -818,140 +824,220 @@ function renderConcepts() {
   }
 }
 
-// ============ Concept graph autoplay ============
-// Reveals nodes one by one in a logical order (group → pre_mid/transport/network/link/wireless),
-// shows each node's description in the bottom-right panel, then animates the next node in.
+// ============ Concept graph autoplay — BFS tree traversal ============
+// Reveals nodes one by one BFS-style from a root: shows root, then expands its branches one by one.
+// PAUSE keeps current state; RESUME continues from where it stopped. STOP fully resets.
 const conceptAutoplayState = {
   running: false,
+  paused: false,
   timer: null,
   idx: 0,
-  order: [],          // [node objects in reveal order]
-  hiddenIds: [],      // node ids currently hidden
-  hiddenEdgeIds: [],  // edge ids currently hidden
+  order: [],            // [node objects in BFS reveal order]
+  edgeRevealAt: {},     // map edgeId -> idx at which it should appear
+  hiddenIds: [],        // node ids currently hidden (snapshot at start)
+  hiddenEdgeIds: [],    // edge ids currently hidden
   delay: 2500,
+  rootId: null,
 };
 
-function _groupOrder() {
-  return ['pre_mid', 'app', 'transport', 'network', 'link', 'wireless', 'general'];
+// Build BFS order from a root. Each node "grows" from a parent edge.
+function _buildBFSOrder(rootId) {
+  const byId = new Map((CONCEPTS.nodes || []).map(n => [n.id, n]));
+  const adj = new Map();   // nodeId -> [{neighborId, edgeId}]
+  (CONCEPTS.edges || []).forEach(e => {
+    if (!e.id) return;
+    if (!adj.has(e.from)) adj.set(e.from, []);
+    if (!adj.has(e.to)) adj.set(e.to, []);
+    adj.get(e.from).push({ neighbor: e.to, edgeId: e.id });
+    adj.get(e.to).push({ neighbor: e.from, edgeId: e.id });
+  });
+  const visited = new Set();
+  const order = [];        // node objects
+  const edgeRevealAt = {}; // edgeId -> position in order (which step)
+  const queue = [];
+  if (rootId && byId.has(rootId)) {
+    queue.push({ id: rootId, edgeId: null });
+  }
+  while (queue.length) {
+    const { id, edgeId } = queue.shift();
+    if (visited.has(id)) continue;
+    visited.add(id);
+    const node = byId.get(id);
+    if (!node) continue;
+    order.push(node);
+    if (edgeId) edgeRevealAt[edgeId] = order.length - 1;
+    // sort neighbors so traversal is deterministic + groups together
+    const neighbors = (adj.get(id) || []).slice().sort((a, b) => {
+      const na = byId.get(a.neighbor), nb = byId.get(b.neighbor);
+      const ga = (na?.group || 'z'), gb = (nb?.group || 'z');
+      if (ga !== gb) return ga.localeCompare(gb);
+      return (na?.label || '').localeCompare(nb?.label || '');
+    });
+    neighbors.forEach(({ neighbor, edgeId: eId }) => {
+      if (!visited.has(neighbor)) queue.push({ id: neighbor, edgeId: eId });
+    });
+  }
+  // tack on any nodes not reachable from root
+  (CONCEPTS.nodes || []).forEach(n => {
+    if (!visited.has(n.id)) order.push(n);
+  });
+  return { order, edgeRevealAt };
 }
 
-function _buildAutoplayOrder() {
-  // group nodes by .group, follow group order, alphabetical within
-  const byGroup = {};
+function _autoplayPickRoot() {
+  // honor explicit choice from dropdown
+  const sel = document.getElementById('autoplayRoot');
+  if (sel && sel.value) return sel.value;
+  // default: most-connected node (was "cong_control" = 11 edges)
+  const deg = {};
+  (CONCEPTS.edges || []).forEach(e => {
+    deg[e.from] = (deg[e.from] || 0) + 1;
+    deg[e.to] = (deg[e.to] || 0) + 1;
+  });
+  let bestId = null, bestDeg = -1;
   (CONCEPTS.nodes || []).forEach(n => {
-    const g = n.group || 'general';
-    (byGroup[g] = byGroup[g] || []).push(n);
+    if ((deg[n.id] || 0) > bestDeg) { bestDeg = deg[n.id]; bestId = n.id; }
   });
-  const out = [];
-  _groupOrder().forEach(g => {
-    if (!byGroup[g]) return;
-    byGroup[g].sort((a, b) => (a.label || '').localeCompare(b.label || ''));
-    out.push(...byGroup[g]);
-  });
-  // tack on any groups we didn't enumerate
-  Object.keys(byGroup).forEach(g => {
-    if (!_groupOrder().includes(g)) out.push(...byGroup[g]);
-  });
-  return out;
+  return bestId;
 }
 
 function toggleConceptAutoplay() {
   const btn = document.getElementById('autoplayBtn');
-  if (conceptAutoplayState.running) {
-    conceptAutoplayState.running = false;
-    clearTimeout(conceptAutoplayState.timer);
-    // restore all hidden nodes/edges
-    const nodes = window._conceptNodes, edges = window._conceptEdges;
-    conceptAutoplayState.hiddenIds.forEach(id => { try { nodes.update({ id, hidden: false }); } catch(e) {} });
-    conceptAutoplayState.hiddenEdgeIds.forEach(id => { try { edges.update({ id, hidden: false }); } catch(e) {} });
-    conceptAutoplayState.hiddenIds = [];
-    conceptAutoplayState.hiddenEdgeIds = [];
-    if (btn) btn.textContent = '▶️ 自动播放';
+  const s = conceptAutoplayState;
+
+  // RESUME from pause
+  if (s.paused) {
+    s.paused = false;
+    s.running = true;
+    if (btn) btn.textContent = '⏸️ 暂停';
+    _stepAutoplay();
     return;
   }
-  // start autoplay: hide everything, then reveal one by one
+  // PAUSE while running
+  if (s.running) {
+    s.running = false;
+    s.paused = true;
+    clearTimeout(s.timer);
+    if (btn) btn.textContent = '▶️ 继续';
+    return;
+  }
+  // START fresh
   if (!window._conceptNetwork || !CONCEPTS) return;
   const nodes = window._conceptNodes, edges = window._conceptEdges;
-  conceptAutoplayState.order = _buildAutoplayOrder();
-  conceptAutoplayState.hiddenIds = conceptAutoplayState.order.map(n => n.id);
-  conceptAutoplayState.hiddenEdgeIds = (CONCEPTS.edges || []).map(e => e.id).filter(Boolean);
-  // hide all
-  conceptAutoplayState.hiddenIds.forEach(id => nodes.update({ id, hidden: true }));
-  conceptAutoplayState.hiddenEdgeIds.forEach(id => edges.update({ id, hidden: true }));
-  conceptAutoplayState.idx = 0;
-  conceptAutoplayState.running = true;
+  s.rootId = _autoplayPickRoot();
+  const { order, edgeRevealAt } = _buildBFSOrder(s.rootId);
+  s.order = order;
+  s.edgeRevealAt = edgeRevealAt;
+  s.hiddenIds = order.map(n => n.id);
+  s.hiddenEdgeIds = (CONCEPTS.edges || []).map(e => e.id).filter(Boolean);
+  s.hiddenIds.forEach(id => nodes.update({ id, hidden: true }));
+  s.hiddenEdgeIds.forEach(id => edges.update({ id, hidden: true }));
+  s.idx = 0;
+  s.running = true;
+  s.paused = false;
   if (btn) btn.textContent = '⏸️ 暂停';
   _stepAutoplay();
 }
 
+function stopConceptAutoplay() {
+  const s = conceptAutoplayState;
+  s.running = false;
+  s.paused = false;
+  clearTimeout(s.timer);
+  const nodes = window._conceptNodes, edges = window._conceptEdges;
+  s.hiddenIds.forEach(id => { try { nodes.update({ id, hidden: false }); } catch(e){} });
+  s.hiddenEdgeIds.forEach(id => { try { edges.update({ id, hidden: false }); } catch(e){} });
+  s.hiddenIds = [];
+  s.hiddenEdgeIds = [];
+  s.idx = 0;
+  const btn = document.getElementById('autoplayBtn');
+  if (btn) btn.textContent = '▶️ 自动播放';
+  const detail = document.getElementById('conceptDetail');
+  if (detail) detail.style.display = 'none';
+}
+
 function _stepAutoplay() {
-  if (!conceptAutoplayState.running) return;
-  const { order, idx } = conceptAutoplayState;
-  if (idx >= order.length) {
-    // done — restore button
-    conceptAutoplayState.running = false;
+  const s = conceptAutoplayState;
+  if (!s.running) return;
+  if (s.idx >= s.order.length) {
+    s.running = false;
     const btn = document.getElementById('autoplayBtn');
     if (btn) btn.textContent = '▶️ 自动播放';
     return;
   }
-  const node = order[idx];
+  const node = s.order[s.idx];
   const nodes = window._conceptNodes, edges = window._conceptEdges;
   const network = window._conceptNetwork;
   // reveal this node
   try { nodes.update({ id: node.id, hidden: false }); } catch(e) {}
-  // reveal any edges where BOTH endpoints are already visible (current node id or any already revealed)
-  const revealedSet = new Set(order.slice(0, idx + 1).map(n => n.id));
+  // reveal the *single* edge that brought us here (BFS tree edge) — animates the branch growing
+  const parentEdges = Object.entries(s.edgeRevealAt).filter(([eId, atIdx]) => atIdx === s.idx).map(([eId]) => eId);
+  parentEdges.forEach(eId => { try { edges.update({ id: eId, hidden: false }); } catch(e) {} });
+  // also reveal any cross edges between already-visible nodes (so the graph doesn't look like only a tree)
+  const visibleSet = new Set(s.order.slice(0, s.idx + 1).map(n => n.id));
   (CONCEPTS.edges || []).forEach(e => {
     if (!e.id) return;
-    if (revealedSet.has(e.from) && revealedSet.has(e.to)) {
+    if (visibleSet.has(e.from) && visibleSet.has(e.to)) {
       try { edges.update({ id: e.id, hidden: false }); } catch(err) {}
     }
   });
-  // focus camera on the new node (gentle zoom-in)
+  // focus + select
   try {
-    network.focus(node.id, { scale: 1.1, animation: { duration: 600, easingFunction: 'easeInOutQuad' } });
+    network.focus(node.id, { scale: 1.05, animation: { duration: 500, easingFunction: 'easeInOutQuad' } });
     network.selectNodes([node.id]);
   } catch(e) {}
-  // show its detail panel
+  // panel
+  _renderAutoplayPanel(node, s.idx, s.order.length);
+  s.idx += 1;
+  s.timer = setTimeout(_stepAutoplay, s.delay);
+}
+
+function _renderAutoplayPanel(node, idx, total) {
   const detail = document.getElementById('conceptDetail');
-  if (detail) {
-    let html = `<div style="font-size:11px;color:var(--subtle)">自动播放 ${idx + 1} / ${order.length}</div>
-      <h3 style="margin:4px 0 8px;color:var(--accent)">${node.label}</h3>
-      <div class="subtle" style="margin-bottom:8px">分类：${node.group || 'general'}</div>
-      ${node.desc ? `<div>${marked.parse(node.desc)}</div>` : '<div class="subtle">（无描述）</div>'}`;
-    if (node.formula) html += `<h4 style="color:var(--accent-2);margin-bottom:4px">公式</h4><div>${node.formula}</div>`;
-    if (node.refs && node.refs.length) {
-      html += `<h4 style="color:var(--accent-2);margin-bottom:4px">出现在</h4><ul style="margin:0;padding-left:18px">${node.refs.map(r => `<li>${r.file} 第 ${r.page} 页</li>`).join('')}</ul>`;
-    }
-    html += `<div style="margin-top:10px;display:flex;gap:6px;justify-content:flex-end">
-      <button onclick="_autoplaySkip(-1)" style="background:var(--panel-2);border:1px solid var(--border);color:var(--text);padding:4px 10px;border-radius:4px;cursor:pointer">⬅️ 上一个</button>
-      <button onclick="_autoplaySkip(1)" style="background:var(--panel-2);border:1px solid var(--border);color:var(--text);padding:4px 10px;border-radius:4px;cursor:pointer">下一个 ➡️</button>
-      <button onclick="toggleConceptAutoplay()" style="background:var(--accent);color:#0a0c12;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-weight:600">⏹️ 停止</button>
-    </div>`;
-    detail.innerHTML = html;
-    detail.style.display = 'block';
-    if (window.renderMathInElement) try { renderMathInElement(detail, {delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]}); } catch(e) {}
+  if (!detail) return;
+  let html = `<div style="font-size:11px;color:var(--subtle)">BFS 树遍历 ${idx + 1} / ${total} · 从 <b>${conceptAutoplayState.rootId}</b> 展开</div>
+    <h3 style="margin:4px 0 8px;color:var(--accent)">${node.label}</h3>
+    <div class="subtle" style="margin-bottom:8px">分类：${node.group || 'general'}</div>
+    ${node.desc ? `<div>${marked.parse(node.desc)}</div>` : '<div class="subtle">（无描述）</div>'}`;
+  if (node.formula) html += `<h4 style="color:var(--accent-2);margin-bottom:4px">公式</h4><div>${node.formula}</div>`;
+  if (node.refs && node.refs.length) {
+    html += `<h4 style="color:var(--accent-2);margin-bottom:4px">出现在</h4><ul style="margin:0;padding-left:18px">${node.refs.map(r => `<li>${r.file} 第 ${r.page} 页</li>`).join('')}</ul>`;
   }
-  conceptAutoplayState.idx = idx + 1;
-  conceptAutoplayState.timer = setTimeout(_stepAutoplay, conceptAutoplayState.delay);
+  html += `<div style="margin-top:10px;display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap">
+    <button onclick="_autoplaySkip(-1)" style="background:var(--panel-2);border:1px solid var(--border);color:var(--text);padding:4px 10px;border-radius:4px;cursor:pointer">⬅️ 上一个</button>
+    <button onclick="_autoplaySkip(1)" style="background:var(--panel-2);border:1px solid var(--border);color:var(--text);padding:4px 10px;border-radius:4px;cursor:pointer">下一个 ➡️</button>
+    <button onclick="toggleConceptAutoplay()" style="background:var(--accent-2);color:#0a0c12;border:none;padding:4px 10px;border-radius:4px;cursor:pointer">⏸️ 暂停</button>
+    <button onclick="stopConceptAutoplay()" style="background:var(--bad);color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer">⏹️ 停止</button>
+  </div>`;
+  detail.innerHTML = html;
+  detail.style.display = 'block';
+  if (window.renderMathInElement) try { renderMathInElement(detail, {delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]}); } catch(e) {}
 }
 
 function _autoplaySkip(delta) {
-  if (!conceptAutoplayState.running) return;
-  clearTimeout(conceptAutoplayState.timer);
-  conceptAutoplayState.idx = Math.max(0, conceptAutoplayState.idx - 1 + delta);
-  // if going backward, hide nodes after new idx
+  const s = conceptAutoplayState;
+  if (!s.running && !s.paused) return;
+  clearTimeout(s.timer);
+  // adjust target idx (idx is the NEXT to reveal, so current displayed = idx-1)
+  const target = Math.max(0, Math.min(s.order.length - 1, s.idx - 1 + delta));
+  // sync DOM to target
   const nodes = window._conceptNodes, edges = window._conceptEdges;
-  conceptAutoplayState.order.forEach((n, i) => {
-    nodes.update({ id: n.id, hidden: i >= conceptAutoplayState.idx });
+  s.order.forEach((n, i) => {
+    nodes.update({ id: n.id, hidden: i > target });
   });
-  // also re-hide edges that should not be visible
-  const visibleSet = new Set(conceptAutoplayState.order.slice(0, conceptAutoplayState.idx).map(n => n.id));
+  const visibleSet = new Set(s.order.slice(0, target + 1).map(n => n.id));
   (CONCEPTS.edges || []).forEach(e => {
     if (!e.id) return;
     edges.update({ id: e.id, hidden: !(visibleSet.has(e.from) && visibleSet.has(e.to)) });
   });
-  _stepAutoplay();
+  s.idx = target;  // _stepAutoplay will display order[idx] then bump
+  if (s.running) {
+    _stepAutoplay();
+  } else {
+    // paused — just update the panel to show new current node
+    _renderAutoplayPanel(s.order[target], target, s.order.length);
+    s.idx = target + 1;  // so resume continues correctly
+  }
 }
 
 function toggleConceptQA() {
