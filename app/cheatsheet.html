@@ -462,6 +462,18 @@
 </section>
 
 <section>
+<h2>Subnet 概念</h2>
+<ul>
+<li><b>Subnet</b> = 一组『不经 router 就能互通』的接口</li>
+<li>IP 地址 = <b>subnet 部分</b>（高位）+ <b>host 部分</b>（低位）</li>
+<li>Mask 决定『前多少位是 subnet 部分』</li>
+<li><b>同子网</b> = ARP 直接通；<b>跨子网</b> = 经 router</li>
+<li><b>识别 recipe</b>：把图里每个 router 接口断开 → 数剩下的『孤岛』，每个孤岛 = 一个 subnet</li>
+<li>IP 关联到 <b>interface</b>（不是 host）：router 有几个接口就有几个 IP</li>
+</ul>
+</section>
+
+<section>
 <h2>CIDR &amp; Subnet calc <span class="tag">exam</span></h2>
 <div class="formula">prefix = IP AND mask;  hosts = 2^(32−x)</div>
 <ul>

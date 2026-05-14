@@ -481,6 +481,12 @@ body {
   border-color: var(--warn);
   color: var(--warn);
 }
+.toolbar button.pace-on {
+  background: linear-gradient(90deg, rgba(91,214,163,0.22), rgba(91,214,163,0.06));
+  border-color: var(--good);
+  color: var(--good);
+}
+#paceStatus { color: var(--good); }
 .toolbar button:hover { color: #fff; }
 
 /* ============ Stars view ============ */

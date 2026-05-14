@@ -308,6 +308,7 @@ async function boot() {
     if (e.key === 'ArrowLeft') step(-1);
     if ((e.key === 's' || e.key === 'S') && FILES.find(f=>f.id===currentTab)) onToggleStar();
     if ((e.key === 'y' || e.key === 'Y') && FILES.find(f=>f.id===currentTab)) hlSelected(currentTab, currentPage);
+    if ((e.key === 'p' || e.key === 'P') && FILES.find(f=>f.id===currentTab)) togglePace();
   });
 }
 
@@ -412,8 +413,11 @@ function renderLecture(id) {
   const content = document.getElementById('content');
   content.innerHTML = `
     <div class="toolbar">
-      <div class="title"><b>${file.label}</b> <span class="subtle">— 第 <span id="curp">1</span> / ${total} 页</span></div>
+      <div class="title"><b>${file.label}</b> <span class="subtle">— 第 <span id="curp">1</span> / ${total} 页 <span id="paceStatus" class="subtle"></span></span></div>
       <div class="pager">
+        <button id="paceBtn" onclick="togglePace()" title="自动翻页模式 (P 键)">⏱️ 计时翻页</button>
+        <input type="number" id="paceSec" min="3" max="600" value="${loadPaceSec()}" title="每页停留秒数" onchange="setPaceSec(this.value)" style="width:50px">
+        <span class="subtle" style="font-size:11px">秒</span>
         <button id="starBtn" onclick="onToggleStar()" title="收藏/取消收藏 (S)">☆ 收藏</button>
         <button onclick="step(-1)">← 上一页</button>
         <input type="number" id="goto" min="1" max="${total}" value="1">
@@ -427,6 +431,7 @@ function renderLecture(id) {
     </div>
   `;
   showPage();
+  refreshPaceUI();
 }
 
 function refreshStarBtn() {
@@ -1465,5 +1470,84 @@ function _onMarkDblClick(ev) {
   parent.normalize();
   persistHighlights(currentTab, currentPage);
 }
+
+// ============ Pace mode (timed auto-advance) ============
+const KEY_PACE_ON = '4119:pace:on';
+const KEY_PACE_SEC = '4119:pace:sec';
+let _paceTimer = null;
+let _paceRemaining = 0;
+let _paceTick = null;
+
+function loadPaceSec() {
+  const v = parseInt(localStorage.getItem(KEY_PACE_SEC) || '30');
+  return (Number.isFinite(v) && v >= 3) ? v : 30;
+}
+function setPaceSec(v) {
+  const n = Math.max(3, Math.min(600, parseInt(v) || 30));
+  localStorage.setItem(KEY_PACE_SEC, String(n));
+  // restart pace if active
+  if (_paceTimer) { stopPace(); startPace(); }
+}
+function isPaceOn() { return localStorage.getItem(KEY_PACE_ON) === '1'; }
+
+function togglePace() {
+  if (_paceTimer) { stopPace(); return; }
+  startPace();
+}
+
+function startPace() {
+  stopPace(); // clear any previous
+  const sec = loadPaceSec();
+  _paceRemaining = sec;
+  localStorage.setItem(KEY_PACE_ON, '1');
+  _paceTick = setInterval(() => {
+    _paceRemaining--;
+    refreshPaceUI();
+    if (_paceRemaining <= 0) {
+      // advance
+      const file = FILES.find(f => f.id === currentTab);
+      if (file && currentPage < file.pages) {
+        currentPage++;
+        showPage();
+        _paceRemaining = sec;
+      } else {
+        // reached end → stop
+        stopPace();
+      }
+    }
+  }, 1000);
+  refreshPaceUI();
+}
+
+function stopPace() {
+  if (_paceTick) { clearInterval(_paceTick); _paceTick = null; }
+  _paceTimer = null;
+  localStorage.setItem(KEY_PACE_ON, '0');
+  refreshPaceUI();
+}
+
+function refreshPaceUI() {
+  const btn = document.getElementById('paceBtn');
+  const status = document.getElementById('paceStatus');
+  if (!btn) return;
+  if (_paceTick) {
+    btn.classList.add('pace-on');
+    btn.innerHTML = `⏸️ 停止计时`;
+    if (status) status.textContent = ` · 下一页 ${_paceRemaining}s`;
+    _paceTimer = _paceTick; // keep alias for togglePace check
+  } else {
+    btn.classList.remove('pace-on');
+    btn.innerHTML = `⏱️ 计时翻页`;
+    if (status) status.textContent = '';
+  }
+}
+
+// On page change, reset pace countdown (so each page gets full N seconds)
+const _origShowPage = showPage;
+showPage = function() {
+  _origShowPage();
+  if (_paceTick) _paceRemaining = loadPaceSec();
+  refreshPaceUI();
+};
 
 boot();
