@@ -1,4 +1,4 @@
-<!-- CHEATSHEET_VERSION: 34 -->
+<!-- CHEATSHEET_VERSION: 35 -->
 <!--
   COMS 4119 FINAL CHEAT SHEET
   4 sheets organized by course chapter (Kurose-Ross order):
@@ -322,7 +322,6 @@
 
 <section data-key="aimd-fairness-exam">
 <h2>AIMD Fairness <span class="tag">exam</span></h2>
-<figure><img src="cheatsheet-assets/quiz-tcp-throughput.jpg"><figcaption>Quiz: TCP throughput from W</figcaption></figure>
 <figure><img src="cheatsheet-assets/aimd-fairness.jpg"><figcaption>AIMD fairness convergence (x1 vs x2)</figcaption></figure>
 <ul>
 <li>+a → both move up 45° (efficiency line)</li>
@@ -962,6 +961,7 @@ Transmit: 101011 110</pre>
 
 <section data-key="hidden-terminal-exam">
 <h2>Hidden Terminal <span class="tag">exam</span></h2>
+<figure><img src="cheatsheet-assets/example-q5-hidden-exposed.jpg"><figcaption>Example Q5 — Hidden / Exposed Terminal identification</figcaption></figure>
 <p class="mini"><b>Def</b>: node <b>X</b> <b>outside</b> sender <b>A</b>'s range but <b>inside</b> receiver <b>B</b>'s interference range. X hears idle → sends → collides w/ A at B.</p>
 <ul>
 <li>Symptom: A transmits fine, B receives nothing</li>
@@ -1284,31 +1284,15 @@ Transmit: 101011 110</pre>
 </tbody></table>
 </section>
 
-<section data-key="combo-cheats">
+<section data-key="combo-cheats" data-wired="1" contenteditable="true" spellcheck="false">
 <h2>Combo Cheats</h2>
 <ul>
 <li>Mbps × ms = Kb (divide by 1000)</li>
 <li>Gbps × μs = Kb</li>
-<li>MB × 8 = Mb</li>
-<li>GB × 8 = Gb</li>
-<li>(L bytes) × 8 / (R bps) = T_trans (sec)</li>
-<li>(d m) / (3·10⁸ m/s) = T_prop (sec)</li>
 </ul>
 </section>
 
-<section data-key="common-frame-header-sizes">
-<h2>Common Frame / Header Sizes</h2>
-<ul>
-<li>Min Ethernet: 64 B (w/ hdr+CRC)</li>
-<li>Max Ethernet (typical): 1518 B</li>
-<li>MTU (Internet typical): 1500 B</li>
-<li>TCP segment header: 20 B</li>
-<li>IPv4 header: 20 B (no options)</li>
-<li>IPv6 header: 40 B fixed</li>
-<li>UDP header: 8 B</li>
-<li>TCP+IP overhead: 40 B/packet</li>
-</ul>
-</section>
+
 
 </div></div>
 
