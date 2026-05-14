@@ -54,7 +54,7 @@ body {
 .tab.section { color: var(--subtle); font-size: 11px; text-transform: uppercase; letter-spacing: 1px; cursor: default; padding-top: 14px; padding-bottom: 4px; }
 .tab.section:hover { background: transparent; }
 
-.content { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
+.content { flex: 1; overflow: hidden; display: flex; flex-direction: column; position: relative; }
 
 .toolbar {
   display: flex;
@@ -288,6 +288,45 @@ body {
   background: rgba(245, 196, 110, 0.65);
 }
 
+/* ============ Postmid summary view ============ */
+.postmid-view {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  width: 100%;
+  box-sizing: border-box;
+}
+.postmid-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 16px 24px 40px;
+}
+.postmid-body {
+  background: #161b29;
+  border: 1px solid #2a3247;
+  border-radius: 10px;
+  padding: 28px 36px;
+  margin-top: 12px;
+  line-height: 1.75;
+  font-size: 14.5px;
+  color: #d6dbe8;
+}
+.postmid-body h1 { color: #fff; border-bottom: 2px solid #2a3247; padding-bottom: 8px; margin-top: 24px; }
+.postmid-body h2 { color: var(--accent-2, #f5c46e); margin-top: 28px; border-bottom: 1px dashed #2a3247; padding-bottom: 4px; }
+.postmid-body h3 { color: #9fc4ff; margin-top: 18px; }
+.postmid-body h4 { color: #cde0ff; margin-top: 14px; }
+.postmid-body code { background: #1f2638; color: #f5c46e; padding: 2px 6px; border-radius: 4px; font-size: 0.92em; }
+.postmid-body pre { background: #0f1320; border: 1px solid #2a3247; border-radius: 6px; padding: 12px 14px; overflow-x: auto; }
+.postmid-body pre code { background: transparent; padding: 0; color: #d6dbe8; }
+.postmid-body table { border-collapse: collapse; margin: 12px 0; width: 100%; }
+.postmid-body th, .postmid-body td { border: 1px solid #2a3247; padding: 6px 10px; text-align: left; }
+.postmid-body th { background: #1f2638; color: #fff; }
+.postmid-body blockquote { border-left: 3px solid var(--accent-2, #f5c46e); padding: 4px 14px; color: #b8c0d0; background: #1a2030; margin: 12px 0; }
+.postmid-body ul, .postmid-body ol { padding-left: 24px; }
+.postmid-body li { margin: 4px 0; }
+.postmid-body hr { border: 0; border-top: 1px solid #2a3247; margin: 24px 0; }
+.postmid-body strong { color: #fff; }
+
 /* ============ Cheatsheet section overlay (delete/image buttons) ============ */
 .cheat-host section {
   position: relative;
@@ -331,6 +370,59 @@ body {
 .section-overlay button:hover {
   background: var(--accent);
   color: #0a0c12;
+}
+.section-overlay button.drag-handle { cursor: grab; }
+.section-overlay button.drag-handle:active { cursor: grabbing; }
+.cheat-host section.dragging {
+  opacity: 0.4;
+  outline: 2px dashed var(--accent) !important;
+}
+.cheat-host .cols.drag-over {
+  background: rgba(122, 162, 255, 0.08);
+  outline: 1px dashed rgba(122, 162, 255, 0.7);
+}
+.cheat-host section.drop-before { box-shadow: 0 -4px 0 -1px var(--accent); }
+.cheat-host section.drop-after  { box-shadow: 0  4px 0 -1px var(--accent); }
+
+/* figure overlay (hover ⠿/✕) + drop indicators */
+.cheat-host figure { position: relative; }
+.cheat-host figure:hover { outline: 1px solid rgba(122, 162, 255, 0.5); }
+.cheat-host figure.dragging { opacity: 0.4; outline: 2px dashed var(--accent) !important; }
+.cheat-host figure.fig-drop-before { box-shadow: 0 -3px 0 -1px var(--accent); }
+.cheat-host figure.fig-drop-after  { box-shadow: 0  3px 0 -1px var(--accent); }
+.figure-overlay {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.15s;
+  z-index: 11;
+}
+.cheat-host figure:hover .figure-overlay,
+.cheat-host figure:focus-within .figure-overlay { opacity: 1; }
+.figure-overlay button {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--border);
+  font-size: 11px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.figure-overlay button.drag-handle { cursor: grab; }
+.figure-overlay button.drag-handle:active { cursor: grabbing; }
+.figure-overlay button:hover { background: var(--accent); color: #0a0c12; }
+.figure-overlay button:last-child:hover { background: var(--bad); color: #fff; }
+@media print {
+  .figure-overlay { display: none !important; }
 }
 .section-overlay button:last-child:hover {
   background: var(--bad);
@@ -592,7 +684,109 @@ body {
   display: flex;
   justify-content: center;
 }
-.cheat-pages { display: flex; flex-direction: column; gap: 20px; align-items: center; }
+.cheat-pages {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  /* don't use align-items:center — when a child is wider than parent it overflows BOTH sides,
+     and the left overflow gets hidden behind the sidebar. Use auto margins instead so
+     overflow only goes right where overflow-x:auto can scroll. */
+  align-items: flex-start;
+  padding: 8px 0;
+}
+.cheat-pages > .sheet { margin: 0 auto; }
+.cheat-host {
+  overflow-x: auto;
+  position: relative;
+  flex: 1;
+}
+
+/* inline "my note" inside a cheatsheet section — merged from stars/QA/highlights */
+.cheat-host .my-note {
+  font-size: 7pt;
+  line-height: 1.25;
+  margin: 0.6mm 0;
+  padding: 0.6mm 1.2mm;
+  background: #fff7d6;
+  border-left: 1mm solid #d4a017;
+  border-radius: 0.5mm;
+  color: #333;
+}
+.cheat-host .my-note + .my-note { margin-top: 0.3mm; }
+.cheat-host .my-note-tag {
+  display: inline-block;
+  margin-right: 1mm;
+  font-size: 7pt;
+}
+.cheat-host section.my-notes-fallback {
+  background: #fff3a0;
+  border-color: #d4a017;
+}
+@media print {
+  .cheat-host .my-note { background: #f7f4e0; border-left-color: #888; color: #000; }
+}
+
+/* small floating toast at bottom of screen after 📥 pull */
+.cheat-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(20, 24, 36, 0.96);
+  color: #fff;
+  padding: 10px 18px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+  font-size: 13px;
+  z-index: 1000;
+  animation: cheatToastIn 0.18s ease-out;
+}
+@keyframes cheatToastIn { from { opacity: 0; transform: translate(-50%, 6px); } to { opacity: 1; transform: translate(-50%, 0); } }
+
+/* floating compact toolbar (top-right corner of the content area) */
+.cheat-floatbar {
+  position: absolute;
+  top: 8px;
+  right: 16px;
+  z-index: 30;
+  display: flex;
+  gap: 4px;
+  background: rgba(20, 24, 36, 0.92);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 4px 6px;
+  backdrop-filter: blur(6px);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.35);
+}
+.cheat-floatbar button {
+  background: transparent;
+  border: none;
+  color: var(--text);
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+.cheat-floatbar button:hover:not(:disabled) { background: var(--panel-2); }
+.cheat-floatbar button:disabled { opacity: 0.35; cursor: default; }
+.cheat-saved-ind {
+  color: var(--good, #6dd06d);
+  font-size: 11px;
+  padding: 0 6px;
+  min-width: 0;
+  white-space: nowrap;
+  align-self: center;
+  font-weight: 500;
+  transition: opacity 0.3s;
+}
+.cheat-saved-ind:empty { display: none; }
+@media print { .cheat-floatbar { display: none !important; } }
 .sheet {
   width: 210mm;
   min-height: 297mm;
@@ -605,16 +799,15 @@ body {
   line-height: 1.25;
   break-after: page;
   page-break-after: always;
+  flex-shrink: 0;
 }
-.sheet h1 {
-  font-size: 11pt;
-  margin: 0 0 2mm;
-  padding: 1mm 2mm;
-  background: #111;
-  color: #fff;
-  text-align: center;
-  letter-spacing: 1px;
-}
+/* on screen: zoom shrinks the bounding box (unlike scale), so the sheet fits viewport.
+   zoom is ignored at print time, so A4 layout is preserved. */
+@media screen and (max-width: 900px)  { .sheet { zoom: 0.55; } }
+@media screen and (min-width: 900px)  and (max-width: 1100px) { .sheet { zoom: 0.7; } }
+@media screen and (min-width: 1100px) and (max-width: 1300px) { .sheet { zoom: 0.85; } }
+@media screen and (min-width: 1300px) and (max-width: 1500px) { .sheet { zoom: 0.95; } }
+.sheet h1 { display: none; }
 .sheet .cols {
   column-count: 3;
   column-gap: 3mm;

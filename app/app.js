@@ -40,6 +40,7 @@ const SPECIAL = [
   { id: 'stars',      label: '⭐ 收藏的重点',   pages: 0 },
   { id: 'final',      label: '🎯 Final Preview', pages: 14 },
   { id: 'midterm',    label: '📝 期中复盘',     pages: 4 },
+  { id: 'postmid',    label: '📖 期中后总结',   pages: 0 },
   { id: 'concepts',   label: '🧠 概念知识库',   pages: 0 },
   { id: 'cheat',      label: '🖨️ Cheat Sheet',  pages: 0 },
 ];
@@ -127,7 +128,7 @@ function buildContextForKey(qaKey) {
       p.gotcha ? `易错点: ${p.gotcha}` : '',
     ].filter(Boolean).join('\n\n');
   }
-  if (qaKey === 'concepts' || qaKey === 'overview' || qaKey === 'cheat' || qaKey === 'stars') {
+  if (qaKey === 'concepts' || qaKey === 'overview' || qaKey === 'cheat' || qaKey === 'stars' || qaKey === 'postmid') {
     return `[场景] ${qaKey} 视图`;
   }
   // lecture page: "fileId:page"
@@ -309,6 +310,12 @@ async function boot() {
   renderTabs();
   selectTab(currentTab);
   document.addEventListener('keydown', e=>{
+    // cheatsheet undo/redo — handled BEFORE contentEditable early-return so it works inside sections
+    if (currentTab === 'cheat' && (e.metaKey || e.ctrlKey)) {
+      const k = e.key.toLowerCase();
+      if (k === 'z' && !e.shiftKey) { e.preventDefault(); cheatUndo(); return; }
+      if ((k === 'z' && e.shiftKey) || k === 'y') { e.preventDefault(); cheatRedo(); return; }
+    }
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
     if (e.target.isContentEditable) return;
     if (e.key === 'ArrowRight') step(1);
@@ -364,6 +371,7 @@ function selectTab(id) {
   if (id==='overview') return renderOverview();
   if (id==='final') return renderFinal();
   if (id==='midterm') return renderMidterm();
+  if (id==='postmid') return renderPostMid();
   if (id==='concepts') return renderConcepts();
   if (id==='cheat') return renderCheatSheet();
   if (id==='stars') return renderStars();
@@ -877,6 +885,41 @@ function clearAllStars() {
   renderStars();
 }
 
+// ============ Post-midterm Summary (lec14, 16-23 in Chinese) ============
+async function renderPostMid() {
+  const content = document.getElementById('content');
+  content.innerHTML = `<div class="postmid-view">
+    <div class="postmid-inner">
+      <div class="toolbar">
+        <div class="title"><b>📖 期中后内容总结</b> <span class="subtle">lec14, 16-23 · 中文 · 重点概念 + 公式 + 解题策略</span></div>
+        <div class="pager">
+          <button onclick="document.querySelector('.postmid-view').scrollTo({top:0,behavior:'smooth'})">⬆️ 顶部</button>
+          <button onclick="window.print()">🖨️ 打印</button>
+        </div>
+      </div>
+      <div id="postmidBody" class="postmid-body"><p class="subtle">加载中...</p></div>
+      <div class="postmid-qa">
+        <h3 style="color:var(--accent-2);margin-top:24px">问 AI 助教（基于这份总结）</h3>
+        ${qaWidgetHtml('postmid', '问 AI（期中后总结）')}
+      </div>
+    </div>
+  </div>`;
+  let md = '';
+  try {
+    md = await fetch('data/postmid-summary.md').then(r=>r.text());
+  } catch (e) {
+    md = '# 加载失败\n\n找不到 `app/data/postmid-summary.md`。';
+  }
+  const body = document.getElementById('postmidBody');
+  body.innerHTML = marked.parse(md);
+  if (window.renderMathInElement) {
+    try { window.renderMathInElement(body, {delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]}); } catch(e) {}
+  }
+  const root = content.querySelector('.postmid-view');
+  renderAllQAIn(root);
+  wireQAShortcuts(root);
+}
+
 // ============ Cheat Sheet (interactive editor) ============
 const KEY_CHEAT = '4119:cheatsheet:html';
 
@@ -889,16 +932,19 @@ async function renderCheatSheet() {
   } else {
     bodyHtml = await fetch('cheatsheet.html').then(r=>r.text()).catch(()=>'<p>cheatsheet.html not found</p>');
   }
-  content.innerHTML = `<div class="toolbar">
-      <div class="title"><b>🖨️ Cheat Sheet</b> <span class="subtle">直接点击编辑 · ✕ 删 section · 📷 加图 · 自动存</span></div>
-      <div class="pager">
-        <button onclick="cheatInsertAuto()" title="拉取你的收藏 / 笔记 / Q&A / 高亮">📥 拉取笔记</button>
-        <button onclick="cheatAddSection()">➕ Section</button>
-        <button onclick="window.print()">🖨️ Print</button>
-      </div>
+  content.innerHTML = `<div class="cheat-floatbar" title="点击编辑 · ⠿ 拖动 · ⌘Z 撤回 · 自动保存到文件">
+      <span id="cheatSavedIndicator" class="cheat-saved-ind"></span>
+      <button id="cheatUndoBtn" onclick="cheatUndo()" title="撤回（⌘Z）" disabled>↩️</button>
+      <button id="cheatRedoBtn" onclick="cheatRedo()" title="重做（⌘⇧Z）" disabled>↪️</button>
+      <button onclick="cheatSyncTemplate()" title="➕ 拉取模板新增 section（绝不改你已有的内容）">🔄</button>
+      <button onclick="cheatInsertAuto()" title="📥 拉取笔记">📥</button>
+      <button onclick="cheatAddSection()" title="➕ 加 Section">➕</button>
+      <button onclick="window.print()" title="🖨️ 打印">🖨️</button>
     </div>
     <div class="cheat-host" id="cheatHost">${bodyHtml}</div>`;
   attachCheatHandlers();
+  cheatHistoryInit();
+  cheatCheckTemplateVersion();
   if (window.renderMathInElement) {
     renderMathInElement(content, { delimiters: [
       {left:'$$',right:'$$',display:true},
@@ -907,28 +953,241 @@ async function renderCheatSheet() {
   }
 }
 
+function _markModified(section) {
+  if (section && section.tagName === 'SECTION') section.dataset.modified = '1';
+}
+
 function attachCheatHandlers() {
   const host = document.getElementById('cheatHost');
   if (!host) return;
+  _assignKeys(host);  // ensure every section has a stable data-key for merge
   host.querySelectorAll('section').forEach(section => {
     if (section.dataset.wired) return;
     section.dataset.wired = '1';
     section.contentEditable = 'true';
     section.spellcheck = false;
-    // overlay buttons (non-editable)
+    // overlay buttons (non-editable). Drag handle uses HTML5 DnD attached to the section.
     const overlay = document.createElement('div');
     overlay.className = 'section-overlay';
     overlay.contentEditable = 'false';
     overlay.innerHTML = `
+      <button class="drag-handle" title="拖到任何 section/列上重排（跨页也行）" onmousedown="cheatDragStart(this); event.stopPropagation();" onmouseup="cheatDragEnd(this);">⠿</button>
       <button title="让 AI 往这个 section 补内容" onclick="cheatLLMAddTo(this); event.stopPropagation();">🤖</button>
       <button title="加图" onclick="cheatAddImage(this); event.stopPropagation();">📷</button>
       <button title="删除" onclick="cheatDeleteSection(this); event.stopPropagation();">✕</button>`;
     section.appendChild(overlay);
+    // section drag events (only the handle starts a drag)
+    section.addEventListener('dragstart', onSectionDragStart);
+    section.addEventListener('dragend', onSectionDragEnd);
+    section.addEventListener('dragover', onSectionDragOver);
+    section.addEventListener('dragleave', onSectionDragLeave);
+    section.addEventListener('drop', onSectionDrop);
   });
-  // single input listener, debounced
+  // wire each .cols container as drop target (for empty-column drops)
+  host.querySelectorAll('.cols').forEach(cols => {
+    if (cols.dataset.dropWired) return;
+    cols.dataset.dropWired = '1';
+    cols.addEventListener('dragover', onColsDragOver);
+    cols.addEventListener('dragleave', onColsDragLeave);
+    cols.addEventListener('drop', onColsDrop);
+  });
+  // wire each <figure> with hover overlay (drag handle + delete) and DnD
+  host.querySelectorAll('figure').forEach(fig => {
+    if (fig.dataset.figWired) return;
+    fig.dataset.figWired = '1';
+    fig.contentEditable = 'false';
+    const overlay = document.createElement('div');
+    overlay.className = 'figure-overlay';
+    overlay.contentEditable = 'false';
+    overlay.innerHTML = `
+      <button class="drag-handle" title="拖到任何 section 里" onmousedown="cheatFigDragStart(this); event.stopPropagation();" onmouseup="cheatFigDragEnd(this);">⠿</button>
+      <button title="删除图片" onclick="cheatDeleteFigure(this); event.stopPropagation();">✕</button>`;
+    fig.appendChild(overlay);
+    fig.addEventListener('dragstart', onFigureDragStart);
+    fig.addEventListener('dragend', onFigureDragEnd);
+    fig.addEventListener('dragover', onFigureDragOver);
+    fig.addEventListener('dragleave', onFigureDragLeave);
+    fig.addEventListener('drop', onFigureDrop);
+  });
+  // single input listener — also flags edited section as modified for smart-merge
   if (!host.dataset.listenerWired) {
     host.dataset.listenerWired = '1';
-    host.addEventListener('input', debouncedSaveCheat);
+    host.addEventListener('input', e => {
+      if (!_cheatApplyingHist) _markModified(e.target.closest('section'));
+      debouncedSaveCheat();
+    });
+  }
+}
+
+// ========== Figure drag-and-drop (mirrors section DnD) ==========
+let _draggedFigure = null;
+function cheatFigDragStart(btn) {
+  const fig = btn.closest('figure');
+  if (fig) fig.setAttribute('draggable', 'true');
+}
+function cheatFigDragEnd(btn) {
+  const fig = btn.closest('figure');
+  if (fig) setTimeout(()=>fig.removeAttribute('draggable'), 100);
+}
+function onFigureDragStart(e) {
+  const fig = e.currentTarget;
+  if (fig.getAttribute('draggable') !== 'true') { e.preventDefault(); return; }
+  _draggedFigure = fig;
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', 'cheat-figure');
+  fig.classList.add('dragging');
+  e.stopPropagation();
+}
+function onFigureDragEnd(e) {
+  const fig = e.currentTarget;
+  fig.classList.remove('dragging');
+  fig.removeAttribute('draggable');
+  document.querySelectorAll('.cheat-host .fig-drop-before, .cheat-host .fig-drop-after').forEach(el=>{
+    el.classList.remove('fig-drop-before','fig-drop-after');
+  });
+  _draggedFigure = null;
+}
+function onFigureDragOver(e) {
+  if (!_draggedFigure) return;
+  const fig = e.currentTarget;
+  if (fig === _draggedFigure) return;
+  e.preventDefault();
+  e.stopPropagation();
+  e.dataTransfer.dropEffect = 'move';
+  const rect = fig.getBoundingClientRect();
+  const before = (e.clientY - rect.top) < rect.height / 2;
+  fig.classList.toggle('fig-drop-before', before);
+  fig.classList.toggle('fig-drop-after', !before);
+}
+function onFigureDragLeave(e) {
+  const fig = e.currentTarget;
+  fig.classList.remove('fig-drop-before','fig-drop-after');
+}
+function onFigureDrop(e) {
+  if (!_draggedFigure) return;
+  const fig = e.currentTarget;
+  if (fig === _draggedFigure) return;
+  e.preventDefault();
+  e.stopPropagation();
+  const rect = fig.getBoundingClientRect();
+  const before = (e.clientY - rect.top) < rect.height / 2;
+  // mark BOTH source and destination sections as modified
+  _markModified(_draggedFigure.closest('section'));
+  _markModified(fig.closest('section'));
+  if (before) fig.parentNode.insertBefore(_draggedFigure, fig);
+  else fig.parentNode.insertBefore(_draggedFigure, fig.nextSibling);
+  fig.classList.remove('fig-drop-before','fig-drop-after');
+  debouncedSaveCheat();
+}
+function cheatDeleteFigure(btn) {
+  const fig = btn.closest('figure');
+  if (!fig) return;
+  const cap = fig.querySelector('figcaption')?.textContent || '(no caption)';
+  if (!confirm(`删除这张图?\n\n${cap}`)) return;
+  _markModified(fig.closest('section'));
+  fig.remove();
+  saveCheatSheet();
+}
+
+// ========== Drag and drop for cheatsheet sections ==========
+let _draggedSection = null;
+function cheatDragStart(btn) {
+  const section = btn.closest('section');
+  if (!section) return;
+  section.setAttribute('draggable', 'true');
+}
+function cheatDragEnd(btn) {
+  const section = btn.closest('section');
+  if (!section) return;
+  // keep draggable off otherwise text-select / contentEditable breaks
+  setTimeout(()=>section.removeAttribute('draggable'), 100);
+}
+function onSectionDragStart(e) {
+  const section = e.currentTarget;
+  if (section.getAttribute('draggable') !== 'true') { e.preventDefault(); return; }
+  _draggedSection = section;
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', 'cheat-section');
+  section.classList.add('dragging');
+}
+function onSectionDragEnd(e) {
+  const section = e.currentTarget;
+  section.classList.remove('dragging');
+  section.removeAttribute('draggable');
+  document.querySelectorAll('.cheat-host .drop-before, .cheat-host .drop-after').forEach(el=>{
+    el.classList.remove('drop-before','drop-after');
+  });
+  document.querySelectorAll('.cheat-host .cols.drag-over').forEach(el=>el.classList.remove('drag-over'));
+  _draggedSection = null;
+}
+function onSectionDragOver(e) {
+  // accept either a dragged section (re-order) or a dragged figure (drop into section)
+  if (!_draggedSection && !_draggedFigure) return;
+  const section = e.currentTarget;
+  if (section === _draggedSection) return;
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  if (_draggedSection) {
+    const rect = section.getBoundingClientRect();
+    const before = (e.clientY - rect.top) < rect.height / 2;
+    section.classList.toggle('drop-before', before);
+    section.classList.toggle('drop-after', !before);
+  } else if (_draggedFigure) {
+    // outline whole section to show it'll accept the figure inside
+    section.classList.add('drag-over');
+  }
+}
+function onSectionDragLeave(e) {
+  const section = e.currentTarget;
+  section.classList.remove('drop-before','drop-after','drag-over');
+}
+function onSectionDrop(e) {
+  if (!_draggedSection && !_draggedFigure) return;
+  const section = e.currentTarget;
+  if (section === _draggedSection) return;
+  e.preventDefault();
+  e.stopPropagation();
+  if (_draggedSection) {
+    const rect = section.getBoundingClientRect();
+    const before = (e.clientY - rect.top) < rect.height / 2;
+    if (before) section.parentNode.insertBefore(_draggedSection, section);
+    else section.parentNode.insertBefore(_draggedSection, section.nextSibling);
+  } else if (_draggedFigure) {
+    // figure dropped into a new section
+    _markModified(_draggedFigure.closest('section'));
+    _markModified(section);
+    const overlay = section.querySelector('.section-overlay');
+    if (overlay) section.insertBefore(_draggedFigure, overlay);
+    else section.appendChild(_draggedFigure);
+  }
+  section.classList.remove('drop-before','drop-after','drag-over');
+  debouncedSaveCheat();
+}
+function onColsDragOver(e) {
+  if (!_draggedSection) return;
+  // only mark drag-over if we're past the last section (empty area below)
+  const cols = e.currentTarget;
+  const sections = [...cols.querySelectorAll(':scope > section')];
+  const last = sections[sections.length-1];
+  if (!last) { e.preventDefault(); cols.classList.add('drag-over'); return; }
+  const rect = last.getBoundingClientRect();
+  if (e.clientY > rect.bottom) {
+    e.preventDefault();
+    cols.classList.add('drag-over');
+  }
+}
+function onColsDragLeave(e) {
+  e.currentTarget.classList.remove('drag-over');
+}
+function onColsDrop(e) {
+  if (!_draggedSection) return;
+  e.preventDefault();
+  const cols = e.currentTarget;
+  cols.classList.remove('drag-over');
+  // append to end if dropped on empty area
+  if (e.target === cols) {
+    cols.appendChild(_draggedSection);
+    debouncedSaveCheat();
   }
 }
 
@@ -938,16 +1197,126 @@ function debouncedSaveCheat() {
   _cheatSaveTimer = setTimeout(saveCheatSheet, 400);
 }
 
-function saveCheatSheet() {
+function cleanCheatHTML() {
   const host = document.getElementById('cheatHost');
-  if (!host) return;
-  // clone, strip overlays + ephemeral attrs
+  if (!host) return '';
   const clone = host.cloneNode(true);
   clone.querySelectorAll('.section-overlay').forEach(o => o.remove());
+  clone.querySelectorAll('.figure-overlay').forEach(o => o.remove());
   clone.querySelectorAll('[contenteditable]').forEach(e => e.removeAttribute('contenteditable'));
   clone.querySelectorAll('[data-wired]').forEach(e => e.removeAttribute('data-wired'));
+  clone.querySelectorAll('[data-fig-wired]').forEach(e => e.removeAttribute('data-fig-wired'));
   clone.querySelectorAll('[spellcheck]').forEach(e => e.removeAttribute('spellcheck'));
-  localStorage.setItem(KEY_CHEAT, clone.innerHTML);
+  clone.querySelectorAll('[draggable]').forEach(e => e.removeAttribute('draggable'));
+  clone.querySelectorAll('[data-drop-wired]').forEach(e => e.removeAttribute('data-drop-wired'));
+  clone.querySelectorAll('.dragging, .drop-before, .drop-after, .drag-over, .fig-drop-before, .fig-drop-after').forEach(e => {
+    e.classList.remove('dragging','drop-before','drop-after','drag-over','fig-drop-before','fig-drop-after');
+  });
+  return clone.innerHTML;
+}
+
+function saveCheatSheet() {
+  const html = cleanCheatHTML();
+  if (!html) return;
+  localStorage.setItem(KEY_CHEAT, html);
+  cheatHistoryPush(html);
+  cheatPushToFile(html);   // auto-persist to cheatsheet.html on disk
+}
+
+// Auto-write the cheatsheet HTML back to the source file so Claude works on top of user edits.
+// Debounced + concurrent-safe (queues at most one pending write while one is in flight).
+let _cheatFileWriteInFlight = false;
+let _cheatFilePending = null;
+function cheatPushToFile(html) {
+  _cheatFilePending = html;
+  if (_cheatFileWriteInFlight) return;
+  _cheatFlushToFile();
+}
+async function _cheatFlushToFile() {
+  if (_cheatFilePending == null) return;
+  _cheatFileWriteInFlight = true;
+  const html = _cheatFilePending;
+  _cheatFilePending = null;
+  try {
+    const r = await fetch('/api/save-cheatsheet', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ html }),  // version comment is already in html
+    });
+    if (r.ok) {
+      const ind = document.getElementById('cheatSavedIndicator');
+      if (ind) {
+        ind.textContent = '✓ 已写入文件';
+        clearTimeout(ind._t);
+        ind._t = setTimeout(() => { ind.textContent = ''; }, 1600);
+      }
+    }
+  } catch (e) {
+    // silent — localStorage still has the data
+  } finally {
+    _cheatFileWriteInFlight = false;
+    if (_cheatFilePending != null) _cheatFlushToFile();
+  }
+}
+
+// ========== Cheatsheet undo/redo ==========
+const CHEAT_HIST_MAX = 80;
+let _cheatHistory = [];
+let _cheatHistPos = -1;       // index of current state
+let _cheatApplyingHist = false;
+
+function cheatHistoryInit() {
+  const html = cleanCheatHTML();
+  _cheatHistory = html ? [html] : [];
+  _cheatHistPos = _cheatHistory.length ? 0 : -1;
+  updateUndoButtons();
+}
+
+function cheatHistoryPush(html) {
+  if (_cheatApplyingHist) return;
+  // skip no-op
+  if (_cheatHistPos >= 0 && _cheatHistory[_cheatHistPos] === html) return;
+  // drop the redo tail
+  _cheatHistory = _cheatHistory.slice(0, _cheatHistPos + 1);
+  _cheatHistory.push(html);
+  if (_cheatHistory.length > CHEAT_HIST_MAX) {
+    _cheatHistory.shift();
+  } else {
+    _cheatHistPos++;
+  }
+  updateUndoButtons();
+}
+
+function applyCheatSnapshot(html) {
+  _cheatApplyingHist = true;
+  const host = document.getElementById('cheatHost');
+  if (!host) { _cheatApplyingHist = false; return; }
+  host.innerHTML = html;
+  host.removeAttribute('data-listener-wired');
+  delete host.dataset.listenerWired;
+  attachCheatHandlers();
+  localStorage.setItem(KEY_CHEAT, html);
+  _cheatApplyingHist = false;
+  updateUndoButtons();
+}
+
+function cheatUndo() {
+  if (_cheatHistPos <= 0) return;
+  _cheatHistPos--;
+  applyCheatSnapshot(_cheatHistory[_cheatHistPos]);
+}
+
+function cheatRedo() {
+  if (_cheatHistPos >= _cheatHistory.length - 1) return;
+  _cheatHistPos++;
+  applyCheatSnapshot(_cheatHistory[_cheatHistPos]);
+}
+
+function updateUndoButtons() {
+  const u = document.getElementById('cheatUndoBtn');
+  const r = document.getElementById('cheatRedoBtn');
+  if (u) u.disabled = _cheatHistPos <= 0;
+  if (r) r.disabled = _cheatHistPos >= _cheatHistory.length - 1;
 }
 
 function cheatDeleteSection(btn) {
@@ -983,6 +1352,8 @@ function cheatAddImage(btn) {
         fig.innerHTML = `<img src="${data.path}" alt=""><figcaption contenteditable="true">caption</figcaption>`;
         const overlay = section.querySelector('.section-overlay');
         section.insertBefore(fig, overlay);
+        _markModified(section);
+        attachCheatHandlers();   // wire the new figure
         saveCheatSheet();
       } catch (err) {
         alert('上传失败: ' + err.message);
@@ -1009,83 +1380,326 @@ function cheatAddSection() {
 
 
 // Pull from your collected content: midterm takeaways, starred slides, Q&A, highlights
+// ============ Template version + smart section merge ============
+const KEY_CHEAT_VERSION = '4119:cheatsheet:version';
+
+function _extractVersion(html) {
+  const m = /CHEATSHEET_VERSION:\s*(\d+)/.exec(html || '');
+  return m ? parseInt(m[1]) : 0;
+}
+
+// stable section key from h2 title — assigned once on first wire, never changes
+function _slugify(text) {
+  return (text || '')
+    .toLowerCase()
+    .replace(/<[^>]+>/g, '')
+    .replace(/[^\w一-鿿]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 80);
+}
+
+function _assignKeys(root) {
+  root.querySelectorAll('section').forEach(sec => {
+    if (sec.dataset.key) return;
+    const h2 = sec.querySelector('h2');
+    if (!h2) return;
+    const slug = _slugify(h2.textContent);
+    sec.dataset.key = slug || ('sec-' + Math.random().toString(36).slice(2, 8));
+  });
+}
+
+async function cheatCheckTemplateVersion() {
+  try {
+    const fresh = await fetch('cheatsheet.html?t=' + Date.now()).then(r => r.text());
+    const newV = _extractVersion(fresh);
+    const hasSaved = !!localStorage.getItem(KEY_CHEAT);
+    let cur = parseInt(localStorage.getItem(KEY_CHEAT_VERSION) || '0');
+    if (cur === 0 && !hasSaved) {
+      // brand new install — record version silently
+      localStorage.setItem(KEY_CHEAT_VERSION, String(newV));
+      return;
+    }
+    if (cur === 0 && hasSaved) cur = 1;  // legacy user — treat as ancient
+    if (newV > cur) {
+      const toast = document.createElement('div');
+      toast.className = 'cheat-toast cheat-toast-action';
+      toast.innerHTML = `📋 模板有新 section (v${cur} → v${newV}) — 不会覆盖你的内容。<button id="cheatSyncNow" style="margin-left:10px;background:var(--accent);color:#0a0c12;border:none;padding:4px 10px;border-radius:999px;cursor:pointer;font-size:12px;font-weight:600">➕ 仅添加新增</button>`;
+      document.body.appendChild(toast);
+      document.getElementById('cheatSyncNow').onclick = () => { toast.remove(); cheatSyncTemplate(true); };
+      setTimeout(() => toast.remove(), 15000);
+    }
+  } catch (e) { /* silent */ }
+}
+
+// CONSERVATIVE merge — your edits are sacred:
+//  - Existing sections in your cheatsheet: NEVER touched
+//  - New sections in fresh template that you don't have yet: added to corresponding sheet
+//  - Sections you ➕ added yourself: kept as-is
+// If you want template's newer version of an existing section, use per-section 🆕 button (TODO).
+async function cheatSyncTemplate(skipConfirm=false) {
+  if (!skipConfirm && !confirm('拉取模板新增内容？\n\n✅ 只会【新增】你还没有的 section\n✅ 你已有的 section 完全不动，不会改任何字\n\n继续？')) return;
+  const host = document.getElementById('cheatHost');
+  if (!host) return;
+  try {
+    const fresh = await fetch('cheatsheet.html?t=' + Date.now()).then(r => r.text());
+    const tmp = document.createElement('div');
+    tmp.innerHTML = fresh;
+    _assignKeys(tmp);
+    _assignKeys(host);
+
+    // snapshot current state to undo stack so ⌘Z reverts the sync
+    const preMergeHtml = cleanCheatHTML();
+    cheatHistoryPush(preMergeHtml);
+
+    // index user sections by key
+    const userKeys = new Set();
+    host.querySelectorAll('section').forEach(sec => {
+      if (sec.dataset.key) userKeys.add(sec.dataset.key);
+    });
+
+    // add only new sections (in fresh but not in user) to the right sheet
+    const userSheets = host.querySelectorAll('.sheet');
+    let added = 0;
+    tmp.querySelectorAll('.sheet').forEach((sheet, sheetIdx) => {
+      sheet.querySelectorAll('section').forEach(sec => {
+        const k = sec.dataset.key;
+        if (!k || userKeys.has(k)) return;
+        const targetSheet = userSheets[sheetIdx] || userSheets[userSheets.length - 1];
+        const cols = targetSheet?.querySelector('.cols');
+        if (!cols) return;
+        const newSec = sec.cloneNode(true);
+        newSec.dataset.key = k;
+        cols.appendChild(newSec);
+        added++;
+      });
+    });
+
+    localStorage.setItem(KEY_CHEAT_VERSION, String(_extractVersion(fresh)));
+
+    attachCheatHandlers();
+    saveCheatSheet();   // pushes new state to history (so ⌘Z works)
+
+    const msg = added > 0
+      ? `已新增 ${added} 个 section（你已有的内容完全没动；⌘Z 可撤回）`
+      : '模板版本更新了，但你已经有所有 section — 没新增。';
+    const t = document.createElement('div');
+    t.className = 'cheat-toast';
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 5000);
+  } catch (e) {
+    alert('同步失败：' + e.message);
+  }
+}
+
+// ============ Pull notes INTO existing topical sections ============
+// Each lecture maps to one or more section-title keywords. When user clicks 📥, every
+// star/QA/highlight gets routed into the matching existing section as an inline
+// `.my-note` block (not a separate sheet). De-duped via data-note-key.
+const LEC_TOPICS = {
+  'lec1-intro':        ['Layering','End-to-End','Encapsulation','Internet'],
+  'lec2-basics1':      ['Packet vs Circuit','Delays','Performance','Throughput'],
+  'lec3-basics2':      ['Layering','Encapsulation','Header'],
+  'lec4-basics3':      ['BDP','Stop-and-Wait','Sliding Window','Performance','RTT'],
+  'lec5-web':          ['HTTP','Cookie','Cache','Persistence','RTT Counting','Web Cache'],
+  'lec6-video':        ['Video','DASH','Streaming'],
+  'lec7':              ['Socket'],
+  'lec8-dns':          ['DNS'],
+  'lec9-p2p':          ['P2P','BitTorrent','DHT'],
+  'lec10-transport':   ['UDP','TCP Segment','3WHS','UDP vs TCP','Transport'],
+  'lec11-reliability': ['RDT','GBN','SR','What Can Go Wrong','Selective Repeat'],
+  'lec12-tcp':         ['TCP Reliable','TCP Flow Control','TCP cwnd','TCP 3WHS','TCP Segment'],
+  'lec13-congestion':  ['Congestion','AIMD','Slow start','Fairness','CC','End-end','Network-assisted'],
+  'lec14':             ['Congestion','CC FSM','AIMD','CUBIC','BBR','ECN','Loss','CC variants','Fairness'],
+  'lec16':             ['Data Plane','Control Plane','Forwarding','Routing','Router Architecture','Internet Structure','Packet Scheduling','Buffer','Longest Prefix','LPM','Network Service'],
+  'lec17':             ['IPv4 Datagram','Subnet','CIDR','DHCP','NAT','Longest Prefix','LPM'],
+  'lec18':             ['IPv6','Tunneling','Link State','Distance Vector','LS vs DV','Dijkstra','Bellman-Ford','Count-to-Infinity'],
+  'lec19':             ['OSPF','BGP','Hot Potato','Why Intra','BGP Policy'],
+  'lec20':             ['SDN','OpenFlow','Error Detection','CRC','Link Layer services'],
+  'lec21':             ['MAC categories','ALOHA','CSMA','Ethernet Frame','MAC Address','ARP','CSMA/CD'],
+  'lec22':             ['Switch','VLAN','Router vs Switch','Wireless ≠ Wired','Free-Space','Pathloss','Propagation','Multipath','Collision','Broadcast Domain','Fading','SNR','SINR','WiFi'],
+  'lec23':             ['Hidden Terminal','Exposed Terminal','RTS','CTS','NAV','CSMA/CA','802.11','Backoff','Fading','Coherence','WiFi','SNR'],
+  'midterm-preview':   [],
+  'final-preview':     [],
+};
+
+function _normH2(text) {
+  // strip tag spans and emoji for matching
+  return text.replace(/mid Q\d+|final Q\d+|exam|\s+/gi, ' ').toLowerCase().trim();
+}
+
+function findSectionForLec(host, fileId, fallbackTitle='') {
+  const keywords = LEC_TOPICS[fileId] || [];
+  if (!keywords.length && !fallbackTitle) return null;
+  const candidates = [...host.querySelectorAll('section')].filter(s => !s.classList.contains('my-notes-fallback'));
+  let best = null, bestScore = 0;
+  candidates.forEach(sec => {
+    const h2 = sec.querySelector('h2');
+    if (!h2) return;
+    const title = _normH2(h2.textContent);
+    let score = 0;
+    keywords.forEach(k => {
+      if (title.includes(k.toLowerCase())) score += k.length;
+    });
+    if (fallbackTitle) {
+      const ft = _normH2(fallbackTitle);
+      // partial-word matches with the actual page title
+      ft.split(/\s+/).filter(w=>w.length>3).forEach(w => {
+        if (title.includes(w)) score += 2;
+      });
+    }
+    if (score > bestScore) { bestScore = score; best = sec; }
+  });
+  return bestScore > 0 ? best : null;
+}
+
+function findSectionForMidQ(host, qIdx) {
+  // sections tag themselves with `mid Q3` etc.
+  const wanted = `mid q${qIdx+1}`;
+  return [...host.querySelectorAll('section h2 .tag')].find(t =>
+    t.textContent.toLowerCase().includes(wanted)
+  )?.closest('section') || null;
+}
+
+function findSectionForFinalQ(host, qIdx) {
+  const wanted = `final q${qIdx+1}`;
+  return [...host.querySelectorAll('section h2 .tag')].find(t =>
+    t.textContent.toLowerCase().includes(wanted)
+  )?.closest('section') || null;
+}
+
+function insertNoteInto(section, key, html) {
+  // de-dupe: skip if a note with this key already exists
+  if (section.querySelector(`.my-note[data-note-key="${CSS.escape(key)}"]`)) return false;
+  const note = document.createElement('div');
+  note.className = 'my-note';
+  note.setAttribute('data-note-key', key);
+  note.innerHTML = html;
+  // append before the section-overlay (which is the last child)
+  const overlay = section.querySelector('.section-overlay');
+  if (overlay) section.insertBefore(note, overlay);
+  else section.appendChild(note);
+  return true;
+}
+
+function ensureFallbackSection(host, sheetTitle='APP & TRANSPORT') {
+  // find or create a "📌 我的笔记" section at the end of sheet 1
+  let fb = host.querySelector('section.my-notes-fallback');
+  if (fb) return fb;
+  const firstSheet = host.querySelector('.sheet .cols');
+  if (!firstSheet) return null;
+  fb = document.createElement('section');
+  fb.className = 'my-notes-fallback';
+  fb.innerHTML = `<h2>📌 其它笔记 <span class="tag">未匹配</span></h2>`;
+  firstSheet.appendChild(fb);
+  return fb;
+}
+
 function cheatInsertAuto() {
   const host = document.getElementById('cheatHost');
   if (!host) return;
-  // Build a new sheet that aggregates user-collected importance
-  const sheet = document.createElement('div');
-  sheet.className = 'sheet';
-  sheet.innerHTML = `<h1>YOUR COLLECTED IMPORTANT POINTS</h1><div class="cols"></div>`;
-  const cols = sheet.querySelector('.cols');
-  let count = 0;
 
-  // 1) Midterm takeaways
-  (MIDTERM || []).forEach((q, i) => {
-    if (q.takeaway) {
-      const sec = document.createElement('section');
-      sec.innerHTML = `<h2>📝 Mid Q${i+1}: ${escapeHtml(q.title || '').slice(0,40)}</h2>
-        <p>${escapeHtml(q.takeaway)}</p>`;
-      cols.appendChild(sec);
-      count++;
+  // clean up any prior "YOUR COLLECTED IMPORTANT POINTS" sheet (legacy behavior)
+  [...host.querySelectorAll('.sheet h1')].forEach(h1 => {
+    if (/collected important points/i.test(h1.textContent)) {
+      h1.closest('.sheet')?.remove();
     }
   });
 
-  // 2) Starred slides
-  const stars = loadStars();
-  if (stars.length > 0) {
-    const sec = document.createElement('section');
-    const items = stars.map(k => {
-      const [f, p] = k.split(':');
-      const e = (EXPL[f] || [])[parseInt(p) - 1] || {};
-      return `<li><b>${f} p${p}</b>: ${escapeHtml(e.title || '')}</li>`;
-    }).join('');
-    sec.innerHTML = `<h2>⭐ Starred slides (${stars.length})</h2><ul>${items}</ul>`;
-    cols.appendChild(sec);
-    count++;
-  }
+  let inserted = 0, skipped = 0, unmatched = 0;
 
-  // 3) Q&A entries
+  // 1) Starred slides — merged into matching sections
+  loadStars().forEach(k => {
+    const [f, p] = k.split(':');
+    const e = (EXPL[f] || [])[parseInt(p) - 1] || {};
+    const target = findSectionForLec(host, f, e.title || '') || ensureFallbackSection(host);
+    if (!target) { unmatched++; return; }
+    const key = `star:${k}`;
+    const html = `<span class="my-note-tag">⭐</span> <b>${escapeHtml(f)} p${p}</b> ${escapeHtml(e.title || '')}`;
+    if (insertNoteInto(target, key, html)) inserted++; else skipped++;
+  });
+
+  // 2) Q&A entries — merged
   const qa = loadQAMap();
-  let qaCount = 0;
   Object.entries(qa).forEach(([k, list]) => {
     if (!list || !list.length) return;
-    const [f, p] = k.split(':');
-    list.forEach(item => {
-      const sec = document.createElement('section');
-      const aHtml = marked.parse(item.a || '').replace(/<\/?p[^>]*>/g, '');
-      sec.innerHTML = `<h2>💬 Q&A · ${f} p${p}</h2>
-        <p><b>Q:</b> ${escapeHtml(item.q || '')}</p>
-        <p>${aHtml}</p>`;
-      cols.appendChild(sec);
-      count++;
-      qaCount++;
+    const parts = k.split(':');
+    let target = null;
+    if (k === 'overview' || k === 'concepts' || k === 'cheat' || k === 'stars' || k === 'postmid') {
+      // general-purpose QA — drop into fallback
+      target = ensureFallbackSection(host);
+    } else if (parts[0] === 'midterm' || parts[0] === 'mid') {
+      target = findSectionForMidQ(host, parseInt(parts[1]));
+    } else if (parts[0] === 'final') {
+      target = findSectionForFinalQ(host, parseInt(parts[1]));
+    } else {
+      const e = (EXPL[parts[0]] || [])[parseInt(parts[1]) - 1] || {};
+      target = findSectionForLec(host, parts[0], e.title || '');
+    }
+    if (!target) target = ensureFallbackSection(host);
+    if (!target) { unmatched += list.length; return; }
+    list.forEach((item, i) => {
+      const key = `qa:${k}:${i}`;
+      const aSnippet = (item.a || '').replace(/\s+/g, ' ').slice(0, 220);
+      const html = `<span class="my-note-tag">💬</span> <b>Q:</b> ${escapeHtml(item.q || '')}<br><b>A:</b> ${escapeHtml(aSnippet)}${(item.a||'').length>220?'…':''}`;
+      if (insertNoteInto(target, key, html)) inserted++; else skipped++;
     });
   });
 
-  // 4) Highlighted text from AI explanations
+  // 3) Highlights — merged
   const hl = loadHighlights();
-  const hlEntries = Object.entries(hl);
-  if (hlEntries.length > 0) {
-    const sec = document.createElement('section');
-    const items = hlEntries.map(([k, marks]) => {
-      const [f, p] = k.split(':');
-      const e = (EXPL[f] || [])[parseInt(p) - 1] || {};
-      const lines = marks.map(t => `<li>${escapeHtml(t)}</li>`).join('');
-      return `<div><b>${f} p${p}</b> — ${escapeHtml(e.title || '')}<ul>${lines}</ul></div>`;
-    }).join('');
-    sec.innerHTML = `<h2>🖍️ Highlights</h2>${items}`;
-    cols.appendChild(sec);
-    count++;
-  }
+  Object.entries(hl).forEach(([k, val]) => {
+    if (k.endsWith('__html')) return;
+    if (!Array.isArray(val) || val.length === 0) return;
+    const [f, p] = k.split(':');
+    const e = (EXPL[f] || [])[parseInt(p) - 1] || {};
+    const target = findSectionForLec(host, f, e.title || '') || ensureFallbackSection(host);
+    if (!target) { unmatched++; return; }
+    val.forEach((text, i) => {
+      const key = `hl:${k}:${i}`;
+      const html = `<span class="my-note-tag">🖍️</span> <b>${escapeHtml(f)} p${p}</b>: ${escapeHtml(text)}`;
+      if (insertNoteInto(target, key, html)) inserted++; else skipped++;
+    });
+  });
 
-  if (count === 0) {
-    alert('还没有可拉取的内容。先去:\n• 讲义页按 S 收藏重点\n• 在 AI 解释里划词点高亮\n• 在 Q&A 框里问问题\n• 看期中复盘');
-    return;
-  }
-  host.appendChild(sheet);
+  // 4) Midterm takeaways — route by Q tag
+  (MIDTERM || []).forEach((q, i) => {
+    if (!q.takeaway) return;
+    const target = findSectionForMidQ(host, i) || ensureFallbackSection(host);
+    if (!target) { unmatched++; return; }
+    const key = `mid:${i}:takeaway`;
+    const html = `<span class="my-note-tag">📝</span> <b>mid Q${i+1} 要诀:</b> ${escapeHtml(q.takeaway)}`;
+    if (insertNoteInto(target, key, html)) inserted++; else skipped++;
+  });
+
+  // 5) Final-preview takeaways / gotchas / walkthroughs (short summaries)
+  (FINAL || []).forEach((q, i) => {
+    const target = findSectionForFinalQ(host, i)
+      || findSectionForLec(host, '', q.topic || q.title || '')
+      || ensureFallbackSection(host);
+    if (!target) { unmatched++; return; }
+    if (q.gotcha) {
+      const key = `final:${i}:gotcha`;
+      const html = `<span class="my-note-tag">⚠️</span> <b>final Q${i+1} 易错:</b> ${escapeHtml(q.gotcha)}`;
+      if (insertNoteInto(target, key, html)) inserted++; else skipped++;
+    }
+  });
+
   attachCheatHandlers();
   saveCheatSheet();
-  sheet.scrollIntoView({behavior:'smooth', block:'start'});
+
+  const msg = inserted > 0
+    ? `已合并 ${inserted} 条笔记到对应章节${skipped>0?`（${skipped} 条已存在跳过）`:''}${unmatched>0?`，${unmatched} 条无匹配章节进入 📌 其它笔记`:''}`
+    : (skipped > 0 ? `所有 ${skipped} 条笔记之前已合并，无新内容` : '还没有可拉取的内容。先去收藏 / 高亮 / 提问。');
+  // toast-style feedback (non-blocking)
+  if (inserted === 0 && skipped === 0) alert(msg);
+  else {
+    const t = document.createElement('div');
+    t.className = 'cheat-toast';
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(()=>t.remove(), 2800);
+  }
 }
 
 // LLM-fill a section: prompt user, ask AI to produce dense cheat-sheet HTML, append
@@ -1159,6 +1773,7 @@ ${currentText}
       ]});
     }
     status.remove();
+    _markModified(section);
     saveCheatSheet();
   } catch (err) {
     status.textContent = '❌ ' + err.message;

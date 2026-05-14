@@ -1,3 +1,4 @@
+<!-- CHEATSHEET_VERSION: 5 -->
 <!--
   COMS 4119 FINAL CHEAT SHEET
   4 sheets organized by course chapter (Kurose-Ross order):
@@ -327,6 +328,10 @@
 
 <section>
 <h2>TCP CC FSM <span class="tag">exam</span></h2>
+<figure><img src="cheatsheet-assets/tcp-cc-fsm.jpg"><figcaption>lec14 p12 · TCP CC 状态机总图</figcaption></figure>
+<p class="mini"><b>Loss detection → recovery：</b>
+<span class="red">Timeout</span> ⇒ cwnd=1 + <b>slow start</b>；
+<span class="red">3 dup ACK</span> ⇒ cwnd/=2 + <b>congestion avoidance</b>。</p>
 <ul>
 <li><b>Slow start</b>: cwnd=1; each ACK cwnd += MSS (×2/RTT)</li>
 <li>cwnd &gt; ssthresh → <b>Congestion avoidance</b> (+1 MSS/RTT)</li>
@@ -524,6 +529,7 @@
 
 <section>
 <h2>DHCP DORA</h2>
+<figure><img src="cheatsheet-assets/dhcp-dora.jpg"><figcaption>lec17 p15 · DHCP DORA 时序</figcaption></figure>
 <ol>
 <li><b>Discover</b> (src 0.0.0.0:68 → 255.255.255.255:67, broadcast)</li>
 <li><b>Offer</b> (server: yiaddr, lease)</li>
@@ -597,6 +603,7 @@
 
 <section>
 <h2>Dijkstra (LS)</h2>
+<figure><img src="cheatsheet-assets/dijkstra-example.jpg"><figcaption>lec18 p26 · Dijkstra 算法 + 迭代表</figcaption></figure>
 <div class="formula">D(v) = min(D(v), D(w) + c(w,v))</div>
 <ol>
 <li>N'={u}; D(v)=c(u,v) or ∞</li>
@@ -651,10 +658,12 @@
 <li>AS-PATH includes own AS → reject (loop)</li>
 <li><b>Route select</b>: 1) local pref 2) shortest AS-PATH 3) closest NEXT-HOP (hot potato) 4) others</li>
 </ul>
+<figure><img src="cheatsheet-assets/bgp-route-select.jpg"><figcaption>lec19 p23 · BGP Route Selection 4 步优先级</figcaption></figure>
 </section>
 
 <section>
 <h2>BGP Policy <span class="tag">final Q3</span></h2>
+<p class="mini"><span class="red">⚠️ Trap</span>: BGP <b>不一定</b>选 AS 跳数最少的路 — policy-based。例如 shortest path 上的 neighbor AS 拒绝转发 → 只能绕远路。</p>
 <ul>
 <li><b>Export</b>: choose whom to advertise to</li>
 <li><b>Import</b>: choose whose route to accept</li>
@@ -666,11 +675,11 @@
 
 <section>
 <h2>Hot Potato Routing</h2>
+<p class="mini"><b>Def</b>: 对去往其他 AS 的包，router 把它转给 <b>intra-AS cost 最小</b>的 border router（"扔掉烫手山芋"）。<br><b>Why</b>: 每个 AS 只关心 minimize <b>自己</b>的 traffic cost，不在乎包出去后在别的 AS 走多远。</p>
 <ul>
 <li>Multi-exit to same dst → pick gateway with min intra-AS cost</li>
-<li>"Throw the hot potato out fast"</li>
-<li>Economics: don't carry traffic on own network longer than needed</li>
-<li>Hot potato = picks closest exit in <b>intra-AS</b> cost, ignores inter-AS hops</li>
+<li>BGP route selection 第 3 步：tie-break 用 closest NEXT-HOP</li>
+<li>全局未必最短，但每个 AS 自己便宜（自私最优）</li>
 </ul>
 </section>
 
@@ -790,6 +799,7 @@ Transmit: 101011 110</pre>
 
 <section>
 <h2>Ethernet Frame</h2>
+<figure><img src="cheatsheet-assets/ethernet-frame.jpg"><figcaption>lec21 p26 · Ethernet 帧结构（字段 + 长度）</figcaption></figure>
 <ul>
 <li>Preamble 7 B + SFD 1 B (clock sync)</li>
 <li>Dst MAC 6 B + Src MAC 6 B</li>
@@ -932,12 +942,16 @@ Transmit: 101011 110</pre>
 
 <section>
 <h2>Hidden Terminal <span class="tag">exam</span></h2>
+<figure><img src="cheatsheet-assets/hidden-terminal.jpg"><figcaption>lec23 p19 · Hidden terminal 几何图</figcaption></figure>
+<p class="mini"><b>例</b>：A — C — B 一线，A 和 B 都对 C 发；A↔B 距离太远互相听不到 → 都觉得空闲 → 在 C 处碰撞。</p>
 <ul>
 <li>X <b>outside</b> sender A's range, <b>inside</b> receiver B's interference range</li>
 <li>X thinks idle → sends → collision at B</li>
 <li>Symptom: A sends fine, B receives nothing</li>
-<li>Fix: <b>RTS/CTS</b> (B's CTS quiets nodes around B)</li>
 </ul>
+<p class="mini"><b>两个解法</b>：
+<br>① <b>CSMA/CA</b> — 接收方对每帧显式 <span class="red">ACK</span>；没 ACK = 推断碰撞，退避重发。
+<br>② <b>RTS/CTS</b> — A、B 都发 RTS 给 C；C 挑一个（say A）回 CTS，CTS <b>广播</b>到所有人；A、B 都收到 CTS，只有拿到 CTS 的 A 发，B 静音（设 NAV）。</p>
 </section>
 
 <section>
@@ -962,6 +976,7 @@ Transmit: 101011 110</pre>
 
 <section>
 <h2>CSMA/CA full flow <span class="tag">exam</span></h2>
+<figure><img src="cheatsheet-assets/csma-ca-flow.jpg"><figcaption>lec23 p29 · CSMA/CA 完整流程图</figcaption></figure>
 <ol>
 <li>Carrier sense (physical + virtual NAV)</li>
 <li>Idle → wait <b>DIFS</b> → still idle → send</li>

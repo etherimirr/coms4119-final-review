@@ -29,7 +29,59 @@ class Handler(SimpleHTTPRequestHandler):
             return self._handle_ask()
         if self.path == "/api/upload":
             return self._handle_upload()
+        if self.path == "/api/save-cheatsheet":
+            return self._handle_save_cheatsheet()
         self.send_error(404, "POST not allowed for that path")
+
+    def _handle_save_cheatsheet(self):
+        """Persist the browser's current cheatsheet body back to cheatsheet.html.
+        Body: {html: "...", version: 5}
+        We rewrite cheatsheet.html so future Claude edits flow on top of user edits.
+        Keeps a rolling backup at cheatsheet.html.bak (last good version before write).
+        """
+        try:
+            body = self._read_json_body()
+        except Exception as exc:
+            return self._send_json({"error": f"bad JSON: {exc}"}, 400)
+
+        html = body.get("html") or ""
+        if not html.strip():
+            return self._send_json({"error": "empty html"}, 400)
+        if len(html) > 4 * 1024 * 1024:
+            return self._send_json({"error": "html too large (>4MB)"}, 413)
+
+        here = os.path.dirname(os.path.abspath(__file__))
+        path = os.path.join(here, "cheatsheet.html")
+        bak = path + ".bak"
+
+        # rolling backup of previous file
+        try:
+            if os.path.exists(path):
+                with open(path, "rb") as src, open(bak, "wb") as dst:
+                    dst.write(src.read())
+        except Exception:
+            pass
+
+        # bump version comment if present
+        import re
+        version = body.get("version")
+        if version:
+            try:
+                version = int(version)
+                if re.search(r"CHEATSHEET_VERSION:\s*\d+", html):
+                    html = re.sub(r"CHEATSHEET_VERSION:\s*\d+",
+                                  f"CHEATSHEET_VERSION: {version}", html, count=1)
+                else:
+                    html = f"<!-- CHEATSHEET_VERSION: {version} -->\n" + html
+            except (TypeError, ValueError):
+                pass
+
+        try:
+            with open(path, "w", encoding="utf-8") as f:
+                f.write(html)
+        except Exception as exc:
+            return self._send_json({"error": f"write failed: {exc}"}, 500)
+        return self._send_json({"ok": True, "bytes": len(html.encode("utf-8"))})
 
     def _handle_upload(self):
         """Accept JSON {dataUrl, filename?} and save the image to cheatsheet-assets/.

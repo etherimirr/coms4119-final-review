@@ -7,6 +7,9 @@
 # server runtime files (in /tmp during dev)
 nohup.out
 
+# cheatsheet auto-backup (created on each save)
+app/cheatsheet.html.bak
+
 # 个人期中信息 — 不进 public repo
 midoriginoutput.pdf
 submission_396807124.pdf
