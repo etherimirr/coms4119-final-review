@@ -868,8 +868,7 @@ body {
   column-count: 4;
   column-gap: 2.5mm;
   column-rule: 0.5px solid #ddd;
-  column-fill: balance;
-  height: 100%;
+  column-fill: auto;  /* sequential fill: col1 → col2 → col3 → col4, then overflow next page */
 }
 .sheet section {
   break-inside: avoid;
