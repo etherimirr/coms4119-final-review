@@ -849,7 +849,6 @@ body {
 @media print { .cheat-floatbar { display: none !important; } }
 .sheet {
   width: 210mm;
-  min-height: 297mm;
   background: #fff;
   color: #000;
   padding: 3mm 3mm;
@@ -857,10 +856,11 @@ body {
   font-family: "Helvetica Neue", "Arial", "PingFang SC", "Microsoft YaHei", sans-serif;
   font-size: 7.5pt;
   line-height: 1.2;
-  break-after: page;
-  page-break-after: always;
   flex-shrink: 0;
+  /* No min-height, no forced page break: sheets shrink to content and stack
+     so browser paginates naturally → no empty space, total pages minimized */
 }
+.cheat-pages > .sheet + .sheet { box-shadow: none; }  /* visual: continuous */
 /* Show sheets at exact A4 size (210mm × 297mm) on screen — no scaling at all.
    Screen pixels = PDF pixels. If window narrow, horizontal scroll. */
 .sheet h1 { display: none; }
