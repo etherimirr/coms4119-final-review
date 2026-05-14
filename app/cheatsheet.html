@@ -1,4 +1,4 @@
-<!-- CHEATSHEET_VERSION: 32 -->
+<!-- CHEATSHEET_VERSION: 33 -->
 <!--
   COMS 4119 FINAL CHEAT SHEET
   4 sheets organized by course chapter (Kurose-Ross order):
@@ -296,6 +296,7 @@
 
 <section data-key="tcp-cwnd">
 <h2>TCP cwnd</h2>
+<figure><img src="cheatsheet-assets/tcp-cwnd.jpg"><figcaption>TCP cwnd mechanism</figcaption></figure>
 <ul>
 <li>LastByteSent − LastByteAcked &lt; cwnd</li>
 <li>rate ≈ cwnd / RTT</li>
@@ -321,6 +322,8 @@
 
 <section data-key="aimd-fairness-exam">
 <h2>AIMD Fairness <span class="tag">exam</span></h2>
+<figure><img src="cheatsheet-assets/quiz-tcp-throughput.jpg"><figcaption>Quiz: TCP throughput from W</figcaption></figure>
+<figure><img src="cheatsheet-assets/aimd-fairness.jpg"><figcaption>AIMD fairness convergence (x1 vs x2)</figcaption></figure>
 <ul>
 <li>+a → both move up 45° (efficiency line)</li>
 <li>×b → toward origin, ratio kept</li>
@@ -328,7 +331,7 @@
 <li><b>Only AIMD</b> → both fairness + efficiency</li>
 </ul>
 <div class="formula">avg cwnd = 3W/4 → R = 3W/(4·RTT)</div>
-<div class="my-note" data-note-key="star:lec14:6"><span class="my-note-tag">⭐</span> <b>lec14 p6</b> AIMD — 唯一收敛公平 ✨ ⭐⭐</div></section>
+</section>
 
 <section data-key="end-end-vs-network-assisted-congestion-control">
 <h2>End-end vs Network-assisted CC</h2>
@@ -343,6 +346,7 @@
 
 <section data-key="cc-variants">
 <h2>CC variants</h2>
+<figure><img src="cheatsheet-assets/ecn.jpg"><figcaption>ECN mechanism</figcaption></figure>
 <ul>
 <li><b>CUBIC</b> (Linux): W(t) = C(t−K)³ + Wmax · fast climb to Wmax, slow probe past</li>
 <li><b>Vegas</b> (delay-based): rising RTT → cong; <span class="red">starves</span> vs loss-based</li>
@@ -369,7 +373,7 @@
 <li>TCP misreads as congestion → halves cwnd → wireless throughput tanks</li>
 <li>Fix: ECN (see CC variants)</li>
 </ul>
-<div class="my-note" data-note-key="star:lec14:7"><span class="my-note-tag">⭐</span> <b>lec14 p7</b> TCP cwnd 工作机制</div><div class="my-note" data-note-key="star:lec14:20"><span class="my-note-tag">⭐</span> <b>lec14 p20</b> ECN ⭐</div><div class="my-note" data-note-key="final:0:gotcha"><span class="my-note-tag">⚠️</span> <b>final Q1 易错:</b> 考试时如果题目让你举一个例子，最稳的答法就是『链路层 bit error → checksum 失败 → 丢弃』。</div></section>
+<div class="my-note" data-note-key="final:0:gotcha"><span class="my-note-tag">⚠️</span> <b>final Q1 易错:</b> 考试时如果题目让你举一个例子，最稳的答法就是『链路层 bit error → checksum 失败 → 丢弃』。</div></section>
 
 </div></div>
 
@@ -579,6 +583,8 @@
 
 <section data-key="dijkstra-ls">
 <h2>Dijkstra (LS)</h2>
+<figure><img src="cheatsheet-assets/dijkstra-shortest-path-tree.jpg"><figcaption>Dijkstra shortest-path tree + forwarding table</figcaption></figure>
+<figure><img src="cheatsheet-assets/dijkstra-step0.jpg"><figcaption>Dijkstra Step 0 (Init)</figcaption></figure>
 <figure><img src="cheatsheet-assets/dijkstra-example.jpg"><figcaption>Dijkstra example + iteration table</figcaption></figure>
 <div class="formula">D(v) = min(D(v), D(w) + c(w, v))</div>
 <ol>
@@ -611,7 +617,7 @@
 <li>Fixes 2-node loops; <span class="red">not 3+ node loops</span></li>
 <li>Cap loops with small "∞" (e.g. 16)</li>
 </ul>
-<div class="my-note" data-note-key="star:lec18:27"><span class="my-note-tag">⭐</span> <b>lec18 p27</b> Dijkstra 例 — Step 0 (Init)</div><div class="my-note" data-note-key="star:lec18:38"><span class="my-note-tag">⭐</span> <b>lec18 p38</b> Dijkstra — 最短路径树 + Forwarding Table</div></section>
+</section>
 
 <section data-key="ospf-intra-as">
 <h2>OSPF (intra-AS)</h2>
@@ -646,7 +652,7 @@
 <li><b>Columbia-CERN example</b>: don't advertise CERN path to NYU → NYU can't route via Columbia</li>
 <li>Customer-of-provider always gets advertised</li>
 </ul>
-<div class="my-note" data-note-key="star:lec19:25"><span class="my-note-tag">⭐</span> <b>lec19 p25</b> Quiz: TCP Throughput (preview for lec20)</div><div class="my-note" data-note-key="final:2:gotcha"><span class="my-note-tag">⚠️</span> <b>final Q3 易错:</b> 考试看到『policy』『control who can traverse my network』关键词 → 一定是 BGP advertisement policy，不是 OSPF / Dijkstra / cost。OSPF 是 intra-AS（一个 AS 内部），BGP 才管 AS 之间的策略。</div></section>
+<div class="my-note" data-note-key="final:2:gotcha"><span class="my-note-tag">⚠️</span> <b>final Q3 易错:</b> 考试看到『policy』『control who can traverse my network』关键词 → 一定是 BGP advertisement policy，不是 OSPF / Dijkstra / cost。OSPF 是 intra-AS（一个 AS 内部），BGP 才管 AS 之间的策略。</div></section>
 
 <section data-key="hot-potato-routing">
 <h2>Hot Potato Routing</h2>
@@ -744,13 +750,14 @@ Transmit: 101011 110</pre>
 
 <section data-key="mac-categories">
 <h2>MAC categories</h2>
+<figure><img src="cheatsheet-assets/quiz-round1-a.jpg"><figcaption>Quiz Round 1 — A's view</figcaption></figure>
 <table>
 <tr><th>Type</th><th>Examples</th></tr>
 <tr><td>Channel partition</td><td>TDMA · FDMA · CDMA</td></tr>
 <tr><td>Taking turns</td><td>polling · token</td></tr>
 <tr><td>Random access</td><td>ALOHA · CSMA · CSMA/CD · CSMA/CA</td></tr>
 </table>
-<div class="my-note" data-note-key="star:lec21:2"><span class="my-note-tag">⭐</span> <b>lec21 p2</b> Quiz Round 1 — A 的视角</div></section>
+</section>
 
 <section data-key="slotted-aloha-derivation">
 <h2>Slotted ALOHA derivation</h2>
@@ -972,7 +979,7 @@ Transmit: 101011 110</pre>
 <li>No clean CSMA/CA fix</li>
 </ul>
 <p class="mini">Mnemonic: hidden = sender-OUT + recv-IN (should stop, doesn't). Exposed = sender-IN + target-OUT (defers, didn't need to).</p>
-<div class="my-note" data-note-key="star:lec23:27"><span class="my-note-tag">⭐</span> <b>lec23 p27</b> CSMA/CA — 三大机制拆解</div></section>
+</section>
 
 <section data-key="rts-cts-nav">
 <h2>RTS / CTS / NAV</h2>
@@ -986,6 +993,7 @@ Transmit: 101011 110</pre>
 
 <section data-key="csma-ca-full-flow-exam">
 <h2>CSMA/CA full flow <span class="tag">exam</span></h2>
+<figure><img src="cheatsheet-assets/csma-ca-three-mechanisms.jpg"><figcaption>CSMA/CA three mechanisms</figcaption></figure>
 <figure><img src="cheatsheet-assets/csma-ca-flow.jpg"><figcaption>CSMA/CA full flow</figcaption></figure>
 <ol>
 <li>Carrier sense (physical + virtual NAV)</li>
