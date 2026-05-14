@@ -869,8 +869,7 @@ body {
   column-count: 4;
   column-gap: 2.5mm;
   column-rule: 0.5px solid #ddd;
-  column-fill: balance;
-  height: 100%;
+  column-fill: auto;   /* sequential fill; supports multi-page paginated multicol better */
 }
 .sheet section {
   break-inside: avoid;
@@ -946,7 +945,17 @@ body {
   .sidebar, .toolbar, .pager, .subtle { display: none !important; }
   .content, .cheat-host { overflow: visible !important; padding: 0 !important; background: white !important; }
   .cheat-pages { gap: 0; }
-  .sheet { box-shadow: none !important; margin: 0 !important; }
+  .sheet {
+    box-shadow: none !important;
+    margin: 0 !important;
+    overflow: visible !important;   /* ensure print shows everything */
+    page-break-inside: auto;        /* allow content to break across pages */
+    break-inside: auto;
+  }
+  .sheet section {
+    break-inside: avoid;            /* but keep individual sections intact */
+    page-break-inside: avoid;
+  }
 }
 
 ::-webkit-scrollbar { width: 10px; height: 10px; }
