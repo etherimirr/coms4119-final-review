@@ -1319,7 +1319,9 @@ async function renderCheatSheet() {
       <button id="cheatRedoBtn" onclick="cheatRedo()" title="重做（⌘⇧Z）" disabled>↪️</button>
       <button onclick="cheatInsertAuto()" title="📥 拉取你的收藏 / Q&A / 高亮笔记进对应 section">📥</button>
       <button onclick="cheatAddSection()" title="➕ 加 Section">➕</button>
-      <button onclick="window.print()" title="🖨️ 打印">🖨️</button>
+      <button onclick="cheatExportHTML()" title="📄 下载 HTML 原文件备份（最准）">📄</button>
+      <button onclick="cheatExportDoc()" title="📝 下载 Word .doc（HTML-based，Word 可打开）">📝</button>
+      <button onclick="cheatExportPDF()" title="🖨️ 打印 / 存为 PDF">🖨️</button>
     </div>
     <div class="cheat-host" id="cheatHost">${bodyHtml}</div>`;
   attachCheatHandlers();
@@ -1336,6 +1338,63 @@ async function renderCheatSheet() {
 
 function _markModified(section) {
   if (section && section.tagName === 'SECTION') section.dataset.modified = '1';
+}
+
+// ============ Cheatsheet backup / export ============
+function _downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click();
+  setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
+}
+
+function _todayStamp() {
+  const d = new Date();
+  const p = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}`;
+}
+
+// Build a fully-inline standalone HTML doc (with current cheatsheet + the print CSS) for export
+async function _buildStandaloneCheatsheetHTML() {
+  const cheatHtml = cleanCheatHTML();
+  let css = '';
+  try { css = await fetch('style.css?t=' + Date.now()).then(r => r.text()); } catch (e) {}
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>COMS 4119 Cheat Sheet — ${_todayStamp()}</title>
+<style>${css}</style>
+</head>
+<body>
+<div class="cheat-host" style="background:#fff;color:#000">
+${cheatHtml}
+</div>
+</body>
+</html>`;
+}
+
+// 📄 Download HTML — most accurate backup (preserves all layout)
+async function cheatExportHTML() {
+  const html = await _buildStandaloneCheatsheetHTML();
+  _downloadBlob(new Blob([html], { type: 'text/html;charset=utf-8' }),
+    `coms4119-cheatsheet-${_todayStamp()}.html`);
+}
+
+// 📝 Download Word .doc — same HTML inside, Word opens it as a document
+async function cheatExportDoc() {
+  const html = await _buildStandaloneCheatsheetHTML();
+  // Word .doc with proper MS Office prelude so it opens cleanly
+  const docHeader = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>`;
+  const wrapped = html.replace(/^<!DOCTYPE html>\s*<html[^>]*>/, docHeader);
+  _downloadBlob(new Blob(['﻿' + wrapped], { type: 'application/msword' }),
+    `coms4119-cheatsheet-${_todayStamp()}.doc`);
+}
+
+// 🖨️ Print → user picks PDF in print dialog
+function cheatExportPDF() {
+  window.print();
 }
 
 function attachCheatHandlers() {
