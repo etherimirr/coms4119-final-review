@@ -861,12 +861,13 @@ body {
   page-break-after: always;
   flex-shrink: 0;
 }
-/* on screen: zoom shrinks the bounding box (unlike scale), so the sheet fits viewport.
-   zoom is ignored at print time, so A4 layout is preserved. */
-@media screen and (max-width: 900px)  { .sheet { zoom: 0.55; } }
-@media screen and (min-width: 900px)  and (max-width: 1100px) { .sheet { zoom: 0.7; } }
-@media screen and (min-width: 1100px) and (max-width: 1300px) { .sheet { zoom: 0.85; } }
-@media screen and (min-width: 1300px) and (max-width: 1500px) { .sheet { zoom: 0.95; } }
+/* on screen: scale (visual only) — layout is always computed at full A4 so screen = print pixel-perfect.
+   zoom changes layout computations (breaks columns at different positions); scale doesn't. */
+.sheet { transform-origin: top center; }
+@media screen and (max-width: 900px)  { .sheet { transform: scale(0.55); margin-bottom: -135mm; } }
+@media screen and (min-width: 900px)  and (max-width: 1100px) { .sheet { transform: scale(0.7); margin-bottom: -90mm; } }
+@media screen and (min-width: 1100px) and (max-width: 1300px) { .sheet { transform: scale(0.85); margin-bottom: -45mm; } }
+@media screen and (min-width: 1300px) and (max-width: 1500px) { .sheet { transform: scale(0.95); margin-bottom: -15mm; } }
 .sheet h1 { display: none; }
 .sheet .cols {
   column-count: 4;
