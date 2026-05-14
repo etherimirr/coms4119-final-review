@@ -1314,7 +1314,8 @@ async function renderCheatSheet() {
       <span id="cheatSavedIndicator" class="cheat-saved-ind"></span>
       <button id="cheatUndoBtn" onclick="cheatUndo()" title="撤回（⌘Z）" disabled>↩️</button>
       <button id="cheatRedoBtn" onclick="cheatRedo()" title="重做（⌘⇧Z）" disabled>↪️</button>
-      <button onclick="cheatSyncTemplate()" title="➕ 拉取模板新增 section（绝不改你已有的内容）">🔄</button>
+      <button onclick="cheatSyncTemplate()" title="➕ 仅拉取模板新增 section（绝不改你已有的内容）">🔄</button>
+      <button onclick="cheatPullAllSections()" title="🆕🆕 强制全部刷新所有 section 到源文件最新版（笔记会自动重新合并）">🆕</button>
       <button onclick="cheatInsertAuto()" title="📥 拉取笔记">📥</button>
       <button onclick="cheatAddSection()" title="➕ 加 Section">➕</button>
       <button onclick="window.print()" title="🖨️ 打印">🖨️</button>
@@ -1902,6 +1903,77 @@ async function cheatCheckTemplateVersion() {
       setTimeout(() => toast.remove(), 15000);
     }
   } catch (e) { /* silent */ }
+}
+
+// FULL refresh — pulls latest source for ALL sections (including ones user has).
+// User's stars/QA/highlights auto-remerge via cheatInsertAuto.
+// User-added sections (➕) preserved.
+async function cheatPullAllSections() {
+  if (!confirm('强制全部刷新到源文件最新？\n\n✅ 所有 section 用源文件最新内容覆盖（PDU 格式、新公式、新图等）\n✅ ⭐ 收藏 / 💬 Q&A / 🖍️ 高亮 / 📝 题目笔记 会自动重新合并回去\n✅ 你 ➕ 自己加的 section 完整保留\n⚠️ 你手动键入的文字（在已有 section 里改的字）会丢\n\n继续？')) return;
+  const host = document.getElementById('cheatHost');
+  if (!host) return;
+  try {
+    // snapshot to undo so ⌘Z reverts
+    const pre = cleanCheatHTML();
+    cheatHistoryPush(pre);
+
+    const fresh = await fetch('cheatsheet.html?t=' + Date.now()).then(r => r.text());
+    const tmp = document.createElement('div');
+    tmp.innerHTML = fresh;
+    _assignKeys(tmp);
+    _assignKeys(host);
+
+    // index fresh sections + their sheet
+    const freshSections = new Map();
+    tmp.querySelectorAll('.sheet').forEach((sheet, sheetIdx) => {
+      sheet.querySelectorAll('section').forEach(sec => {
+        if (sec.dataset.key) freshSections.set(sec.dataset.key, { sec, sheetIdx });
+      });
+    });
+
+    // replace user sections with fresh content (preserve user-only sections)
+    let replaced = 0, added = 0, kept = 0;
+    const userKeys = new Set();
+    host.querySelectorAll('section').forEach(userSec => {
+      const k = userSec.dataset.key;
+      if (!k) { kept++; return; }
+      userKeys.add(k);
+      const fe = freshSections.get(k);
+      if (!fe) { kept++; return; }
+      const newSec = fe.sec.cloneNode(true);
+      newSec.dataset.key = k;
+      newSec.removeAttribute('data-modified');
+      userSec.replaceWith(newSec);
+      replaced++;
+    });
+
+    // add new sections
+    const userSheets = host.querySelectorAll('.sheet');
+    freshSections.forEach((fe, k) => {
+      if (userKeys.has(k)) return;
+      const targetSheet = userSheets[fe.sheetIdx] || userSheets[userSheets.length - 1];
+      const cols = targetSheet?.querySelector('.cols');
+      if (!cols) return;
+      const newSec = fe.sec.cloneNode(true);
+      newSec.dataset.key = k;
+      cols.appendChild(newSec);
+      added++;
+    });
+
+    localStorage.setItem(KEY_CHEAT_VERSION, String(_extractVersion(fresh)));
+    attachCheatHandlers();
+    saveCheatSheet();
+    cheatInsertAuto();   // re-merge stars/QA/highlights/midterm/final notes
+
+    const msg = `全部刷新完成：${replaced} 个 section 更新到源文件最新版 · ${added} 个新增 · ${kept} 个你自己加的保留 · 收藏/Q&A/高亮已重新合并 · ⌘Z 可撤回`;
+    const t = document.createElement('div');
+    t.className = 'cheat-toast';
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 6000);
+  } catch (e) {
+    alert('刷新失败：' + e.message);
+  }
 }
 
 // CONSERVATIVE merge — your edits are sacred:
