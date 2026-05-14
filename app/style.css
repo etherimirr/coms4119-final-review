@@ -849,14 +849,16 @@ body {
 @media print { .cheat-floatbar { display: none !important; } }
 .sheet {
   width: 210mm;
-  min-height: 297mm;
+  height: 297mm;
+  max-height: 297mm;
+  overflow: hidden;
   background: #fff;
   color: #000;
-  padding: 4mm 4mm;
+  padding: 3mm 3mm;
   box-shadow: 0 4px 20px rgba(0,0,0,0.45);
   font-family: "Helvetica Neue", "Arial", "PingFang SC", "Microsoft YaHei", sans-serif;
-  font-size: 8pt;
-  line-height: 1.25;
+  font-size: 7.5pt;
+  line-height: 1.2;
   break-after: page;
   page-break-after: always;
   flex-shrink: 0;
@@ -868,6 +870,8 @@ body {
   column-count: 4;
   column-gap: 2.5mm;
   column-rule: 0.5px solid #ddd;
+  column-fill: balance;
+  height: 100%;
 }
 .sheet section {
   break-inside: avoid;
