@@ -838,7 +838,6 @@ async function renderCheatSheet() {
       <div class="pager">
         <button onclick="cheatInsertAuto()" title="拉取你的收藏 / 笔记 / Q&A / 高亮">📥 拉取笔记</button>
         <button onclick="cheatAddSection()">➕ Section</button>
-        <button onclick="cheatReset()" title="丢弃所有编辑">↻ Reset</button>
         <button onclick="window.print()">🖨️ Print</button>
       </div>
     </div>
@@ -952,11 +951,6 @@ function cheatAddSection() {
   sec.scrollIntoView({behavior:'smooth', block:'center'});
 }
 
-function cheatReset() {
-  if (!confirm('丢弃所有编辑，恢复默认 cheatsheet?')) return;
-  localStorage.removeItem(KEY_CHEAT);
-  renderCheatSheet();
-}
 
 // Pull from your collected content: midterm takeaways, starred slides, Q&A, highlights
 function cheatInsertAuto() {
