@@ -529,7 +529,17 @@ function renderConcepts() {
   content.innerHTML = `<div class="toolbar">
       <div class="title"><b>🧠 概念知识库</b> <span class="subtle">点击节点查看说明 · 拖动可重新布局</span></div>
     </div>
-    <div class="graph-help">提示：节点颜色 = 所属层；边表示「依赖 / 出自」。点击一个节点，右下角会弹出它的定义和它出现在哪几页。</div>
+    <div class="graph-help">
+      <div>提示：节点颜色 = 所属层；边表示「依赖 / 出自」。点击一个节点，右下角会弹出它的定义和它出现在哪几页。</div>
+      <div class="graph-legend">
+        <span class="dot" style="background:#3a7c83"></span>期中前
+        <span class="dot" style="background:#7aa2ff"></span>Transport (CC)
+        <span class="dot" style="background:#a78bfa"></span>Network
+        <span class="dot" style="background:#f5c46e"></span>Link
+        <span class="dot" style="background:#ff7a8a"></span>Wireless
+        <span class="dot" style="background:#8a90a3"></span>其他
+      </div>
+    </div>
     <div id="graph"><div class="graph-loading">加载中...</div></div>
     <div id="conceptDetail" style="position:absolute;right:20px;bottom:20px;width:380px;max-height:60vh;overflow-y:auto;background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:14px 18px;display:none;box-shadow:0 8px 30px rgba(0,0,0,0.5);"></div>`;
   const container = document.getElementById('graph');
@@ -561,6 +571,7 @@ function renderConcepts() {
       arrows: { to: { enabled: true, scaleFactor: 0.5 } },
     },
     groups: {
+      pre_mid:   { color: { background: '#3a7c83', border: '#235257' }, font: { color: '#e6e8ec' } },  // 期中前：深青绿
       app:       { color: { background: '#5bd6a3', border: '#3aa37c' } },
       transport: { color: { background: '#7aa2ff', border: '#4d76d6' } },
       network:   { color: { background: '#a78bfa', border: '#7a5cd1' } },
@@ -681,7 +692,8 @@ async function renderCheatSheet() {
   content.innerHTML = `<div class="toolbar">
       <div class="title"><b>🖨️ Cheat Sheet</b> <span class="subtle">直接点击编辑 · ✕ 删 section · 📷 加图 · 自动存</span></div>
       <div class="pager">
-        <button onclick="cheatInsertAuto()" title="把你的收藏/笔记/期中要点拉过来">📥 拉取重点</button>
+        <button onclick="cheatInsertPreMid()" title="加一页期中前重点">📥 Pre-Mid</button>
+        <button onclick="cheatInsertAuto()" title="拉取你的收藏 / 笔记 / Q&A / 高亮">📥 拉取笔记</button>
         <button onclick="cheatAddSection()">➕ Section</button>
         <button onclick="cheatReset()" title="丢弃所有编辑">↻ Reset</button>
         <button onclick="window.print()">🖨️ Print</button>
@@ -876,6 +888,185 @@ function cheatInsertAuto() {
     alert('还没有可拉取的内容。先去:\n• 讲义页按 S 收藏重点\n• 在 AI 解释里划词点高亮\n• 在 Q&A 框里问问题\n• 看期中复盘');
     return;
   }
+  host.appendChild(sheet);
+  attachCheatHandlers();
+  saveCheatSheet();
+  sheet.scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+// Insert a Pre-Midterm sheet packed with pre-mid content (app/transport up to flow control)
+function cheatInsertPreMid() {
+  const host = document.getElementById('cheatHost');
+  if (!host) return;
+  const sheet = document.createElement('div');
+  sheet.className = 'sheet pre-mid-sheet';
+  sheet.innerHTML = `<h1>COMS 4119 — PRE-MIDTERM REVIEW</h1><div class="cols">
+<section><h2>HTTP Sockets <span class="tag">mid Q1</span></h2>
+<ul>
+<li>UDP server: <b>1 socket</b> (connectionless)</li>
+<li>TCP server: <b>N+1</b> sockets (welcome + per-client)</li>
+<li>UDP distinguishes clients via (src IP, port)</li>
+</ul></section>
+
+<section><h2>HTTP RTT Counting <span class="tag">mid Q1</span></h2>
+<ul>
+<li>Non-persistent: <b>2 RTT/obj</b> (TCP setup + GET)</li>
+<li>Persistent + pipelined: 2 RTT for base, +1 per nesting layer</li>
+<li>Example: HTML + 4 jpg + 1 css(2 jpg) = <b>4 RTT</b></li>
+</ul></section>
+
+<section><h2>HTTP Persistence</h2>
+<ul>
+<li>Non-persistent (HTTP/1.0): new TCP per object</li>
+<li>Persistent (HTTP/1.1): reuse TCP for all objects</li>
+<li>Pipelining: send next request before previous response</li>
+<li>Cookie: stateless HTTP + server-side state</li>
+</ul></section>
+
+<section><h2>Web Cache (Proxy)</h2>
+<ul>
+<li>Proxy caches HTTP responses; cuts RTT + bandwidth</li>
+<li>Consistency: <b>Conditional GET</b> with If-Modified-Since</li>
+<li>Server responds 304 Not Modified (no body) if unchanged</li>
+</ul></section>
+
+<section><h2>DNS Hierarchy</h2>
+<ul>
+<li>local resolver → root → TLD(.com, .edu) → authoritative</li>
+<li>Recursive (resolve for me) vs iterative (tell me next hop)</li>
+<li>RR types: A (IPv4), AAAA (IPv6), NS, MX, CNAME</li>
+<li>UDP 53; falls back to TCP for large responses</li>
+</ul></section>
+
+<section><h2>P2P File Distribution <span class="tag">mid Q6</span></h2>
+<div class="formula">CS:  T = max(NF/U_s, F/d_min)</div>
+<div class="formula">P2P: T = max(F/U_s, F/d_min, NF/(U_s + ΣU_i))</div>
+<ul>
+<li>Server upload is multiplied by N in CS, NOT in P2P</li>
+<li>P2P scales: more peers = more total upload BW</li>
+<li>For 1GB / 100 users, 40Mbps server: CS = 20000s, P2P ≈ 1000s</li>
+</ul></section>
+
+<section><h2>BitTorrent Mechanics</h2>
+<ul>
+<li><b>Rarest first</b>: prioritize chunks scarce in the swarm</li>
+<li><b>Tit-for-tat</b>: upload to those who upload to you</li>
+<li><b>Optimistic unchoke</b>: every ~30s give bw to a new peer (explore)</li>
+<li><b>DHT</b>: distributed hash table replaces central tracker</li>
+</ul></section>
+
+<section><h2>Performance Metrics <span class="tag">mid Q2 Q4</span></h2>
+<ul>
+<li><b>Trans</b> delay = L/R; <b>Prop</b> delay = d/v</li>
+<li>Light c = 3·10⁸ m/s; sound = 1.5 km/s</li>
+<li>End-to-end = Σ per link (L/R + d/v) + queuing</li>
+<li>Pipelined N pkts: 1st pkt full path + (N−1)·<span class="red">bottleneck</span> tx</li>
+<li>Throughput = min(per-link R) = bottleneck</li>
+</ul></section>
+
+<section><h2>BDP — Bandwidth-Delay Product</h2>
+<div class="formula">BDP = R · RTT  (bits in pipe)</div>
+<ul>
+<li>Window size must ≥ BDP to keep pipe full</li>
+<li>Example: 30 Kbps × 80 ms = 2400 bits</li>
+</ul></section>
+
+<section><h2>Stop-and-Wait U <span class="tag">mid Q5</span></h2>
+<div class="formula">U = T_trans / (T_trans + 2·T_prop)</div>
+<ul>
+<li>Bad when L small or RTT large (T_trans ≪ T_prop)</li>
+<li>Example: 2 Kb @ 40 Kbps over 30m acoustic + 3km air → U ≈ 0.54; @ 200b → 0.11</li>
+<li><b>Fix</b>: sliding window with size ≥ BDP</li>
+</ul></section>
+
+<section><h2>Sliding Window</h2>
+<ul>
+<li>Sender maintains window [base, base+N)</li>
+<li>Can send any unACKed packet in window without waiting</li>
+<li>ACK arrives → base slides forward</li>
+<li>Stop-and-wait = window of 1 (special case)</li>
+</ul></section>
+
+<section><h2>UDP vs TCP</h2>
+<table>
+<tr><th></th><th>UDP</th><th>TCP</th></tr>
+<tr><td>conn</td><td>none</td><td>3WHS</td></tr>
+<tr><td>reliable</td><td>no</td><td>yes</td></tr>
+<tr><td>order</td><td>no</td><td>yes</td></tr>
+<tr><td>flow ctrl</td><td>no</td><td>rwnd</td></tr>
+<tr><td>hdr</td><td>8 B</td><td>20 B</td></tr>
+<tr><td>uses</td><td>DNS, RTP, DHCP</td><td>HTTP, SSH</td></tr>
+</table></section>
+
+<section><h2>TCP Segment</h2>
+<ul>
+<li>Src/dst port (16b each)</li>
+<li>Seq #: first byte of data (32b)</li>
+<li>ACK #: next expected byte (32b)</li>
+<li>HLEN, flags: SYN/FIN/ACK/RST/PSH/URG/CWR/ECE</li>
+<li><b>Receive window</b> (16b): rwnd, for flow control</li>
+<li>Checksum (16b)</li>
+</ul></section>
+
+<section><h2>TCP 3WHS &amp; 4-Way Close</h2>
+<ol>
+<li><b>SYN</b> seq=x</li>
+<li><b>SYN-ACK</b> seq=y ack=x+1</li>
+<li><b>ACK</b> seq=x+1 ack=y+1</li>
+</ol>
+<p>Close = 4-way (FIN/ACK each direction). TIME_WAIT 2·MSL.</p></section>
+
+<section><h2>RDT: GBN vs SR <span class="tag">mid Q3</span></h2>
+<table>
+<tr><th></th><th>GBN</th><th>SR</th></tr>
+<tr><td>ACK</td><td>cumulative</td><td>per-packet</td></tr>
+<tr><td>Loss</td><td>resend window</td><td>resend just lost</td></tr>
+<tr><td>Data-loss heavy</td><td>bad</td><td><span class="green">good</span></td></tr>
+<tr><td>ACK-loss heavy</td><td><span class="green">good</span></td><td>bad</td></tr>
+<tr><td>Rcvr buffer</td><td>none</td><td>required</td></tr>
+</table>
+<p class="mini">SR window ≤ N/2 (seq space)</p></section>
+
+<section><h2>TCP Reliable Mechanisms</h2>
+<ul>
+<li><b>Timeout retransmit</b>: TimeoutInterval = EstRTT + 4·DevRTT</li>
+<li>EstRTT = (1−α)·EstRTT + α·SampleRTT, α=0.125</li>
+<li>DevRTT = (1−β)·DevRTT + β·|SampleRTT−EstRTT|, β=0.25</li>
+<li><b>Fast retransmit</b>: 3 dup ACKs trigger immediate resend</li>
+<li>Exponential backoff after timeout</li>
+</ul></section>
+
+<section><h2>TCP Flow Control <span class="tag">mid Q5</span></h2>
+<ul>
+<li>Receiver advertises <b>rwnd</b> in every ACK</li>
+<li>Sender's inflight ≤ min(cwnd, rwnd)</li>
+<li>SR receive buffer holds out-of-order pkts; if packet 1 lost + 2,3,4 occupy buffer → 5+ get dropped</li>
+<li><b>Advertise rwnd = buffer size</b>, not larger</li>
+</ul></section>
+
+<section><h2>RDT Evolution (1.0 → 3.0)</h2>
+<ul>
+<li><b>1.0</b>: perfect channel (useless)</li>
+<li><b>2.0</b>: + ACK/NAK + checksum (handles bit errors)</li>
+<li><b>2.1</b>: + seq # (handles ACK corruption)</li>
+<li><b>2.2</b>: NAK-free (use ACK + last good seq)</li>
+<li><b>3.0</b>: + timer (handles packet loss) — stop-and-wait</li>
+<li>Pipelined: GBN / SR</li>
+</ul></section>
+
+<section><h2>Pre-Mid Exam Pitfalls</h2>
+<ul>
+<li>UDP server: <b>1</b> socket (not N+1)</li>
+<li>TCP server: <b>N+1</b> (welcome + per-client)</li>
+<li>Non-persistent HTTP: <b>×2 RTT</b> per object (setup + GET)</li>
+<li>Pipelining N pkts: bottleneck × (N−1)</li>
+<li>RTT not just propagation — include trans delay if asked</li>
+<li>Stop-and-wait U denominator: <b>T_trans + 2·T_prop</b></li>
+<li>SR receive buffer: out-of-order stuck → drops later pkts</li>
+<li>BT vs CS: server upload multiplied by N only in CS</li>
+</ul></section>
+
+</div>`;
   host.appendChild(sheet);
   attachCheatHandlers();
   saveCheatSheet();
