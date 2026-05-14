@@ -858,7 +858,8 @@ body {
   font-size: 7.5pt;
   line-height: 1.2;
   flex-shrink: 0;
-  overflow: hidden;         /* clip any stray overflow so screen = PDF exactly */
+  /* no overflow clipping — show ALL content; if it doesn't fit A4 height,
+     browser paginates naturally on print */
 }
 .cheat-pages > .sheet + .sheet { box-shadow: none; }  /* visual: continuous */
 /* Show sheets at exact A4 size (210mm × 297mm) on screen — no scaling at all.
