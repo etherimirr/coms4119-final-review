@@ -849,6 +849,7 @@ body {
 @media print { .cheat-floatbar { display: none !important; } }
 .sheet {
   width: 200mm;
+  min-height: 287mm;  /* A4 height (297) − 2×5mm safe margins */
   box-sizing: border-box;
   background: #fff;
   color: #000;
@@ -867,6 +868,8 @@ body {
   column-count: 4;
   column-gap: 2.5mm;
   column-rule: 0.5px solid #ddd;
+  column-fill: auto;  /* sequential top-to-bottom fill → no awkward balance gaps */
+  min-height: 281mm;  /* sheet min-height − 2×3mm padding, gives cols vertical room */
 }
 .sheet section {
   break-inside: avoid;
