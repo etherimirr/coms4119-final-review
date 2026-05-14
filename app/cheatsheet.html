@@ -1,4 +1,4 @@
-<!-- CHEATSHEET_VERSION: 35 -->
+<!-- CHEATSHEET_VERSION: 36 -->
 <!--
   COMS 4119 FINAL CHEAT SHEET
   4 sheets organized by course chapter (Kurose-Ross order):
@@ -48,14 +48,11 @@
 <section data-key="packet-vs-circuit-switching" data-wired="1" contenteditable="true" spellcheck="false">
 <h2>Packet vs Circuit Switching</h2>
 <ul>
-<li><b>Circuit</b>: Mux: <b>TDM</b> / <b>FDM</b></li>
-<li><b>Packet</b>:&nbsp;&nbsp;<b>Best-effort</b> (may lose / corrupt / reorder)</li>
+<li><b>Circuit</b>: reserve resources up-front. Mux via <b>TDM</b> or <b>FDM</b>. Phone network.</li>
+<li><b>Packet</b>: on-demand, best-effort. Internet.</li>
 </ul>
-<table>
-<tbody><tr><th>Circuit ✅</th><th>Circuit ❌</th></tr>
-<tr><td class="mini">Guaranteed BW · simple abstraction · simple forwarding · low per-pkt overhead</td><td class="mini"><span class="red">Wasted BW on bursty</span> · blocked connections · set-up delay · per-conn state</td></tr>
-</tbody></table>
-<p class="mini"><b>vs Packet</b>: great for <b>bursty</b> (resource sharing, no setup); congestion → buffer overflow → delay/loss. Internet picks packet.</p>
+<p class="mini"><b>Packet wins for bursty</b> (resource sharing, no setup) — but <span class="red">congestion possible</span> → buffer overflow → delay/loss → need RDT + congestion control.</p>
+<p class="mini">"How to make packet circuit-like? <b>It's complicated</b>." (QoS, virtual circuits, MPLS)</p>
 </section>
 
 <section data-key="delays-performance-mid-q2-q4">
@@ -320,13 +317,12 @@
 <p class="mini"><span class="red">Trap</span>: FR + new ACK → <b>CA</b>, NOT slow start.</p>
 </section>
 
-<section data-key="aimd-fairness-exam">
+<section data-key="aimd-fairness-exam" data-wired="1" contenteditable="true" spellcheck="false">
 <h2>AIMD Fairness <span class="tag">exam</span></h2>
 <figure><img src="cheatsheet-assets/aimd-fairness.jpg"><figcaption>AIMD fairness convergence (x1 vs x2)</figcaption></figure>
 <ul>
 <li>+a → both move up 45° (efficiency line)</li>
 <li>×b → toward origin, ratio kept</li>
-<li>Spiral converges to x1=x2 ∩ x1+x2=1</li>
 <li><b>Only AIMD</b> → both fairness + efficiency</li>
 </ul>
 <div class="formula">avg cwnd = 3W/4 → R = 3W/(4·RTT)</div>
