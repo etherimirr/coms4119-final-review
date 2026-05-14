@@ -1,4 +1,4 @@
-<!-- CHEATSHEET_VERSION: 5 -->
+<!-- CHEATSHEET_VERSION: 7 -->
 <!--
   COMS 4119 FINAL CHEAT SHEET
   4 sheets organized by course chapter (Kurose-Ross order):
@@ -323,27 +323,32 @@
 <section data-key="tcp-cc-fsm-exam">
 <h2>TCP CC FSM <span class="tag">exam</span></h2>
 <figure><img src="cheatsheet-assets/tcp-cc-fsm.jpg"><figcaption>lec14 p12 · TCP CC 状态机总图</figcaption></figure>
+<figure><img src="cheatsheet-assets/cwnd-phases.jpg"><figcaption>lec14 p10 · cwnd 曲线 — slow start 指数 → CA 线性</figcaption></figure>
 <p class="mini"><b>Loss detection → recovery：</b>
 <span class="red">Timeout</span> ⇒ cwnd=1 + <b>slow start</b>；
-<span class="red">3 dup ACK</span> ⇒ cwnd/=2 + <b>congestion avoidance</b>。</p>
+<span class="red">3 dup ACK</span> ⇒ cwnd/=2 + <b>fast recovery → CA</b>。</p>
 <ul>
-<li><b>Slow start</b>: cwnd=1; each ACK cwnd += MSS (×2/RTT)</li>
-<li>cwnd &gt; ssthresh → <b>Congestion avoidance</b> (+1 MSS/RTT)</li>
-<li><b>3 dup ACKs</b> in CA → ssthresh=cwnd/2, cwnd=ssthresh+3 → <b>Fast recovery</b>; new ACK → back to CA (cwnd=ssthresh)</li>
-<li><b>Timeout</b> any state → ssthresh=cwnd/2, cwnd=1 → slow start</li>
+<li><b>Slow Start (SS)</b>: cwnd=1，每个 ACK +1 MSS → <b>指数</b>增长（每 RTT ×2）</li>
+<li>cwnd ≥ ssthresh → <b>Congestion Avoidance (CA)</b>：每 RTT +1 MSS → <b>线性</b>增长</li>
+<li><b>3 dup ACKs</b>：ssthresh=cwnd/2, cwnd=ssthresh+3 → <b>Fast Recovery (FR)</b></li>
+<li><b>Fast Recovery</b>: 半减 cwnd 后跳过 SS，直接进入 CA 状态线性恢复（"loss 不严重，network 还能用"）</li>
+<li>FR 期间：每收到 dup ACK 再 +1 MSS（充气）；收到 new ACK → 跳回 CA（cwnd=ssthresh）</li>
+<li><b>Timeout (任何状态)</b>: ssthresh=cwnd/2, cwnd=1 → SS（"loss 严重，重头来"）</li>
 </ul>
-<p class="mini"><span class="red">Trap</span>: FR + new ACK → <b>CA</b>, NOT slow start.</p>
+<p class="mini"><span class="red">Trap</span>: FR + new ACK → <b>CA</b>, 不是 slow start。</p>
 </section>
 
 <section data-key="aimd-fairness-exam">
 <h2>AIMD Fairness <span class="tag">exam</span></h2>
+<figure><img src="cheatsheet-assets/aimd-fairness.jpg"><figcaption>lec14 p6 · AIMD 收敛到 x1=x2 (公平) ∩ x1+x2=1 (效率)</figcaption></figure>
 <ul>
-<li>+a moves both up 45° (efficiency line)</li>
-<li>×b scales toward origin (keeps ratio)</li>
-<li>Spiral converges to x1=x2 ∩ x1+x2=1</li>
-<li><b>Only AIMD</b> achieves both fairness and efficiency</li>
+<li><b>+a (additive)</b>: 两人 +a → 沿 45° 上移（向 efficiency line x1+x2=1）</li>
+<li><b>×b (multiplicative)</b>: 两人 ×b → 沿原点连线缩进（保比例，但向 fairness line x1=x2 靠拢）</li>
+<li>螺旋收敛到两线交点 → 既公平又有效</li>
+<li>AIAD / MIMD 都不收敛公平；MIAD 不稳；<b>只有 AIMD</b> 同时拿到两者</li>
 </ul>
-<div class="formula">avg cwnd = 3W/4 ⇒ R = 3W/(4·RTT)</div>
+<div class="formula">avg cwnd = 3W/4 ⇒ <b>R = 3W / (4·RTT)</b> (Steady-state TCP 平均吞吐量)</div>
+<p class="mini">W = loss 前的峰值 cwnd；锯齿状降到 W/2 再线性升回 W → 平均 3W/4。</p>
 <div class="my-note" data-note-key="star:lec14:6"><span class="my-note-tag">⭐</span> <b>lec14 p6</b> AIMD — 唯一收敛公平 ✨ ⭐⭐</div></section>
 
 <section data-key="end-end-vs-network-assisted-congestion-control">
