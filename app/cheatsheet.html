@@ -1,4 +1,4 @@
-<!-- CHEATSHEET_VERSION: 10 -->
+<!-- CHEATSHEET_VERSION: 11 -->
 <!--
   COMS 4119 FINAL CHEAT SHEET
   4 sheets organized by course chapter (Kurose-Ross order):
@@ -812,10 +812,22 @@ Transmit: 101011 110</pre>
 <section data-key="csma-csma-cd">
 <h2>CSMA / CSMA-CD</h2>
 <ul>
-<li>CS: listen before send</li>
+<li><b>CS</b>: listen before send</li>
 <li>Collisions still happen due to <b>propagation delay</b></li>
-<li>CSMA/CD (wired only): listen while sending; abort on collision; jam + binary backoff</li>
-<li>Wireless can't CD: TX deafens RX</li>
+<li><b>CSMA/CD</b> (wired only): listen <b>while sending</b>; abort on collision; jam + binary backoff</li>
+<li>Wireless can't CD: TX signal deafens own RX (功率差 10⁶+ 倍)</li>
+</ul>
+</section>
+
+<section data-key="csma-cd-vs-csma-ca">
+<h2>CSMA/CD vs CSMA/CA <span class="tag">exam</span></h2>
+<p class="mini">关键差异：<b>无线没法边发边听</b>（自己 TX 盖过 RX 天线）→ 不能检测碰撞，只能避免。</p>
+<ul>
+<li><b>CSMA/CD</b>（Ethernet 有线）：发时继续监听 → 直接<b>检测</b>碰撞 → 立即停 + jam + backoff</li>
+<li><b>CSMA/CA</b>（WiFi 无线）：发完不知道碰没碰 → 靠接收方 <b>ACK</b> 推断 → 没 ACK 就 backoff 重发</li>
+<li>CD 一旦空闲立即发；CA 要等 <b>DIFS</b>，ACK/CTS 等更短 <b>SIFS</b>（优先）</li>
+<li>CD 用 <b>min frame size 64B</b> 保证发完前能听到碰撞；CA 用 <b>RTS/CTS</b> 防 hidden terminal</li>
+<li>CA <b>每帧必 ACK</b>；CD 不需要 ACK</li>
 </ul>
 </section>
 
