@@ -882,4 +882,254 @@ Transmit: 101011 110</pre>
 
 </div></div>
 
+
+<!-- ====================== PAGE 6 (UNITS & CONVERSIONS) ====================== -->
+<div class="sheet">
+<h1>COMS 4119 — UNITS &amp; CONVERSIONS</h1>
+<div class="cols">
+
+<section>
+<h2>Time</h2>
+<table>
+<tr><th>Symbol</th><th>=</th><th>seconds</th></tr>
+<tr><td>1 s</td><td>=</td><td>10⁰</td></tr>
+<tr><td>1 ms</td><td>=</td><td>10⁻³</td></tr>
+<tr><td>1 μs</td><td>=</td><td>10⁻⁶</td></tr>
+<tr><td>1 ns</td><td>=</td><td>10⁻⁹</td></tr>
+</table>
+<ul>
+<li>1 s = 1000 ms = 10⁶ μs = 10⁹ ns</li>
+<li>1 ms = 1000 μs = 10⁶ ns</li>
+</ul>
+</section>
+
+<section>
+<h2>Bytes &amp; Bits</h2>
+<ul>
+<li><b>1 byte (B) = 8 bits (b)</b></li>
+<li>Lowercase b = bit; uppercase B = byte</li>
+<li>Mbps = megabits/sec ≠ MBps</li>
+</ul>
+<table>
+<tr><th></th><th>SI (10ⁿ)</th><th>Binary (2ⁿ)</th></tr>
+<tr><td>1 KB</td><td>10³ B</td><td>2¹⁰ = 1024 B</td></tr>
+<tr><td>1 MB</td><td>10⁶ B</td><td>2²⁰ B</td></tr>
+<tr><td>1 GB</td><td>10⁹ B</td><td>2³⁰ B</td></tr>
+<tr><td>1 TB</td><td>10¹² B</td><td>2⁴⁰ B</td></tr>
+</table>
+<p class="mini">Networking usually uses <b>SI (base-10)</b>. Storage often uses binary.</p>
+</section>
+
+<section>
+<h2>Bandwidth (bits/sec)</h2>
+<table>
+<tr><th>Unit</th><th>bps</th></tr>
+<tr><td>1 bps</td><td>1</td></tr>
+<tr><td>1 Kbps</td><td>10³ = 1000</td></tr>
+<tr><td>1 Mbps</td><td>10⁶</td></tr>
+<tr><td>1 Gbps</td><td>10⁹</td></tr>
+<tr><td>1 Tbps</td><td>10¹²</td></tr>
+</table>
+<ul>
+<li>Always base-10 in networking</li>
+<li>1 Gbps = 1000 Mbps = 10⁶ Kbps</li>
+</ul>
+</section>
+
+<section>
+<h2>Bytes ↔ Bits Quick</h2>
+<table>
+<tr><th>Bytes</th><th>Bits</th></tr>
+<tr><td>1 KB</td><td>8 Kb</td></tr>
+<tr><td>1 MB</td><td>8 Mb</td></tr>
+<tr><td>1 GB</td><td>8 Gb</td></tr>
+<tr><td>500 B</td><td>4 Kb = 4000 b</td></tr>
+<tr><td>400 B</td><td>3.2 Kb = 3200 b</td></tr>
+<tr><td>2 Kb</td><td>250 B</td></tr>
+</table>
+</section>
+
+<section>
+<h2>Length / Distance</h2>
+<table>
+<tr><th>Unit</th><th>= meters</th></tr>
+<tr><td>1 km</td><td>1000 m = 10³</td></tr>
+<tr><td>1 cm</td><td>10⁻² m</td></tr>
+<tr><td>1 mm</td><td>10⁻³ m</td></tr>
+<tr><td>1 μm</td><td>10⁻⁶ m</td></tr>
+</table>
+<p class="mini">1 mile ≈ 1.609 km (rarely needed)</p>
+</section>
+
+<section>
+<h2>Speed Constants</h2>
+<table>
+<tr><th>Medium</th><th>Speed</th></tr>
+<tr><td>Light (vacuum/fiber)</td><td>3·10⁸ m/s = 3·10⁵ km/s</td></tr>
+<tr><td>Copper signal</td><td>~2·10⁸ m/s (~⅔ c)</td></tr>
+<tr><td>Sound (water)</td><td>1500 m/s = 1.5 km/s</td></tr>
+<tr><td>Sound (air)</td><td>343 m/s ≈ 0.34 km/s</td></tr>
+</table>
+<p class="mini">Mid Q4 uses 1.5 km/s for acoustic, 3·10⁸ m/s for cellular.</p>
+</section>
+
+<section>
+<h2>Propagation Quickref</h2>
+<ul>
+<li>Light: 1 m → <b>3.3 ns</b></li>
+<li>Light: 1 km → <b>3.3 μs</b></li>
+<li>Light: 1000 km → <b>3.3 ms</b></li>
+<li>Light: 10⁴ km → <b>33 ms</b> (NY ↔ LA RTT-ish)</li>
+<li>Sound (water): 30 m → <b>20 ms</b></li>
+<li>Sound (water): 1 km → <b>0.67 s</b></li>
+</ul>
+</section>
+
+<section>
+<h2>Transmission Quickref (1 packet)</h2>
+<ul>
+<li>1 Kb @ 1 Mbps → 1 ms</li>
+<li>1 Kb @ 1 Gbps → 1 μs</li>
+<li>1500 B @ 100 Mbps → 120 μs</li>
+<li>2 Kb @ 40 Kbps → <b>50 ms</b> (mid Q4)</li>
+<li>500 B @ 1 Mbps → 4 ms</li>
+<li>500 B @ 8 Mbps → 0.5 ms</li>
+</ul>
+</section>
+
+<section>
+<h2>BDP Quickref</h2>
+<ul>
+<li>1 Gbps × 100 ms = 100 Mb = 12.5 MB</li>
+<li>10 Mbps × 30 ms = 300 Kb = 37.5 KB</li>
+<li>30 Kbps × 80 ms = 2.4 Kb = 300 B (mid Q4)</li>
+<li>Throughput × RTT = pipe contents</li>
+</ul>
+</section>
+
+<section>
+<h2>RTT Numbers (typical)</h2>
+<table>
+<tr><th>Path</th><th>RTT</th></tr>
+<tr><td>Localhost</td><td>&lt; 0.1 ms</td></tr>
+<tr><td>Same datacenter</td><td>0.5–1 ms</td></tr>
+<tr><td>Same city</td><td>5–10 ms</td></tr>
+<tr><td>US coast-to-coast</td><td>60–80 ms</td></tr>
+<tr><td>US ↔ Europe</td><td>80–120 ms</td></tr>
+<tr><td>US ↔ Asia</td><td>150–250 ms</td></tr>
+<tr><td>Satellite (GEO)</td><td>~500 ms</td></tr>
+</table>
+</section>
+
+<section>
+<h2>Powers of 2 (memorize)</h2>
+<table>
+<tr><th>2ⁿ</th><th>Value</th></tr>
+<tr><td>2⁸</td><td>256</td></tr>
+<tr><td>2¹⁰</td><td>1024 ≈ 10³</td></tr>
+<tr><td>2¹⁶</td><td>65 536 ≈ 6.5·10⁴</td></tr>
+<tr><td>2²⁰</td><td>1 048 576 ≈ 10⁶</td></tr>
+<tr><td>2³²</td><td>≈ 4.3·10⁹ (IPv4)</td></tr>
+<tr><td>2¹²⁸</td><td>~3.4·10³⁸ (IPv6)</td></tr>
+</table>
+</section>
+
+<section>
+<h2>Subnet Quickref (/x → hosts)</h2>
+<table>
+<tr><th>/x</th><th>Hosts (2^(32−x))</th><th>Notes</th></tr>
+<tr><td>/8</td><td>2²⁴ ≈ 16M</td><td>old Class A</td></tr>
+<tr><td>/16</td><td>2¹⁶ ≈ 65K</td><td>old Class B</td></tr>
+<tr><td>/20</td><td>2¹² = 4096</td><td>mid example</td></tr>
+<tr><td>/23</td><td>2⁹ = 512</td><td></td></tr>
+<tr><td>/24</td><td>2⁸ = 256</td><td>old Class C</td></tr>
+<tr><td>/28</td><td>2⁴ = 16</td><td></td></tr>
+<tr><td>/30</td><td>2² = 4</td><td>point-to-point</td></tr>
+</table>
+</section>
+
+<section>
+<h2>Mask ↔ /x</h2>
+<table>
+<tr><th>/x</th><th>Mask</th></tr>
+<tr><td>/8</td><td>255.0.0.0</td></tr>
+<tr><td>/16</td><td>255.255.0.0</td></tr>
+<tr><td>/20</td><td>255.255.240.0</td></tr>
+<tr><td>/24</td><td>255.255.255.0</td></tr>
+<tr><td>/28</td><td>255.255.255.240</td></tr>
+<tr><td>/30</td><td>255.255.255.252</td></tr>
+</table>
+<p class="mini">Octet pattern: 128, 192, 224, 240, 248, 252, 254, 255</p>
+</section>
+
+<section>
+<h2>dB Conversions</h2>
+<ul>
+<li>+3 dB → ×2 power</li>
+<li>+10 dB → ×10 power</li>
+<li>+20 dB → ×100 power</li>
+<li>+30 dB → ×1000 power</li>
+<li>dBm: 0 dBm = 1 mW; −30 dBm = 1 μW</li>
+<li>WiFi: −50 dBm 强, −70 dBm 中, −90 dBm 弱</li>
+</ul>
+</section>
+
+<section>
+<h2>Hex ↔ Binary</h2>
+<table>
+<tr><th>Hex</th><th>Bin</th></tr>
+<tr><td>0</td><td>0000</td></tr>
+<tr><td>1</td><td>0001</td></tr>
+<tr><td>2</td><td>0010</td></tr>
+<tr><td>4</td><td>0100</td></tr>
+<tr><td>8</td><td>1000</td></tr>
+<tr><td>A</td><td>1010</td></tr>
+<tr><td>C</td><td>1100</td></tr>
+<tr><td>F</td><td>1111</td></tr>
+</table>
+<p class="mini">e.g. MAC 00-15-C5 = 0x001 5C5</p>
+</section>
+
+<section>
+<h2>Powers of 10 Prefixes</h2>
+<table>
+<tr><th>Prefix</th><th>Symbol</th><th>Value</th></tr>
+<tr><td>nano</td><td>n</td><td>10⁻⁹</td></tr>
+<tr><td>micro</td><td>μ</td><td>10⁻⁶</td></tr>
+<tr><td>milli</td><td>m</td><td>10⁻³</td></tr>
+<tr><td>kilo</td><td>k/K</td><td>10³</td></tr>
+<tr><td>mega</td><td>M</td><td>10⁶</td></tr>
+<tr><td>giga</td><td>G</td><td>10⁹</td></tr>
+<tr><td>tera</td><td>T</td><td>10¹²</td></tr>
+</table>
+</section>
+
+<section>
+<h2>Combo Cheats</h2>
+<ul>
+<li>Mbps × ms = Kb (divide by 1000)</li>
+<li>Gbps × μs = Kb</li>
+<li>MB × 8 = Mb</li>
+<li>GB × 8 = Gb</li>
+<li>(L bytes) × 8 / (R bps) = T_trans (sec)</li>
+<li>(d m) / (3·10⁸ m/s) = T_prop (sec)</li>
+</ul>
+</section>
+
+<section>
+<h2>Common Frame / Packet Sizes</h2>
+<ul>
+<li>Min Ethernet: 64 B (w/ hdr+CRC)</li>
+<li>Max Ethernet (typical): 1518 B</li>
+<li>MTU (Internet typical): 1500 B</li>
+<li>TCP segment header: 20 B</li>
+<li>IPv4 header: 20 B</li>
+<li>IPv6 header: 40 B fixed</li>
+<li>UDP header: 8 B</li>
+<li>TCP+IP overhead: 40 B/packet</li>
+</ul>
+</section>
+
+</div></div>
+
 </div>

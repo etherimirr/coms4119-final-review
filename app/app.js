@@ -822,6 +822,7 @@ function attachCheatHandlers() {
     overlay.className = 'section-overlay';
     overlay.contentEditable = 'false';
     overlay.innerHTML = `
+      <button title="让 AI 往这个 section 补内容" onclick="cheatLLMAddTo(this); event.stopPropagation();">🤖</button>
       <button title="加图" onclick="cheatAddImage(this); event.stopPropagation();">📷</button>
       <button title="删除" onclick="cheatDeleteSection(this); event.stopPropagation();">✕</button>`;
     section.appendChild(overlay);
@@ -992,6 +993,85 @@ function cheatInsertAuto() {
   attachCheatHandlers();
   saveCheatSheet();
   sheet.scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+// LLM-fill a section: prompt user, ask AI to produce dense cheat-sheet HTML, append
+async function cheatLLMAddTo(btn) {
+  const section = btn.closest('section');
+  const apiKey = getApiKey();
+  if (!apiKey) {
+    if (confirm('还没设置 OpenAI API Key，现在设置？')) openSettings();
+    return;
+  }
+  const userAsk = prompt('要 AI 在这个 section 里加点什么？\n(比如：加个例题 / 加 BGP policy 详解 / 加 5GHz vs 2.4GHz 对比表)');
+  if (!userAsk || !userAsk.trim()) return;
+
+  // Get current section text content (strip overlay)
+  const clone = section.cloneNode(true);
+  clone.querySelectorAll('.section-overlay').forEach(o => o.remove());
+  const currentText = clone.innerText.trim().slice(0, 800);
+
+  const status = section.querySelector('.llm-status') || (() => {
+    const s = document.createElement('div');
+    s.className = 'llm-status subtle';
+    s.contentEditable = 'false';
+    s.style.cssText = 'font-size:7pt;color:#666;margin-top:1mm;font-style:italic;';
+    section.insertBefore(s, section.querySelector('.section-overlay'));
+    return s;
+  })();
+  status.textContent = '🤖 思考中…';
+
+  const context = `这是 COMS 4119 cheat sheet 的一个 section。
+
+当前 section 内容：
+${currentText}
+
+学生要求：${userAsk}
+
+请直接返回要追加到这个 section 的 HTML 片段（不要 <section> 包裹，可以用 <p> <ul> <li> <table> <b> <code>）。
+要求：极度紧凑、cheat-sheet 风格、英文为主（除非用户特别要中文）、用 KaTeX 数学公式（$...$ 形式）、表格用最少列。最多 150 字。`;
+
+  try {
+    const resp = await fetch('/api/ask', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        question: userAsk,
+        context,
+        history: [],
+        apiKey,
+      }),
+    });
+    const data = await resp.json();
+    if (!resp.ok) throw new Error(data.error || 'unknown error');
+
+    // Insert AI response before overlay
+    const wrap = document.createElement('div');
+    wrap.className = 'ai-addition';
+    wrap.contentEditable = 'true';
+    // Try to detect if response is HTML; else treat as markdown
+    let html = data.answer || '';
+    if (!/<\w+/.test(html)) {
+      // markdown → HTML
+      html = marked.parse(html);
+    }
+    wrap.innerHTML = html;
+    const overlay = section.querySelector('.section-overlay');
+    section.insertBefore(wrap, overlay);
+
+    if (window.renderMathInElement) {
+      renderMathInElement(wrap, { delimiters: [
+        {left:'$$', right:'$$', display: true},
+        {left:'$', right:'$', display: false}
+      ]});
+    }
+    status.remove();
+    saveCheatSheet();
+  } catch (err) {
+    status.textContent = '❌ ' + err.message;
+    status.style.color = 'red';
+    setTimeout(() => status.remove(), 5000);
+  }
 }
 
 // Insert a Pre-Midterm sheet packed with pre-mid content (app/transport up to flow control)

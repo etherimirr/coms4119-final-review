@@ -273,6 +273,34 @@ body {
   background: var(--bad);
   color: #fff;
 }
+.section-overlay button:first-child:hover {
+  background: var(--accent-2);
+  color: #fff;
+}
+
+/* AI-added content gets a subtle accent border so user knows it came from LLM */
+.cheat-host .ai-addition {
+  border-left: 1mm solid #a78bfa;
+  padding-left: 1.5mm;
+  background: rgba(167, 139, 250, 0.06);
+  border-radius: 0 1mm 1mm 0;
+  margin: 0.8mm 0;
+}
+.cheat-host .ai-addition::before {
+  content: "🤖 AI";
+  display: inline-block;
+  font-size: 6pt;
+  color: #a78bfa;
+  background: rgba(167, 139, 250, 0.15);
+  padding: 0 1mm;
+  border-radius: 1mm;
+  margin-right: 1mm;
+  vertical-align: top;
+}
+@media print {
+  .cheat-host .ai-addition { border-left: none; background: transparent; padding-left: 0; }
+  .cheat-host .ai-addition::before { display: none; }
+}
 
 /* Hide overlays in print mode */
 @media print {
