@@ -26,6 +26,13 @@ const FILES = [
   { id: 'lec22',            label: 'lec22 · 交换机 · 无线',  pages: 31 },
   { id: 'lec23',            label: 'lec23 · 无线 MAC',       pages: 39 },
   { id: 'final-preview',    label: 'final-preview · 样题',   pages: 14 },
+  // NYU 参考资料
+  { id: 'nyu-Quiz_3_Solutions',           label: 'NYU Quiz 3 · TCP CC',           pages: 1, nyu: true },
+  { id: 'nyu-Quiz_4_Solutions',           label: 'NYU Quiz 4',                    pages: 1, nyu: true },
+  { id: 'nyu-Quiz_5_Solutions',           label: 'NYU Quiz 5',                    pages: 2, nyu: true },
+  { id: 'nyu-sample_midterm_24s_solutions', label: 'NYU Sample Midterm 24s',       pages: 3, nyu: true },
+  { id: 'nyu-midterm_24s_solutions-2',    label: 'NYU Midterm 24s',               pages: 7, nyu: true },
+  { id: 'nyu-final_24s_solutions1',       label: 'NYU Final 24s',                 pages: 7, nyu: true },
 ];
 
 const SPECIAL = [
@@ -334,7 +341,12 @@ function renderTabs() {
   const secB = document.createElement('div');
   secB.className = 'tab section'; secB.textContent = '讲义 · 期中后';
   nav.appendChild(secB);
-  FILES.filter(f=>!f.premid).forEach(f=>nav.appendChild(mkTab(f)));
+  FILES.filter(f=>!f.premid && !f.nyu).forEach(f=>nav.appendChild(mkTab(f)));
+  // NYU 参考资料
+  const secNYU = document.createElement('div');
+  secNYU.className = 'tab section'; secNYU.textContent = '📘 NYU 参考资料';
+  nav.appendChild(secNYU);
+  FILES.filter(f=>f.nyu).forEach(f=>nav.appendChild(mkTab(f)));
   // 重点复习
   const secC = document.createElement('div');
   secC.className = 'tab section'; secC.textContent = '重点复习';

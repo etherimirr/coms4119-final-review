@@ -1,0 +1,180 @@
+                                                                                                                    1
+
+
+
+        ECE-UY 3613 2024 Spring Final Exam Book
+                            Name:                                  NetID:
+• Write you NAME and ID on the exam book;
+• Write your answers CLEARLY and INTELLIGIBLY on the front pages only;
+1) (12 points) Apply Dijkstra’s shortest path routing algorithm to the following network to construct the shortest
+   paths from node A to all the other nodes in the network.
+     a) (9 points) Show the steps of Dijkstra algorithm by providing a table similar to the homework question;
+     b) (3 points) Show the routing table on A to all the other nodes.
+
+
+
+
+                        B             5
+        3                                     E
+A
+                              2           2
+                        2
+                6
+                                  C
+    2                                             4
+
+
+            D
+                                              F
+                                  1
+                    1
+                                          2
+                              G
+
+
+2) (8 points) In the Distance Vector (DV) shortest path algorithm,
+      a) (3 points) if node s only has three neighbors, x, y , z . The link weights from s to x, y , z are 2, 4, 3,
+         respectively. If the shortest distances from x, y , z to some destination d are 10, 12, 8 respectively. What
+         is the shortest distance from s to d?
+     b) (5 points) suppose all nodes run DV algorithm synchronously, after the k -th iteration, if the distance
+         estimate from node A to some destination x is DA       k (x) = 10, what is the possible value range for A’s
+                                     k−1
+         distance estimate to x, DA (x), in the previous iteration? if the weight on link ⟨A, B⟩ is 2, what is
+                                                                         k+1
+         the possible value range for B ’s distance estimate to x, DB        (x), in the next iteration ?
+   Answer: a) the shortest path distances on s through the three neighbors x, y , z are 2 + 10 = 12, 4 + 12 = 16
+   and 3 + 8 = 11, respectively. So the shortest path distance is 11.
+   b) DA k (x) either decreases or remains the same over iterations, so D k−1 (x) ≥ D k (x) = 10;
+                                                                              A            A
+   At iteration k + 1, B will receive distance estimation DA      k (x) = 10 from A, so the distance estimate on B
+
+   through A is DA  k (x) + 2 = 12, so D k+1 (x) ≤ 12.
+                                            B
+3) (8 points) Please answer the following questions on BGP:
+      a) (4 points) Does BGP routing always select the path with the least number of ASes? Briefly explain why
+         or why not?
+     b) (4 points) What is the hot-potato routing? Briefly explain the motivation for it.
+   Answer: a) BGP is policy based routing, it does not always take the path with the least number of ASes.
+   For example, if a neighbor AS on the shortest path does not agree to forward traffic, traffic has to be routed
+   on a longer path.
+   b) hot-potato routing is that for a packet destined to another AS, a router will forward it to a border router
+   with the least intra-AS cost that can reach the other AS. This is because each AS is interested in minimizing
+   its own traffic cost, without considering the traffic cost in other ASes.
+                                                                                                                2
+
+
+
+4) (12 points) When CRC is employed for error detection, given an original message of 1101011 and generator
+   bit sequence of 1011,
+     a) (8 points) what are the CRC check bits generated? what is the transmitted message with CRC bits?
+     b) (4 points) suppose during the transmission the first bit and the last bit of the transmitted message are
+         flipped, what is the bit sequence received by the receiver? can the receiver detect this error using CRC
+         check? support your answer by showing the calculation.
+                                                                                                                 3
+
+
+
+5) (10 points) For the switched Ethernet in the following figure, suppose the switch table was initially empty,
+   please describe the content of the switch table and the switch forward operation for the following three
+   consecutive frames:
+   1) From A to B’; 2) From C to A; 3) From B to B’
+   You can use TTL value of 60 seconds for each new entry in the switch table.
+
+
+
+
+                              ,
+
+
+
+
+6) (10 points) Answer the following questions for medium access control:
+     a) (4 pints) An Ethernet LAN has three stations, if all the three stations transmit at the same time and ran
+         into a collision, what is the chance that the next transmission attempt on the LAN will be successful?
+     b) (6 points) What is the hidden terminal problem for wireless LAN? How is it solved?
+   Answer: a) after the first collision, each of the three stations will choose a random number between (0, 1)
+   for back-off, to make sure the first attempt is successful, we need exactly one station choose 0, the other two
+   stations both choose 1, the chance it happens is 3/8
+   b) When A and B both transmit to C in the middle of them, their signals will collide on C, but A and B
+   cannot hear each other’s transmissions, because the signal gets weaker at longer distance.
+   The problem can be solved using CSMA/CA, where the receiver will explicitly acknowledge the receipt of
+   a frame, and RTS/CTS: when a sender wants to transmit a frame, it first transmits a Request-to-Send frame,
+   when the receiver receives RTS requests, it will choose one station to grant Clear-to-Send (CTS), and it will
+   be broadcasted to all stations, only the station with CTS will transmit.
+   In the previous example, both A and B send RTS to C, C will choose one station, say A, to grant CTS. Both
+   A and B will get the CTS, so that A will transmit, and B will keep silent.
+                                                                                                                    4
+
+
+
+ 7) (12 points) Suppose both Alice and Bob have their own public-private key pairs. They have each other’s
+    certificates, and they share the same hash function,
+      a) (4 points) how to design a scheme for Alice to send a confidential message to Bob?
+      b) (4 points) if the message is too long for public-private key based encryption, how to design a scheme
+          for Alice to authenticate herself and her message to Bob?
+      c) (4 points) if the message is too long for public-private key based encryption, how to design a scheme
+          for Alice to send a confidential message to Bob?
+    Answer: a) Alice will encrypt the message using Bob’s public key; Bob will decrypt the message using his
+    own private key;
+    b) Alice will apply the hash function on the message to generate a message digest, then encrypt it using her
+    own private key, send the encrypted digest along with the message to Bob. This can authenticates Alice and
+    her message to Bob, because only Alice has access to her private key.
+    c) Alice can generate a symmetric key S , then encrypt it with Bob’s public key, send it to Bob. Finally, Alice
+    and Bob will use S for message encryption and decryption.
+ 8) (8 points) In digital signature, if an attacker can inverse the hash function H(m) (in other words, for any
+    given hash value h, the attacker can find a message x such that H(x) = h), when Alice sends a message to
+    Bob with her digital signature, describe a way for the attacker to change the message of Alice and Bob will
+    not notice the change.
+                                                                         −
+    Answer: Suppose Alice’s message is M , her digital signature is KA     (H(M )). The attacker has Alice’s public
+            +                                          +    −
+    key KA , she can recover the message digest as KA (KA (H(M ))) = H(M ), then she can find another message
+    M ′ such that H(M ′ ) = H(M ), she will change the message to M ′ , transmits it along with the digital signature
+          −
+    of KA   (H(M )). When Bob verifies the message, he cannot identify the change, since H(M ′ ) = H(M ).
+ 9) (8 points) A mobile phone M has a permanent address of X in its home network. When it is roamed to a
+    visited network, it gets a temporary address of Y . A correspondent C wants to send a message to M .
+      a) (4 points) if mobility is handled by direct routing, which address should C use to reach M ? if mobility
+          is handled by indirect routing, which address should C use to reach M ?
+      b) (4 points) Please list one advantage and one disadvantage for mobility handled by direct routing and
+          indirect routing respectively.
+    Answer: a) With direct routing, the message will be sent to Y ; with indirect routing, the message will be
+    sent to X ;
+    b) direct routing: advantage: traffic go directly to M , avoid triangle routing; disadvantage: C needs to keep
+    track of M ’s current address when M roams to different networks.
+    indirect routing: advantage: C always use the same address when M roams to different networks, a connection
+    can be maintained when M roams to different networks; disadvantage: traffic go to home network first, then
+    forwarded to M , longer path resulted from triangle routing;
+10) (12 points) Please answer the following synthesize questions:
+      a) (3 points) when Alice brings her laptop to school and connects to campus WiFi network, what is the
+          application layer protocol her laptop uses to get an IP address? what is the transport layer protocol used
+          by that protocol? what is the destination MAC address of the first data frame sent out by that protocol?
+      b) (3 points) how does Alice’s laptop find out the IP address and MAC address of the first-hop router?
+      c) (3 points) when Alice wants to visit her online bank account securely, which application layer and
+          transport layer protocols are used?
+      d) (3 points) when Alice sends out a packet to the online bank server, what are the source and destination
+          IP addresses, as well as the source and destination MAC addresses in the data frame carrying the packet?
+    Answer: a) DHCP, UDP, FF-FF-FF-FF-FF-FF (broadcast MAC address)
+    b) DHCP reply will carry the IP address of the first-hop router, ARP will be used to find its MAC address
+    c) HTTP/TLS/TCP (or HTTP/QUIC/UDP)
+    d) Alice’s IP address, server’s IP address, Alice’s MAC address, first-hop router’s MAC address.
+                                                       5
+
+
+
++++++++++ End of Exam, Enjoy Your Summer! ++++++++++
+                                                                                                             6
+
+
+
+   If you use up the space under any particular problem, you can write your answer here. On the page of the
+problem, tell us part of your work is here and write down the page number of this page and. Don’t tear off any
+                                                     pages.
+                                                                                                             7
+
+
+
+   If you use up the space under any particular problem, you can write your answer here. On the page of the
+problem, tell us part of your work is here and write down the page number of this page and. Don’t tear off any
+                                                     pages.
+

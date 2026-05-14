@@ -1,0 +1,31 @@
+<p><strong>ECE-UY 3613, Spring 2024, Quiz 3</strong></p>
+<p><strong>Name: ID:</strong></p>
+<ol type="1">
+<li><p>a) how does TCP detect corrupted bits in a received TCP
+segment?</p></li>
+</ol>
+<p>b) what are the two mechanisms TCP use to detect packet losses? how
+does TCP change its congestion control window immediately after each
+type of packet loss detection?</p>
+<blockquote>
+<p><strong>Answer:</strong> a) TCP uses checksum field in the TCP header
+to detect bit corruption.</p>
+<p>b) TCP can detect packet loss using either time-out, or triple
+duplicate ACKs.</p>
+<p>After a timeout loss, TCP reduces its congestion window to 1, then do
+slow-start; after a triple-dup-ACK loss, TCP reduces its congestion
+window by half, then enter congestion avoidance.</p>
+</blockquote>
+<ol start="2" type="1">
+<li><p><img src="./quiz3_media/media/image1.png"
+style="width:5.45833in;height:3.16389in"
+alt="A black background with red x Description automatically generated" />If
+a TCP connection’s congestion control window is 3 segments at time t=0.
+Assuming the receiver has infinite receiving buffer and the sender
+always has data to send. (In other words, the sender can send out as
+many segments as the congestion window allows.) If the first segment is
+lost, will the TCP sender resend the lost packet through
+fast-retransmit? Explain why or why not. Repeat the question if the
+congestion window is 4 at time t=0 and the second segment is
+lost.</p></li>
+</ol>

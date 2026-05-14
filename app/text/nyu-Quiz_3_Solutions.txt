@@ -1,0 +1,30 @@
+2026/5/14 00:12
+
+
+  ECE-UY 3613, Spring 2024, Quiz 3
+  Name: ID:
+     1. a) how does TCP detect corrupted bits in a received TCP segment?
+  b) what are the two mechanisms TCP use to detect packet losses? how does TCP change its
+  congestion control window immediately after each type of packet loss detection?
+        Answer: a) TCP uses checksum field in the TCP header to detect bit corruption.
+        b) TCP can detect packet loss using either time-out, or triple duplicate ACKs.
+        After a timeout loss, TCP reduces its congestion window to 1, then do slow-start;
+        after a triple-dup-ACK loss, TCP reduces its congestion window by half, then enter
+        congestion avoidance.
+
+
+
+
+       2.                                                                         If a TCP connection’s
+            congestion control window is 3 segments at time t=0. Assuming the receiver has infinite
+            receiving buffer and the sender always has data to send. (In other words, the sender can
+            send out as many segments as the congestion window allows.) If the first segment is lost,
+            will the TCP sender resend the lost packet through fast-retransmit? Explain why or why
+            not. Repeat the question if the congestion window is 4 at time t=0 and the second segment
+            is lost.
+
+
+
+
+file:///Users/jyj/Desktop/4119/Quiz_3_Solutions.html                                                  1/1
+

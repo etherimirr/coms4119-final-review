@@ -1,0 +1,9 @@
+                         ECE-UY 3613, Spring 2024, Quiz 4
+Name:                                                  ID:
+    1. Apply Dijkstra's shortest path routing algorithm to the following network to construct
+    the shortest paths from node A to all the other nodes in the network.
+    a) show the steps of Dijkstra algorithm's operation by providing a calculation table similar
+    to that in the lecture;
+    b) show the forwarding table on node A;
+    c) plot the shortest path tree from A to all the other nodes.
+

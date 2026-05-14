@@ -1,0 +1,98 @@
+                                                                                                              1
+
+
+
+                       ECE-UY 3613 2024 Spring:
+                        Sample Midterm Solutions
+
+•   Write your answers CLEARLY and INTELLIGIBLY on the exam book;
+•   Write you NAME and ID on the exam book;
+
+1) (12 points) Given an IP address 128.135.174.79 and the subnet mask 255.255.224.0, find:
+     a) (3 points) the class of this address (Class A, B, C, D or E),
+     b) (3 points) the subnet part of this address,
+     c) (3 points) the host part of this address,
+     d) (3 points) the number of hosts that can be connected in this subnet.
+   Answer: Binary IP address is: 1000 0000. 1000 0111. 1010 1110. 0100 1111 Subnet Mask: 1111 1111. 1111
+   1111. 1110 0000. 0000 0000
+   a) Class B (first two bits of IP address is 10)
+   b) Subnet part: 1000 0000. 1000 0111. 101, or the corresponding decimal number
+   c) Host part: 0 1110 0100 1111, or (3663 decimal)
+   d) number of hosts 213 − 2 = 8190
+2) (12 points) A large IP packet has a total size of 3, 000 bytes, and its ID is 1000. The packet is to be sent
+   over a link with MTU of 1, 120 bytes, assume the IP header is 20 bytes, please show the following fields for
+   the packets actually transmitted on this link: length, ID, fragment flag, offset
+   Answer: a) 3000 bytes of total packet, 2980 bytes of data payload,
+   With MTU=1120 bytes, each frame has at most 1100 = 137.5 ∗ 8 bytes of data, Since it must be a multiple
+   of 8, so each frame can have at most 137*8=1096 bytes of data,
+   Three frames will be generated:
+   Lengths are: 1,116; 1,116, 808;
+   IDs: are all 1000
+   Flags are: 1, 1, 0
+   Offsets: 0, 137, 274
+3) (12 points) A TCP connection will experience a triple-duplicate-ack packet loss whenever the sender’s
+   congestion window reaches 64 segments, and suppose there is no other packet loss in the network, if the
+   round-trip-time of this connection is 100 millisecond, and the packet size is 1, 000 bytes
+      a) (6 points) how often does this TCP connection experience packet loss? In other words, what is the time
+         interval between two consecutive packet losses?
+     b) (6 points) what is the average sending rate (measured in bits-per-second) of the TCP sender in long
+         run?
+   Answer:
+   a) after each loss, TCP will do fast-recovery, reduce its window to 32 segments, then increase it by one
+   segment each round-trip time, until it reaches 64 again, the total time needs is 32 RTTs= 3200 ms. (It is ok
+   if someone use 33 RTTs)
+   b) average window size is (32 + 64)/2 = 48, the average sending rate:
+                                            48 ∗ 1000 ∗ 8
+                                                          = 3.84M bps
+                                                 0.1
+                                                                                                               2
+
+
+
+4) (12 points) At time zero, a TCP sender begins to send out a total of four segments to a receiver, one segment
+   every 5 ms, and each segment contains 100 bytes of data, and the initial sequence number on the sender is
+   50. Suppose the receiver sends back one acknowledgement for each received segment. Assume segment 3 is
+   lost and the acknowledgement for segment 2 is lost, the one-way delay between the sender and receiver is
+   50 ms, and the time-out value is 200ms, you can ignore the processing delay on the receiver side. Plot the
+   packet exchanges between the sender and receiver over time.
+   Answer:
+
+
+
+
+   Here we assume the receiver discards out-of-order segments. It is also fine if you assume the receiver keeps
+   out-of-order segment, then the sender will only retransmit segment 250 after time out, when receiver receives
+   it, it will send back ACK=450.
+5) (10 points) When two users behind the same NAT router access the same website on a web server, suppose
+   the NAT router only has one public IP address, explain how the web server can distinguish requests from the
+   two users, and how the web server’s responses are sent back to different users.
+   Answer: From the web server’s point of view, the two users’ requests will carry the same public IP address,
+   but from different source port numbers (assigned by the NAT router). The web server’s responses will carry
+   different destination port numbers, one for each client. The NAT router will forward the responses to the
+   corresponding clients by looking up its NAT table.
+                                                                                                             3
+
+
+
+6) (12 points) Suppose Alice uses a Web-based e-mail account (such as Gmail or Hotmail) to send out a message
+   to Bob, and the IP address of her email server is initially unknown.
+     a) (4 points) What application-layer protocols are needed on Alice’s machine for her to send an email?
+     b) (4 points) What transport layer protocols are used for each application protocol, and why?
+     c) (4 points) Does Alice’s email client need to get the IP address of Bob’s email server? Briefly explain
+        why or why not.
+   Answer:
+   a) DNS, HTTP;
+   b) DNS uses UDP for low overhead/delay HTTP uses TCP for reliability
+   c) No, Alice’s email server is responsible for contacting Bob’s email server.
+7) (12 points) For multimedia networking,
+     a) (6 points) please rank order (from low to high) the following applications: Netflix movie streaming,
+         Skype video calls, and ESPN live sports broadcast, based on their streaming buffer lengths;
+     b) (6 points) please list two major advantages of using CDN in multimedia networking.
+   Answer:
+   a) From low to high: Skype, ESPN, Netflix;
+   b) (Any two out of the list, or any other reasonable advantages)
+   offload the original server;
+   push content closer to client, reduce their downloading time;
+   reduce traffic on the network;
+   reduce the chance of single-point-of failure
+

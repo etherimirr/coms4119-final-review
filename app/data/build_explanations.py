@@ -20,12 +20,21 @@ PDFS = [
     # post-mid
     "lec14","lec16","lec17","lec18","lec19","lec20","lec21","lec22","lec23",
     "final-preview",
+    # NYU 参考资料
+    "nyu-Quiz_3_Solutions","nyu-Quiz_4_Solutions","nyu-Quiz_5_Solutions",
+    "nyu-sample_midterm_24s_solutions","nyu-midterm_24s_solutions-2",
+    "nyu-final_24s_solutions1",
 ]
 OUT = ROOT / "app" / "data" / "explanations.json"
 DETAIL = ROOT / "app" / "data" / "explanations_detail.json"
 
+def _pdf_path(name):
+    """Map file ID to actual PDF path. NYU files drop the 'nyu-' prefix."""
+    real = name[4:] if name.startswith("nyu-") else name
+    return ROOT / f"{real}.pdf"
+
 def pdf_pages(name):
-    pdf = ROOT / f"{name}.pdf"
+    pdf = _pdf_path(name)
     info = subprocess.run(["pdfinfo", str(pdf)], capture_output=True, text=True).stdout
     m = re.search(r"Pages:\s+(\d+)", info)
     return int(m.group(1))
@@ -33,7 +42,7 @@ def pdf_pages(name):
 def first_line(name, page):
     # extract just this page
     txt = subprocess.run(
-        ["pdftotext", "-layout", "-f", str(page), "-l", str(page), str(ROOT / f"{name}.pdf"), "-"],
+        ["pdftotext", "-layout", "-f", str(page), "-l", str(page), str(_pdf_path(name)), "-"],
         capture_output=True, text=True
     ).stdout
     for line in txt.splitlines():

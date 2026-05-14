@@ -1,0 +1,63 @@
+                           ECE-UY 3613, Spring 2024, Quiz 5
+Name:                                                   ID:
+1. Given a data bit sequence of 10101100111 and generator sequence of 1101, what is the CRC
+code? What is the transmitted sequence with CRC?
+
+          CRC = 118
+         transmitted                       16161170/1/110
+                           sequence
+                                       :
+
+
+
+
+2. For the network in the following figure,
+    a. when A sends out an IP packet to 111.111.111.112, what is the source and destination MAC
+         addresses of the data frame sent out by A?
+    b. when A sends an IP packet to B, what is the destination MAC address in the data frame
+         sent out by A, what is the source MAC address in the data frame received by B?
+
+
+
+
+         .
+         a          0    74-29-9C-EF-FF 55              -
+
+
+
+
+                                                   AB-D
+                    & CC- 49-DE-DO
+                                               -
+
+
+
+
+          b
+          .        0        Ed-E9-00-17-BB-4B
+                  & IA-23-F9-CD -06-9B
+D
+    I
+
+
+    ·
+          I
+
+
+
+
+    110
+                        Bosequate Deputi
+
+
+
+          110
+          -
+              1817
+              110
+              >
+                1118
+                118/
+                -
+                  118
+

@@ -5584,5 +5584,101 @@
       "gotcha": "判断方向反就全错。考前默写定义一遍。",
       "important": "🔥🔥🔥 Final Q5 — Hidden/Exposed"
     }
+  ],
+  "nyu-Quiz_3_Solutions": [
+    {
+      "title": "2026/5/14 00:12",
+      "topics": []
+    }
+  ],
+  "nyu-Quiz_4_Solutions": [
+    {
+      "title": "ECE-UY 3613, Spring 2024, Quiz 4",
+      "topics": []
+    }
+  ],
+  "nyu-Quiz_5_Solutions": [
+    {
+      "title": "ECE-UY 3613, Spring 2024, Quiz 5",
+      "topics": []
+    },
+    {
+      "title": "D",
+      "topics": []
+    }
+  ],
+  "nyu-sample_midterm_24s_solutions": [
+    {
+      "title": "ECE-UY 3613 2024 Spring:",
+      "topics": []
+    },
+    {
+      "title": "4) (12 points) At time zero, a TCP sender begins to send out a total of four segments to a receiver, one segment",
+      "topics": []
+    },
+    {
+      "title": "6) (12 points) Suppose Alice uses a Web-based e-mail account (such as Gmail or Hotmail) to send out a message",
+      "topics": []
+    }
+  ],
+  "nyu-midterm_24s_solutions-2": [
+    {
+      "title": "ECE-UY 3613 2024 Spring: Midterm Exam",
+      "topics": []
+    },
+    {
+      "title": "4) (12 points) Please answer the following questions regarding reliable data transfer.",
+      "topics": []
+    },
+    {
+      "title": "5) (12 points) 100 users are interested in downloading a file with 100M bytes, suppose the file server’s upload",
+      "topics": []
+    },
+    {
+      "title": "a) Class B (first two bits of IP address is 10), the last 16 bits are used for host IDs, we can have 216 − 2 =",
+      "topics": []
+    },
+    {
+      "title": "9) (12 points) At time zero, a TCP sender begins to send out a total of five segments to a receiver, one segment",
+      "topics": []
+    },
+    {
+      "title": "If you use up the space under any particular problem, you can write your answer here. On the page of the",
+      "topics": []
+    },
+    {
+      "title": "If you use up the space under any particular problem, you can write your answer here. On the page of the",
+      "topics": []
+    }
+  ],
+  "nyu-final_24s_solutions1": [
+    {
+      "title": "ECE-UY 3613 2024 Spring Final Exam Book",
+      "topics": []
+    },
+    {
+      "title": "4) (12 points) When CRC is employed for error detection, given an original message of 1101011 and generator",
+      "topics": []
+    },
+    {
+      "title": "5) (10 points) For the switched Ethernet in the following figure, suppose the switch table was initially empty,",
+      "topics": []
+    },
+    {
+      "title": "7) (12 points) Suppose both Alice and Bob have their own public-private key pairs. They have each other’s",
+      "topics": []
+    },
+    {
+      "title": "+++++++++ End of Exam, Enjoy Your Summer! ++++++++++",
+      "topics": []
+    },
+    {
+      "title": "If you use up the space under any particular problem, you can write your answer here. On the page of the",
+      "topics": []
+    },
+    {
+      "title": "If you use up the space under any particular problem, you can write your answer here. On the page of the",
+      "topics": []
+    }
   ]
 }
