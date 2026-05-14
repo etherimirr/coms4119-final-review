@@ -32,15 +32,6 @@ function loadQAMap() {
   try { return JSON.parse(localStorage.getItem(KEY_QA) || '{}'); }
   catch { return {}; }
 }
-function getQA(fileId, page) {
-  const m = loadQAMap();
-  return m[`${fileId}:${page}`] || [];
-}
-function saveQA(fileId, page, list) {
-  const m = loadQAMap();
-  m[`${fileId}:${page}`] = list;
-  localStorage.setItem(KEY_QA, JSON.stringify(m));
-}
 
 function openSettings() {
   const cur = getApiKey();
@@ -52,10 +43,92 @@ function openSettings() {
   if (FILES.find(f=>f.id===currentTab)) showPage();
 }
 
-async function askQuestion(fileId, page) {
-  const ta = document.getElementById('qaInput');
-  const btn = document.getElementById('qaAskBtn');
-  const status = document.getElementById('qaStatus');
+// Generic Q&A: contextKey is an arbitrary string like
+//   "lec23:5"     (lecture page)
+//   "midterm:2"   (midterm question index)
+//   "final:1"     (final-preview question index)
+//   "concepts"    (the concept graph)
+function safeId(s) { return String(s).replace(/[^a-zA-Z0-9]/g, '_'); }
+
+function getQA(qaKey) {
+  const m = loadQAMap();
+  return m[qaKey] || [];
+}
+function saveQA(qaKey, list) {
+  const m = loadQAMap();
+  m[qaKey] = list;
+  localStorage.setItem(KEY_QA, JSON.stringify(m));
+}
+
+function qaWidgetHtml(qaKey, title) {
+  const safe = safeId(qaKey);
+  const t = title || '问 AI 助教';
+  return `<div class="qa-box" data-qa-key="${qaKey}">
+    <div class="qa-header">
+      <h3>${t} <span class="subtle">· 笔记会保存到本地</span></h3>
+      <button class="qa-settings-btn" onclick="openSettings()" title="设置 OpenAI API Key">⚙️</button>
+    </div>
+    <div class="qa-list" id="qaList-${safe}"></div>
+    <div class="qa-input">
+      <textarea id="qaInput-${safe}" placeholder="对这里有不懂的，问我（Cmd/Ctrl + Enter 提交）"></textarea>
+      <button id="qaAskBtn-${safe}" onclick="askQuestion('${qaKey.replace(/'/g, "\\'")}')">问</button>
+    </div>
+    <div id="qaStatus-${safe}" class="qa-status"></div>
+  </div>`;
+}
+
+function buildContextForKey(qaKey) {
+  if (qaKey.startsWith('midterm:')) {
+    const idx = parseInt(qaKey.split(':')[1]);
+    const q = (MIDTERM || [])[idx];
+    if (!q) return qaKey;
+    return [
+      `[场景] 期中复盘 — Q${idx+1}: ${q.title}`,
+      `得分: ${q.got} / ${q.full}`,
+      `题目原文:\n${q.question || ''}`,
+      `标准答案:\n${q.gold || ''}`,
+      q.your_mistake ? `学生失分点:\n${q.your_mistake}` : '',
+      q.takeaway ? `带走口诀:\n${q.takeaway}` : '',
+    ].filter(Boolean).join('\n\n');
+  }
+  if (qaKey.startsWith('final:')) {
+    const idx = parseInt(qaKey.split(':')[1]);
+    const p = (FINAL || [])[idx];
+    if (!p) return qaKey;
+    return [
+      `[场景] Final Preview 样题 — Q${idx+1}: ${p.title}`,
+      `主题: ${p.topic}`,
+      `题目:\n${p.question || ''}`,
+      `标准答案:\n${p.answer || ''}`,
+      `老师讲解:\n${p.walkthrough || ''}`,
+      p.gotcha ? `易错点: ${p.gotcha}` : '',
+    ].filter(Boolean).join('\n\n');
+  }
+  if (qaKey === 'concepts' || qaKey === 'overview' || qaKey === 'cheat' || qaKey === 'stars') {
+    return `[场景] ${qaKey} 视图`;
+  }
+  // lecture page: "fileId:page"
+  const parts = qaKey.split(':');
+  const fileId = parts[0], page = parts[1];
+  const arr = EXPL[fileId] || [];
+  const e = arr[parseInt(page) - 1];
+  if (!e) return qaKey;
+  return [
+    `[场景] 文件 ${fileId}, 第 ${page} 页`,
+    e.title ? `标题: ${e.title}` : '',
+    e.summary ? `摘要: ${e.summary}` : '',
+    Array.isArray(e.key_points) ? `关键点:\n- ${e.key_points.join('\n- ')}` : '',
+    e.explanation ? `详解:\n${e.explanation}` : '',
+    e.gotcha ? `易错点: ${e.gotcha}` : '',
+  ].filter(Boolean).join('\n\n');
+}
+
+async function askQuestion(qaKey) {
+  const safe = safeId(qaKey);
+  const ta = document.getElementById('qaInput-' + safe);
+  const btn = document.getElementById('qaAskBtn-' + safe);
+  const status = document.getElementById('qaStatus-' + safe);
+  if (!ta) return;
   const q = (ta.value || '').trim();
   if (!q) { ta.focus(); return; }
   const key = getApiKey();
@@ -63,21 +136,8 @@ async function askQuestion(fileId, page) {
     if (confirm('还没设置 OpenAI API Key，现在设置？')) openSettings();
     return;
   }
-
-  // gather context from current page's expl entry
-  const arr = EXPL[fileId] || [];
-  const e = arr[page-1] || {};
-  const ctxParts = [
-    `文件: ${fileId}, 第 ${page} 页`,
-    e.title ? `标题: ${e.title}` : '',
-    e.summary ? `摘要: ${e.summary}` : '',
-    Array.isArray(e.key_points) ? `关键点:\n- ${e.key_points.join('\n- ')}` : '',
-    e.explanation ? `详解:\n${e.explanation}` : '',
-    e.gotcha ? `易错点: ${e.gotcha}` : '',
-  ].filter(Boolean);
-  const context = ctxParts.join('\n\n');
-  const history = getQA(fileId, page);
-
+  const context = buildContextForKey(qaKey);
+  const history = getQA(qaKey);
   btn.disabled = true;
   status.textContent = '🤔 AI 思考中...';
   status.className = 'qa-status thinking';
@@ -89,12 +149,12 @@ async function askQuestion(fileId, page) {
     });
     const data = await resp.json();
     if (!resp.ok) throw new Error(data.error || 'unknown error');
-    const list = getQA(fileId, page);
+    const list = getQA(qaKey);
     list.push({ q, a: data.answer, ts: Date.now() });
-    saveQA(fileId, page, list);
+    saveQA(qaKey, list);
     ta.value = '';
     status.textContent = '';
-    renderQAList(fileId, page);
+    renderQAList(qaKey);
   } catch (err) {
     status.textContent = '❌ ' + err.message;
     status.className = 'qa-status error';
@@ -103,22 +163,23 @@ async function askQuestion(fileId, page) {
   }
 }
 
-function deleteQA(fileId, page, idx) {
-  const list = getQA(fileId, page);
+function deleteQA(qaKey, idx) {
+  const list = getQA(qaKey);
   list.splice(idx, 1);
-  saveQA(fileId, page, list);
-  renderQAList(fileId, page);
+  saveQA(qaKey, list);
+  renderQAList(qaKey);
 }
 
-function renderQAList(fileId, page) {
-  const container = document.getElementById('qaList');
+function renderQAList(qaKey) {
+  const safe = safeId(qaKey);
+  const container = document.getElementById('qaList-' + safe);
   if (!container) return;
-  const list = getQA(fileId, page);
+  const list = getQA(qaKey);
   if (list.length === 0) { container.innerHTML = ''; return; }
   container.innerHTML = list.map((qa, i) => `
     <div class="qa-item">
       <div class="qa-q"><b>Q:</b> ${escapeHtml(qa.q)}
-        <button class="qa-del" onclick="deleteQA('${fileId}', ${page}, ${i})" title="删除">✕</button>
+        <button class="qa-del" onclick="deleteQA('${qaKey.replace(/'/g, "\\'")}', ${i})" title="删除">✕</button>
       </div>
       <div class="qa-a"><b>A:</b> ${marked.parse(qa.a)}</div>
     </div>
@@ -129,6 +190,29 @@ function renderQAList(fileId, page) {
       {left:'$', right:'$', display:false}
     ]});
   }
+}
+
+// Wire all Q&A textareas: Cmd/Ctrl + Enter submits
+function wireQAShortcuts(rootEl) {
+  rootEl.querySelectorAll('[data-qa-key] textarea').forEach(ta => {
+    if (ta.dataset.wired) return;
+    ta.dataset.wired = '1';
+    ta.addEventListener('keydown', ev => {
+      if ((ev.metaKey || ev.ctrlKey) && ev.key === 'Enter') {
+        const box = ta.closest('[data-qa-key]');
+        const key = box?.dataset.qaKey;
+        if (key) askQuestion(key);
+      }
+    });
+  });
+}
+
+// Render all Q&A lists found in a container (for each data-qa-key element)
+function renderAllQAIn(rootEl) {
+  rootEl.querySelectorAll('[data-qa-key]').forEach(box => {
+    const k = box.dataset.qaKey;
+    if (k) renderQAList(k);
+  });
 }
 
 function escapeHtml(s) {
@@ -286,8 +370,17 @@ function renderOverview() {
 
     <h3 style="color:var(--accent-2)">重点复习</h3>
     <div class="cards">${specials}</div>
+
+    <h3 style="color:var(--accent-2);margin-top:32px">问 AI 助教</h3>
+    <p class="subtle">这里是『总课程层面』的 Q&A — 跨章节、考前疑问、对比题。每个 PPT / 题目页本身也有自己的 Q&A 框。</p>
+    ${qaWidgetHtml('overview', '问 AI（整门课）')}
   </div>`;
   content.querySelectorAll('.card').forEach(c=>c.onclick = ()=>selectTab(c.dataset.id));
+  const overview = content.querySelector('.overview');
+  if (overview) {
+    renderAllQAIn(overview);
+    wireQAShortcuts(overview);
+  }
 }
 
 // ============ Lecture view ============
@@ -388,18 +481,7 @@ function renderExplain(e, fileId, pageNum) {
   // Q&A section (only for paged lecture views)
   const isLecture = !!FILES.find(f=>f.id===fileId);
   if (isLecture) {
-    html += `<div class="qa-box">
-      <div class="qa-header">
-        <h3>问 AI 助教 <span class="subtle">· 这一页的笔记会保存</span></h3>
-        <button class="qa-settings-btn" onclick="openSettings()" title="设置 OpenAI API Key">⚙️</button>
-      </div>
-      <div class="qa-list" id="qaList"></div>
-      <div class="qa-input">
-        <textarea id="qaInput" placeholder="对这页有不懂的，问我（按 Cmd/Ctrl + Enter 提交）"></textarea>
-        <button id="qaAskBtn" onclick="askQuestion('${fileId}', ${pageNum})">问</button>
-      </div>
-      <div id="qaStatus" class="qa-status"></div>
-    </div>`;
+    html += qaWidgetHtml(`${fileId}:${pageNum}`, '问 AI 助教');
   }
   target.innerHTML = html;
   if (window.renderMathInElement) {
@@ -413,13 +495,8 @@ function renderExplain(e, fileId, pageNum) {
     });
   }
   if (isLecture) {
-    renderQAList(fileId, pageNum);
-    const ta = document.getElementById('qaInput');
-    if (ta) ta.addEventListener('keydown', ev => {
-      if ((ev.metaKey || ev.ctrlKey) && ev.key === 'Enter') {
-        askQuestion(fileId, pageNum);
-      }
-    });
+    renderAllQAIn(target);
+    wireQAShortcuts(target);
     // double-click on a <mark> removes that highlight
     const aiExplain = document.getElementById('aiExplain');
     if (aiExplain) aiExplain.addEventListener('dblclick', _onMarkDblClick);
@@ -453,6 +530,7 @@ function renderFinal() {
         <div class="walkthrough"><h4 style="color:var(--accent-2)">💡 思路 + 详解</h4>${marked.parse(p.walkthrough || '')}
         ${p.gotcha?`<blockquote><b>易错点：</b> ${p.gotcha}</blockquote>`:''}
         ${p.related?`<p class="subtle">相关概念：${p.related.map(r=>`<span class="tag">${r}</span>`).join('')}</p>`:''}
+        ${qaWidgetHtml(`final:${i}`, '问 AI（这题）')}
         </div>
       </div>
     </div>`;
@@ -467,6 +545,8 @@ function renderFinal() {
       ]
     });
   }
+  renderAllQAIn(content);
+  wireQAShortcuts(content);
 }
 
 // ============ Midterm Review (split view: original PDF + standard answers) ============
@@ -513,21 +593,25 @@ function showMidterm() {
       <div class="gold"><b>✅ 标准答案：</b><br>${marked.parse(q.gold || '')}</div>
       ${q.your_mistake?`<div class="gotcha"><b>❌ 你失分的点：</b><br>${marked.parse(q.your_mistake)}</div>`:''}
       ${q.takeaway?`<blockquote><b>带走：</b> ${q.takeaway}</blockquote>`:''}
+      ${qaWidgetHtml(`midterm:${i}`, '问 AI（这题）')}
     </div>`;
   });
-  document.getElementById('midbody').innerHTML = html;
+  const body = document.getElementById('midbody');
+  body.innerHTML = html;
   if (window.renderMathInElement) {
-    renderMathInElement(document.getElementById('midbody'), {
+    renderMathInElement(body, {
       delimiters: [{left:'$$',right:'$$',display:true},{left:'$', right:'$', display:false}]
     });
   }
+  renderAllQAIn(body);
+  wireQAShortcuts(body);
 }
 
 // ============ Concept Graph ============
 function renderConcepts() {
   const content = document.getElementById('content');
   content.innerHTML = `<div class="toolbar">
-      <div class="title"><b>🧠 概念知识库</b> <span class="subtle">点击节点查看说明 · 拖动可重新布局</span></div>
+      <div class="title"><b>🧠 概念知识库</b> <span class="subtle">点击节点查看说明 · 拖动可重新布局 · 右下角 💬 问 AI</span></div>
     </div>
     <div class="graph-help">
       <div>提示：节点颜色 = 所属层；边表示「依赖 / 出自」。点击一个节点，右下角会弹出它的定义和它出现在哪几页。</div>
@@ -541,7 +625,11 @@ function renderConcepts() {
       </div>
     </div>
     <div id="graph"><div class="graph-loading">加载中...</div></div>
-    <div id="conceptDetail" style="position:absolute;right:20px;bottom:20px;width:380px;max-height:60vh;overflow-y:auto;background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:14px 18px;display:none;box-shadow:0 8px 30px rgba(0,0,0,0.5);"></div>`;
+    <div id="conceptDetail" style="position:absolute;right:20px;bottom:20px;width:380px;max-height:60vh;overflow-y:auto;background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:14px 18px;display:none;box-shadow:0 8px 30px rgba(0,0,0,0.5);"></div>
+    <button id="conceptQAToggle" onclick="toggleConceptQA()" title="问 AI 助教" style="position:absolute;right:20px;top:90px;background:var(--accent);color:#0a0c12;border:none;border-radius:50%;width:44px;height:44px;font-size:20px;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,0.4);z-index:5;">💬</button>
+    <div id="conceptQAPanel" style="position:absolute;right:20px;top:140px;width:380px;max-height:70vh;overflow-y:auto;background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:14px 18px;display:none;box-shadow:0 8px 30px rgba(0,0,0,0.5);z-index:5;">
+      ${qaWidgetHtml('concepts', '问 AI（概念图）')}
+    </div>`;
   const container = document.getElementById('graph');
   if (typeof vis === 'undefined' || !vis.Network) {
     container.innerHTML = `<div class="graph-loading" style="color:var(--bad)">❌ vis-network 库没加载成功，刷新一次试试 (Cmd+Shift+R 强刷)</div>`;
@@ -599,6 +687,18 @@ function renderConcepts() {
     if (window.renderMathInElement) renderMathInElement(detail, {delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]});
   });
   network.on('deselectNode', ()=>{ detail.style.display='none'; });
+  // wire concept Q&A widget
+  const qaPanel = document.getElementById('conceptQAPanel');
+  if (qaPanel) {
+    renderAllQAIn(qaPanel);
+    wireQAShortcuts(qaPanel);
+  }
+}
+
+function toggleConceptQA() {
+  const panel = document.getElementById('conceptQAPanel');
+  if (!panel) return;
+  panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
 }
 
 // ============ Stars view ============
