@@ -1,4 +1,4 @@
-<!-- CHEATSHEET_VERSION: 28 -->
+<!-- CHEATSHEET_VERSION: 29 -->
 <!--
   COMS 4119 FINAL CHEAT SHEET
   4 sheets organized by course chapter (Kurose-Ross order):
@@ -427,14 +427,14 @@
 <section data-key="network-service-model">
 <h2>Network Service Model</h2>
 <table>
-<tbody><tr><th>Arch</th><th>BW</th><th>Loss</th><th>Order</th><th>Timing</th></tr>
+<tr><th>Arch</th><th>BW</th><th>Loss</th><th>Order</th><th>Timing</th></tr>
 <tr><td>Internet</td><td>best-effort</td><td>no</td><td>no</td><td>no</td></tr>
 <tr><td>ATM CBR</td><td>const</td><td>yes</td><td>yes</td><td>yes</td></tr>
 <tr><td>ATM ABR</td><td>min guar</td><td>no</td><td>yes</td><td>no</td></tr>
 <tr><td>IntServ</td><td>yes</td><td>yes</td><td>yes</td><td>yes</td></tr>
 <tr><td>DiffServ</td><td>maybe</td><td>maybe</td><td>maybe</td><td>no</td></tr>
-</tbody></table>
-<p class="mini">Why best-effort won: simple → widely deployed; bursty packet-switching efficient; survives failures.</p>
+</table>
+<p class="mini">Best-effort won: simple → widely deployed · packet-switching efficient for bursty · survives failures.</p>
 </section>
 
 <section data-key="internet-structure-as">
@@ -464,8 +464,8 @@
 <ul>
 <li><b>FCFS/FIFO</b>: order of arrival</li>
 <li><b>Priority</b>: classes by header; high first; FCFS within</li>
-<li><b>RR</b>: rotate one packet per class per round</li>
-<li><b>WFQ</b>: class i gets w_i/Σw_j share → min-BW guarantee</li>
+<li><b>RR</b>: 1 pkt per class per round</li>
+<li><b>WFQ</b>: class i gets w_i / Σw_j share → min-BW guarantee</li>
 </ul>
 </section>
 
@@ -473,7 +473,7 @@
 <h2>Buffer Management</h2>
 <ul>
 <li>Drop: tail / priority</li>
-<li>Mark: ECN, RED (early detect)</li>
+<li>Mark: ECN · RED (early detect)</li>
 </ul>
 </section>
 
@@ -494,32 +494,32 @@
 <h2>Longest Prefix Matching <span class="tag">exam</span></h2>
 <ul>
 <li>Pick rule with <b>longest</b> matching prefix</li>
-<li>TCAM = ternary content-addressable; O(1) lookup with wildcards</li>
-<li>Mid 4-Q: 1010.1000.0100.1000 vs 1010.xxxx/4, 10xx/2, 1010.11xx/6 → matches /4 and /2, NOT /6 (10≠11) → choose <b>/4 → port 2</b></li>
+<li>TCAM = ternary CAM, O(1) lookup w/ wildcards</li>
+<li>Ex: 1010.1000.0100.1000 vs /4=1010.xxxx, /2=10xx, /6=1010.11xx → matches /4, /2 (NOT /6 since 10 ≠ 11) → <b>/4 wins → port 2</b></li>
 </ul>
 </section>
 
 <section data-key="subnet-concept">
 <h2>Subnet</h2>
 <ul>
-<li><b>Subnet</b> = set of interfaces that can reach each other <b>without</b> a router</li>
-<li>IP addr = <b>subnet part</b> (high bits) + <b>host part</b> (low bits)</li>
-<li>Mask says how many high bits are the subnet part</li>
-<li>Same subnet → ARP directly; cross subnet → via router</li>
-<li><b>Find subnets</b>: detach each router interface in the topology; each isolated island = one subnet</li>
-<li>IP attaches to <b>interface</b>, not host. A router with N interfaces has N IPs</li>
+<li><b>Subnet</b> = interfaces reachable w/o a router</li>
+<li>IP = <b>subnet part</b> (high bits) + <b>host part</b> (low bits)</li>
+<li>Mask = # of high bits for subnet</li>
+<li>Same subnet → ARP; cross subnet → via router</li>
+<li><b>Find</b>: detach each router iface → each island = 1 subnet</li>
+<li>IP attaches to <b>interface</b>, not host. N-iface router has N IPs</li>
 </ul>
 </section>
 
 <section data-key="cidr-subnet-calc-exam">
 <h2>CIDR &amp; Subnet calc <span class="tag">exam</span></h2>
-<div class="formula">prefix = IP AND mask;  hosts = 2^(32−x)</div>
+<div class="formula">prefix = IP AND mask · hosts = 2^(32−x)</div>
 <ul>
-<li>mask /20 = 255.255.240.0 = 20 ones + 12 zeros</li>
-<li><span class="red">Do the AND in binary, not decimal</span> — middle octet bites</li>
-<li>Reserved: all-0 (network), all-1 (broadcast)</li>
-<li>Final ex: 128.16.51.2 /20 → 51 (00110011) AND 240 (11110000) = 48 → <b>prefix 128.16.48.0/20</b>, host 0.0.3.2, <b>2¹²=4096</b></li>
-<li>Private: 10/8, 172.16/12, 192.168/16</li>
+<li>/20 mask = 255.255.240.0 = 20 ones + 12 zeros</li>
+<li><span class="red">AND in binary, not decimal</span> — middle octet bites</li>
+<li>Reserved: all-0 = network · all-1 = broadcast</li>
+<li>Ex: 128.16.51.2/20 → 51 (00110011) AND 240 (11110000) = 48 → <b>128.16.48.0/20</b> · host 0.0.3.2 · 2¹²=4096</li>
+<li>Private: 10/8 · 172.16/12 · 192.168/16</li>
 </ul>
 </section>
 
@@ -527,35 +527,35 @@
 <h2>DHCP DORA</h2>
 <figure><img src="cheatsheet-assets/dhcp-dora.jpg"><figcaption>DHCP DORA timing</figcaption></figure>
 <ol>
-<li><b>Discover</b> (src 0.0.0.0:68 → 255.255.255.255:67, broadcast)</li>
-<li><b>Offer</b> (server: yiaddr, lease)</li>
+<li><b>Discover</b>: 0.0.0.0:68 → 255.255.255.255:67 (broadcast)</li>
+<li><b>Offer</b>: server proposes (yiaddr, lease)</li>
 <li><b>Request</b></li>
 <li><b>ACK</b></li>
 </ol>
-<p class="mini">Also returns: default gateway, DNS server, netmask, lease.</p>
+<p class="mini">Also returns: default gateway · DNS · netmask · lease</p>
 </section>
 
 <section data-key="nat">
 <h2>NAT</h2>
 <ul>
 <li>LAN shares 1 public IP</li>
-<li>Out: replace (priv IP, port) → (NAT IP, new port); record in table</li>
-<li>In: lookup (NAT IP, new port) → restore (priv IP, port)</li>
-<li>Violates end-to-end; complicates P2P; needs STUN/TURN/ICE</li>
+<li>Out: (priv IP, port) → (NAT IP, new port); table records mapping</li>
+<li>In: (NAT IP, new port) → look up → restore (priv IP, port)</li>
+<li>Breaks end-to-end · complicates P2P · needs STUN/TURN/ICE</li>
 </ul>
 </section>
 
 <section data-key="ipv4-vs-ipv6-tunneling">
 <h2>IPv4 vs IPv6 + Tunneling</h2>
 <table>
-<tbody><tr><th></th><th>v4</th><th>v6</th></tr>
+<tr><th></th><th>v4</th><th>v6</th></tr>
 <tr><td>addr</td><td>32 b</td><td>128 b</td></tr>
 <tr><td>hdr</td><td>20+ B</td><td>40 B fixed</td></tr>
 <tr><td>checksum</td><td>yes</td><td>no</td></tr>
-<tr><td>fragment</td><td>routers</td><td>endpoints only</td></tr>
+<tr><td>fragment</td><td>at routers</td><td>endpoints only</td></tr>
 <tr><td>flow label</td><td>no</td><td>yes</td></tr>
-</tbody></table>
-<p class="mini"><b>Tunneling</b>: IPv6 packet as payload in IPv4 packet for transit across v4-only segment. Logical: B—E look like direct v6 link. Physical: C, D only see v4 header.</p>
+</table>
+<p class="mini"><b>Tunneling</b>: v6 pkt as payload in v4 pkt across v4-only segment. Logical: looks like direct v6 link · Physical: v4 routers only see v4 hdr</p>
 </section>
 
 
@@ -564,10 +564,10 @@
 <section data-key="link-state-routing-ls">
 <h2>Link State Routing (LS) — 4 steps</h2>
 <ol>
-<li>Each node maintains its <b>local link state</b> (direct neighbors + costs)</li>
-<li>Each node <b>floods</b> its link state to all routers</li>
-<li>Each node learns the full topology</li>
-<li>Run <b>Dijkstra</b> to compute shortest paths</li>
+<li>Each node knows <b>local link state</b> (direct neighbors + costs)</li>
+<li><b>Flood</b> link state to all routers</li>
+<li>Each node now knows full topology</li>
+<li>Run <b>Dijkstra</b> → shortest paths</li>
 </ol>
 <p class="mini">"Big mouth": flood everyone. Global view per node. Used by <b>OSPF, IS-IS</b>.</p>
 </section>
@@ -575,10 +575,10 @@
 <section data-key="distance-vector-routing-dv">
 <h2>Distance Vector Routing (DV)</h2>
 <ul>
-<li>Each node tells only its <b>neighbors</b> its distance vector</li>
+<li>Each node tells only <b>neighbors</b> its DV</li>
 <li>Update via <b>Bellman-Ford</b>: D_x(y) = min_v {c(x,v) + D_v(y)}</li>
 <li>DV changes → notify neighbors → eventually converges</li>
-<li><b>Asynchronous, self-stopping</b>: no change, no messages</li>
+<li><b>Async, self-stopping</b>: no change → no msg</li>
 </ul>
 <p class="mini">"Whisper": only tell neighbors. Local view per node. BGP is a path-vector variant.</p>
 </section>
@@ -600,59 +600,59 @@
 <section data-key="dijkstra-ls">
 <h2>Dijkstra (LS)</h2>
 <figure><img src="cheatsheet-assets/dijkstra-example.jpg"><figcaption>Dijkstra example + iteration table</figcaption></figure>
-<div class="formula">D(v) = min(D(v), D(w) + c(w,v))</div>
+<div class="formula">D(v) = min(D(v), D(w) + c(w, v))</div>
 <ol>
-<li>N'={u}; D(v)=c(u,v) or ∞</li>
-<li>pick w ∉ N' with min D(w); add to N'</li>
-<li>relax all neighbors of w</li>
-<li>repeat until N' = all nodes</li>
+<li>Init: N' = {u}; D(v) = c(u, v) or ∞</li>
+<li>Pick w ∉ N' with min D(w); add to N'</li>
+<li>Relax all neighbors of w</li>
+<li>Repeat until N' = all nodes</li>
 </ol>
-<p class="mini">O(n²); heap → O(n log n). Msg complexity O(n²) too.</p>
+<p class="mini">O(n²) · heap → O(n log n). Msg complexity O(n²).</p>
 </section>
 
 <section data-key="bellman-ford-dv">
 <h2>Bellman-Ford (DV)</h2>
-<div class="formula">D_x(y) = min_v∈N(x){ c(x,v) + D_v(y) }</div>
+<div class="formula">D_x(y) = min_v ∈ N(x) [c(x, v) + D_v(y)]</div>
 <ul>
-<li>Each node: table[dst][via neighbor]</li>
+<li>Each node holds table[dst][via-neighbor]</li>
 <li>DV = row-min of table</li>
-<li>On neighbor DV msg → update via BF; if own DV changes → tell neighbors</li>
-<li><span class="red">Init: only direct neighbors filled, rest ∞ per-via column</span></li>
+<li>On neighbor DV msg → update via BF; own DV changes → tell neighbors</li>
+<li><span class="red">Init: only direct neighbors filled; rest ∞ per-via column</span></li>
 <li>BF takes <b>min over neighbors</b>, not sum</li>
-<li>Convergence ≈ max-hop-count in shortest-path tree − 1 (sync, static, no CTI)</li>
+<li>Convergence ≈ max-hop − 1 (sync, static, no CTI)</li>
 </ul>
 </section>
 
 <section data-key="count-to-infinity-poison-reverse">
 <h2>Count-to-Infinity + Poison Reverse</h2>
 <ul>
-<li>Link cost ↑: stale DVs cause loops, +1/+1 spiral</li>
-<li><b>Poison reverse</b>: if Z routes thru Y to X, Z advertises Z→X=∞ to Y</li>
-<li>Solves 2-node loops; <span class="red">not 3+ node loops</span></li>
-<li>Use small "infinity" value (e.g. 16) to cap loops</li>
+<li>Link cost ↑ → stale DVs → +1/+1 spiral loop</li>
+<li><b>Poison reverse</b>: Z routes thru Y to X → Z advertises Z→X=∞ to Y</li>
+<li>Fixes 2-node loops; <span class="red">not 3+ node loops</span></li>
+<li>Cap loops with small "∞" (e.g. 16)</li>
 </ul>
 <div class="my-note" data-note-key="star:lec18:27"><span class="my-note-tag">⭐</span> <b>lec18 p27</b> Dijkstra 例 — Step 0 (Init)</div><div class="my-note" data-note-key="star:lec18:38"><span class="my-note-tag">⭐</span> <b>lec18 p38</b> Dijkstra — 最短路径树 + Forwarding Table</div></section>
 
 <section data-key="ospf-intra-as">
 <h2>OSPF (intra-AS)</h2>
 <ul>
-<li>Open, link-state, runs Dijkstra</li>
-<li>Flood LSAs directly over IP (no TCP/UDP — self-reliable)</li>
+<li>Open · link-state · Dijkstra</li>
+<li>Flood LSAs over raw IP (no TCP/UDP, self-reliable)</li>
 <li>Multi-metric weights (BW, delay)</li>
-<li>Authenticated messages</li>
-<li><b>Hierarchy</b>: area + backbone (area 0); ABR summarizes; boundary router connects other AS</li>
+<li>Authenticated msgs</li>
+<li><b>Hierarchy</b>: area + backbone (area 0); ABR summarizes; border router → other AS</li>
 </ul>
 </section>
 
 <section data-key="bgp-inter-as-exam">
 <h2>BGP (inter-AS) <span class="tag">exam</span></h2>
 <ul>
-<li><b>Path vector</b>, advertised over <b>TCP</b></li>
-<li><b>eBGP</b>: between ASes; <b>iBGP</b>: within an AS (propagate eBGP routes)</li>
+<li><b>Path vector</b> over <b>TCP</b></li>
+<li><b>eBGP</b>: between ASes · <b>iBGP</b>: within AS (propagate eBGP routes)</li>
 <li>Msgs: OPEN / UPDATE / KEEPALIVE / NOTIFICATION</li>
 <li>Advertise = (prefix, <b>AS-PATH</b>, <b>NEXT-HOP</b>)</li>
-<li>AS-PATH includes own AS → reject (loop)</li>
-<li><b>Route select</b>: 1) local pref 2) shortest AS-PATH 3) closest NEXT-HOP (hot potato) 4) others</li>
+<li>AS-PATH contains own AS → reject (loop)</li>
+<li><b>Route select</b>: 1) local pref → 2) shortest AS-PATH → 3) closest NEXT-HOP (hot potato) → 4) others</li>
 </ul>
 <figure><img src="cheatsheet-assets/bgp-route-select.jpg"><figcaption>BGP Route Selection 4-step priority</figcaption></figure>
 </section>
@@ -682,9 +682,9 @@
 <section data-key="why-intra-inter-exam">
 <h2>Why Intra ≠ Inter <span class="tag">exam</span></h2>
 <ul>
-<li><b>Policy</b>: inter needs admin policy; intra single admin</li>
-<li><b>Scale</b>: hierarchy shrinks tables (1M BGP prefixes total)</li>
-<li><b>Performance</b>: intra optimizes path; inter optimizes policy</li>
+<li><b>Policy</b>: inter needs admin policy · intra = 1 admin</li>
+<li><b>Scale</b>: hierarchy shrinks tables (~1M BGP prefixes)</li>
+<li><b>Perf</b>: intra optimizes path · inter optimizes policy</li>
 </ul>
 </section>
 
@@ -694,14 +694,14 @@
 <section data-key="sdn-openflow">
 <h2>SDN + OpenFlow</h2>
 <ul>
-<li>Controller computes FTs, ships to switches via <b>OpenFlow</b></li>
-<li><b>Match + Action</b> uniformly replaces router / switch / firewall / NAT / load-balancer</li>
-<li>Match: <b>11 fields</b> (in-port · src/dst MAC, Ethertype, VLAN id+priority · src/dst IP, IP proto, IP ToS · src/dst port) — all wildcardable</li>
-<li>Action: forward / drop / modify / to-controller</li>
-<li>Priority resolves overlaps; counters track stats</li>
-<li>Msgs C→S: features, configure, modify-state, packet-out</li>
-<li>Msgs S→C: packet-in, flow-removed, port-status</li>
-<li>Northbound API for apps, southbound for switches</li>
+<li>Controller computes flow tables, ships to switches via <b>OpenFlow</b></li>
+<li><b>Match + Action</b> unifies router / switch / firewall / NAT / LB</li>
+<li>Match: <b>11 fields</b> (in-port · src/dst MAC, Ethertype, VLAN id+pri · src/dst IP, proto, ToS · src/dst port) — all wildcardable</li>
+<li>Action: forward · drop · modify · to-controller</li>
+<li>Priority resolves overlaps · counters track stats</li>
+<li>Msgs C→S: features · configure · modify-state · packet-out</li>
+<li>Msgs S→C: packet-in · flow-removed · port-status</li>
+<li>Northbound API → apps · Southbound → switches</li>
 </ul>
 </section>
 
@@ -744,7 +744,7 @@
 <li><b>Parity</b> 1-bit: detects odd-bit errors only</li>
 <li><b>2D parity</b>: detects + corrects single bit</li>
 <li><b>Checksum</b>: 16-b word sum w/o carry (TCP/UDP/IP)</li>
-<li><b>CRC</b>: D·2^r mod G = R; transmit (D, R); receiver checks (D·2^r XOR R) mod G == 0</li>
+<li><b>CRC</b>: R = D·2^r mod G; send (D, R); rcvr checks (D·2^r XOR R) mod G = 0</li>
 </ul>
 <div class="formula">R = (D · 2^r) mod G   (mod 2 = XOR)</div>
 <p class="mini">CRC detects all burst errors ≤ r bits.</p>
@@ -766,11 +766,11 @@ Transmit: 101011 110</pre>
 <section data-key="mac-categories">
 <h2>MAC categories</h2>
 <table>
-<tbody><tr><th>Type</th><th>Examples</th></tr>
-<tr><td>Channel partition</td><td>TDMA, FDMA, CDMA</td></tr>
-<tr><td>Taking turns</td><td>polling, token</td></tr>
-<tr><td>Random access</td><td>ALOHA, CSMA, CSMA/CD, CSMA/CA</td></tr>
-</tbody></table>
+<tr><th>Type</th><th>Examples</th></tr>
+<tr><td>Channel partition</td><td>TDMA · FDMA · CDMA</td></tr>
+<tr><td>Taking turns</td><td>polling · token</td></tr>
+<tr><td>Random access</td><td>ALOHA · CSMA · CSMA/CD · CSMA/CA</td></tr>
+</table>
 <div class="my-note" data-note-key="star:lec21:2"><span class="my-note-tag">⭐</span> <b>lec21 p2</b> Quiz Round 1 — A 的视角</div></section>
 
 <section data-key="slotted-aloha-derivation">
@@ -779,7 +779,7 @@ Transmit: 101011 110</pre>
 <ul>
 <li>Max at p* = 1/N</li>
 <li>S_max → 1/e ≈ 0.37 as N → ∞</li>
-<li>Pure ALOHA (no slots): collision window doubles → 1/(2e) ≈ 0.18</li>
+<li>Pure ALOHA (no slots): collision window 2× → S_max → 1/(2e) ≈ 0.18</li>
 </ul>
 </section>
 
@@ -788,30 +788,30 @@ Transmit: 101011 110</pre>
 <ul>
 <li><b>CS</b>: listen before send</li>
 <li>Collisions still happen due to <b>propagation delay</b></li>
-<li><b>CSMA/CD</b> (wired only): listen <b>while sending</b>; abort on collision; jam + binary backoff</li>
-<li>Wireless can't CD: own TX power >> far-end RX signal → can't hear others while sending</li>
+<li><b>CSMA/CD</b> (wired): listen <b>while sending</b> → abort + jam + binary backoff</li>
+<li>Wireless can't CD: TX power >> far-end RX → own RX deafened</li>
 </ul>
 </section>
 
 <section data-key="csma-cd-vs-csma-ca">
 <h2>CSMA/CD vs CSMA/CA <span class="tag">exam</span></h2>
-<p class="mini">Key diff: <b>wireless can't listen while transmitting</b> (own TX dominates RX antenna) → can't detect collision, must avoid.</p>
+<p class="mini">Key diff: <b>wireless can't listen while TX</b> (own TX dominates RX) → no detection, must avoid.</p>
 <ul>
-<li><b>CSMA/CD</b> (wired Ethernet): keep listening while sending → <b>detect</b> collision → stop + jam + backoff</li>
-<li><b>CSMA/CA</b> (wireless WiFi): can't detect → relies on receiver <b>ACK</b>; no ACK = inferred collision → backoff &amp; retry</li>
-<li>CD: send immediately when idle. CA: wait <b>DIFS</b>; ACK/CTS wait shorter <b>SIFS</b> (priority)</li>
-<li>CD uses <b>min frame size 64 B</b> so collision is heard before TX ends. CA uses <b>RTS/CTS</b> to combat hidden terminal</li>
-<li>CA <b>ACKs every frame</b>; CD does not ACK</li>
+<li><b>CSMA/CD</b> (wired): listen during TX → detect collision → stop + jam + backoff</li>
+<li><b>CSMA/CA</b> (wireless): infer collision via missing <b>ACK</b> → backoff + retry</li>
+<li>CD: send immediately when idle · CA: wait <b>DIFS</b>; ACK/CTS wait shorter <b>SIFS</b></li>
+<li>CD: <b>min frame 64 B</b> so collision heard before TX ends · CA: <b>RTS/CTS</b> for hidden terminal</li>
+<li>CA <b>ACKs every frame</b> · CD doesn't ACK</li>
 </ul>
 </section>
 
 <section data-key="csma-cd-min-frame-size-exam">
 <h2>CSMA/CD min frame size <span class="tag">exam</span></h2>
-<div class="formula">L_min / R ≥ 2·d_max / v</div>
+<div class="formula">L_min / R ≥ 2 · d_max / v</div>
 <ul>
-<li>Need to detect collision before tx ends</li>
-<li>10 Mbps Ethernet: min 512 bit, max cable 100 m</li>
-<li>Binary backoff: after n collisions, pick slot ∈ [0, 2ⁿ − 1]</li>
+<li>Detect collision before TX ends</li>
+<li>10 Mbps Ethernet → min 512 b, max cable 100 m</li>
+<li>Binary backoff: after n collisions pick slot ∈ [0, 2ⁿ − 1]</li>
 </ul>
 </section>
 
@@ -848,19 +848,19 @@ Transmit: 101011 110</pre>
 <h2>ARP</h2>
 <ul>
 <li>Map IP → MAC</li>
-<li>Broadcast query, unicast reply, cache with TTL (soft state)</li>
-<li><span class="red">Cross-subnet</span>: ARP resolves <b>first-hop router</b>'s MAC, NOT the final dst</li>
-<li>Host knows when to use router via netmask (from DHCP)</li>
+<li>Broadcast query · unicast reply · cache w/ TTL (soft state)</li>
+<li><span class="red">Cross-subnet</span>: ARP resolves <b>first-hop router</b>'s MAC, NOT final dst</li>
+<li>Host decides via netmask (from DHCP)</li>
 </ul>
 </section>
 
 <section data-key="switch-l2">
 <h2>Switch</h2>
 <ul>
-<li>Store-and-forward at the link layer</li>
-<li><b>Self-learning</b>: on frame in, record (src MAC, in-port, TTL)</li>
-<li>Dst in table → unicast; else flood</li>
-<li>Plug-and-play; no config</li>
+<li>Store-and-forward at link layer</li>
+<li><b>Self-learning</b>: on frame in → record (src MAC, in-port, TTL)</li>
+<li>Dst in table → unicast · else flood</li>
+<li>Plug-and-play, no config</li>
 <li>Doesn't touch TTL</li>
 </ul>
 </section>
@@ -868,8 +868,8 @@ Transmit: 101011 110</pre>
 <section data-key="vlan">
 <h2>VLAN</h2>
 <ul>
-<li>One physical switch → multiple virtual LANs (by port or MAC)</li>
-<li>Traffic isolation; dynamic port-to-VLAN reassignment</li>
+<li>1 physical switch → multiple virtual LANs (by port or MAC)</li>
+<li>Traffic isolation · dynamic port↔VLAN reassign</li>
 <li>Cross-VLAN → must go through router</li>
 </ul>
 </section>
@@ -889,8 +889,8 @@ Transmit: 101011 110</pre>
 <section data-key="collision-broadcast-domains">
 <h2>Collision &amp; Broadcast Domains</h2>
 <ul>
-<li><b>Collision domain</b>: hubs join one big; switches split per port</li>
-<li><b>Broadcast domain</b>: limited by router (or VLAN boundary)</li>
+<li><b>Collision domain</b>: hubs join 1 big · switches split per port</li>
+<li><b>Broadcast domain</b>: bounded by router or VLAN</li>
 </ul>
 </section>
 
@@ -900,7 +900,7 @@ Transmit: 101011 110</pre>
 <section data-key="wireless-wired-exam">
 <h2>Wireless ≠ Wired <span class="tag">exam</span></h2>
 <ol>
-<li><b>Time-varying channel</b>: distance, mobility, environment</li>
+<li><b>Time-varying channel</b>: distance · mobility · environment</li>
 <li><b>Broadcast → interference</b> from neighbors</li>
 </ol>
 <p class="mini">These two drive all wireless MAC design.</p>
@@ -908,20 +908,20 @@ Transmit: 101011 110</pre>
 
 <section data-key="free-space-pathloss">
 <h2>Free-Space Pathloss</h2>
-<div class="formula">L = (4πd/λ)² = (4πd·f/c)²</div>
+<div class="formula">L = (4πd/λ)² = (4πdf/c)²</div>
 <ul>
-<li>d = distance, λ = wavelength, f = freq, c = light speed</li>
+<li>d = dist · λ = wavelen · f = freq · c = light speed</li>
 <li>Higher f (smaller λ) → more loss</li>
-<li>5 GHz attenuates faster than 2.4 GHz; worse through walls</li>
+<li>5 GHz attenuates faster than 2.4 GHz · worse through walls</li>
 </ul>
-<p class="mini">Real env: PL(d) = PL(d₀) + 10α·log(d/d₀) + X. α=2 free; 2.7–3.5 urban; 4–6 indoor.</p>
+<p class="mini">Real env: PL(d) = PL(d₀) + 10α · log(d/d₀) + X. α = 2 free · 2.7–3.5 urban · 4–6 indoor.</p>
 </section>
 
 <section data-key="propagation-modes">
 <h2>Propagation Modes</h2>
 <ul>
 <li><b>Reflection</b>: object ≫ λ (walls, ground)</li>
-<li><b>Diffraction</b>: sharp edges → bends around obstacles (corners)</li>
+<li><b>Diffraction</b>: bends around edges (corners)</li>
 <li><b>Scattering</b>: object &lt; λ (leaves, lamp posts) — hardest to model</li>
 </ul>
 </section>
@@ -929,8 +929,8 @@ Transmit: 101011 110</pre>
 <section data-key="fading">
 <h2>Fading</h2>
 <ul>
-<li><b>Large-scale</b>: average drop w/ distance (pathloss + shadowing)</li>
-<li><b>Small-scale</b>: rapid swings in small area (multipath interference)</li>
+<li><b>Large-scale</b>: avg drop w/ distance (pathloss + shadowing)</li>
+<li><b>Small-scale</b>: rapid swings in small area (multipath)</li>
 <li>Mobility → small-scale fade</li>
 </ul>
 </section>
@@ -938,17 +938,17 @@ Transmit: 101011 110</pre>
 <section data-key="multipath-coherence-time">
 <h2>Multipath &amp; Coherence Time</h2>
 <ul>
-<li>LOS + reflected paths arrive at different times → ISI</li>
-<li>Coherence time = duration channel response stays valid</li>
-<li>Symbol period must be &lt; coherence time</li>
+<li>LOS + reflected paths arrive at diff times → ISI</li>
+<li>Coherence time = how long channel response stays valid</li>
+<li>Symbol period < coherence time</li>
 </ul>
 </section>
 
 <section data-key="snr-sinr">
 <h2>SNR / SINR</h2>
-<div class="formula">SNR_dB = 10·log₁₀(S/N);  SINR_dB = 10·log₁₀(S/(N+I))</div>
+<div class="formula">SNR_dB = 10·log₁₀(S/N) · SINR_dB = 10·log₁₀(S/(N+I))</div>
 <ul>
-<li>Higher SNR → lower BER → higher mod/code rate possible</li>
+<li>Higher SNR → lower BER → higher mod/code rate</li>
 <li>SINR adds interference from other senders</li>
 </ul>
 </section>
@@ -966,44 +966,44 @@ Transmit: 101011 110</pre>
 
 <section data-key="csma-sender-driven-problem">
 <h2>CSMA's Fundamental Flaw (Wireless)</h2>
-<p class="mini"><b>Key insight</b>: CSMA has the <b>sender</b> sense the channel — but collision happens at the <b>receiver</b>.</p>
+<p class="mini"><b>Key</b>: CSMA = <b>sender</b> senses channel — but collision = at <b>receiver</b>.</p>
 <ul>
 <li>Sender hears idle ≠ receiver can decode</li>
-<li>Wireless attenuates with distance → sender and receiver see different channel states</li>
-<li>→ Derives <b>Hidden Terminal</b> (sender thinks idle, receiver collides)</li>
-<li>→ Also derives <b>Exposed Terminal</b> (sender thinks busy, receiver is actually free)</li>
+<li>Wireless attenuates w/ dist → sender + receiver see different channel</li>
+<li>→ <b>Hidden Terminal</b> (sender thinks idle, receiver collides)</li>
+<li>→ <b>Exposed Terminal</b> (sender thinks busy, receiver free)</li>
 </ul>
-<p class="mini">Fix (wireless): move decision-making from sender to receiver — <b>explicit ACK</b> (CSMA/CA) + <b>RTS/CTS</b> (receiver claims channel).</p>
+<p class="mini">Fix: shift decision from sender → receiver. <b>ACK</b> (CSMA/CA) + <b>RTS/CTS</b> (receiver claims channel).</p>
 </section>
 
 <section data-key="hidden-terminal-exam">
 <h2>Hidden Terminal <span class="tag">exam</span></h2>
 <figure><img src="cheatsheet-assets/hidden-terminal.jpg"><figcaption>Hidden terminal geometry</figcaption></figure>
-<p class="mini"><b>Def</b>: a third node <b>X</b> is <b>outside</b> sender <b>A</b>'s range (can't hear A) but <b>inside</b> receiver <b>B</b>'s interference range. X thinks idle → sends → collides with A at B.</p>
+<p class="mini"><b>Def</b>: node <b>X</b> <b>outside</b> sender <b>A</b>'s range but <b>inside</b> receiver <b>B</b>'s interference range. X hears idle → sends → collides w/ A at B.</p>
 <ul>
 <li>Symptom: A transmits fine, B receives nothing</li>
-<li>NYU Final Q6b restatement: A and B both transmit to C in the middle; A↔B too far to hear each other → collision at C</li>
+<li>Equiv: A &amp; B both transmit to middle C; A↔B too far to hear → collision at C</li>
 </ul>
-<p class="mini">Fixes: <b>CSMA/CA</b> (ACK-based) + <b>RTS/CTS</b> (NAV reservation). See those sections for mechanics.</p>
+<p class="mini">Fixes: <b>CSMA/CA</b> (ACK) + <b>RTS/CTS</b> (NAV). See those sections.</p>
 </section>
 
 <section data-key="exposed-terminal">
 <h2>Exposed Terminal</h2>
 <ul>
-<li>X <b>inside</b> sender A's range (hears A), but X's own target is <b>outside</b> A's range</li>
+<li>X <b>inside</b> sender A's range (hears A) · X's target <b>outside</b> A's range</li>
 <li>X needlessly defers → wasted parallelism</li>
 <li>No clean CSMA/CA fix</li>
 </ul>
-<p class="mini">Mnemonic: hidden = sender-out + recv-in (should stop but doesn't). Exposed = sender-in + target-out (defers but didn't need to).</p>
+<p class="mini">Mnemonic: hidden = sender-OUT + recv-IN (should stop, doesn't). Exposed = sender-IN + target-OUT (defers, didn't need to).</p>
 <div class="my-note" data-note-key="star:lec23:27"><span class="my-note-tag">⭐</span> <b>lec23 p27</b> CSMA/CA — 三大机制拆解</div></section>
 
 <section data-key="rts-cts-nav">
 <h2>RTS / CTS / NAV</h2>
 <ul>
-<li>A sends RTS → B replies CTS (with NAV duration)</li>
-<li>Nodes hearing RTS quiet for ~CTS time</li>
-<li>Nodes hearing CTS quiet for full NAV</li>
-<li>Solves hidden, NOT exposed</li>
+<li>A → RTS · B → CTS (carries NAV duration)</li>
+<li>Hear RTS → quiet for ~CTS time</li>
+<li>Hear CTS → quiet for full NAV</li>
+<li>Solves hidden · <span class="red">NOT exposed</span></li>
 </ul>
 </section>
 
@@ -1013,9 +1013,9 @@ Transmit: 101011 110</pre>
 <ol>
 <li>Carrier sense (physical + virtual NAV)</li>
 <li>Idle → wait <b>DIFS</b> → still idle → send</li>
-<li>Replies (CTS/ACK) wait <b>SIFS</b> (shorter; priority over new contention)</li>
-<li>Busy → after DIFS, start random backoff [0, CW]; decrement when idle, freeze when busy</li>
-<li>Backoff=0 → send RTS</li>
+<li>Replies (CTS / ACK) wait <b>SIFS</b> (shorter, priority)</li>
+<li>Busy → after DIFS pick random backoff ∈ [0, CW]; decrement when idle, freeze when busy</li>
+<li>Backoff = 0 → send RTS</li>
 <li>No CTS → CW = min(2·CW, CWmax) (binary exp)</li>
 <li>Success → reset CW = CWmin</li>
 </ol>
@@ -1025,8 +1025,8 @@ Transmit: 101011 110</pre>
 <section data-key="backoff-variants">
 <h2>Backoff variants</h2>
 <ul>
-<li><b>Binary exp</b>: too aggressive reset → oscillation + unfair</li>
-<li><b>MACAW</b>: CW −1 on success (linear decrease, "AIMD" of MAC)</li>
+<li><b>Binary exp</b>: aggressive reset → oscillation + unfair</li>
+<li><b>MACAW</b>: CW − 1 on success (linear decrease — "AIMD" of MAC)</li>
 <li>Append CW to packet so peers track congestion</li>
 </ul>
 </section>
@@ -1034,13 +1034,13 @@ Transmit: 101011 110</pre>
 <section data-key="802-11-standards">
 <h2>802.11 standards</h2>
 <table>
-<tbody><tr><th>Std</th><th>Band</th><th>Rate</th></tr>
+<tr><th>Std</th><th>Band</th><th>Rate</th></tr>
 <tr><td>b</td><td>2.4 G</td><td>11 M</td></tr>
-<tr><td>a/g</td><td>5/2.4 G</td><td>54 M</td></tr>
-<tr><td>n</td><td>2.4/5 G</td><td>~600 M (MIMO)</td></tr>
-<tr><td>ac WiFi 5</td><td>5 G</td><td>&gt;1 G</td></tr>
-<tr><td>ax WiFi 6</td><td>2.4/5 G</td><td>~14 G</td></tr>
-</tbody></table>
+<tr><td>a / g</td><td>5 / 2.4 G</td><td>54 M</td></tr>
+<tr><td>n</td><td>2.4 / 5 G</td><td>~600 M (MIMO)</td></tr>
+<tr><td>ac (WiFi 5)</td><td>5 G</td><td>&gt; 1 G</td></tr>
+<tr><td>ax (WiFi 6)</td><td>2.4 / 5 G</td><td>~14 G</td></tr>
+</table>
 <p class="mini">2.4 G non-overlap channels: 1, 6, 11 (22 MHz each).</p>
 </section>
 
@@ -1048,8 +1048,8 @@ Transmit: 101011 110</pre>
 <h2>802.11 Architecture</h2>
 <ul>
 <li><b>BSS</b>: AP + associated hosts (infrastructure mode)</li>
-<li><b>Ad-hoc</b>: hosts direct, no AP</li>
-<li>Associate first (probe + auth), then data</li>
+<li><b>Ad-hoc</b>: hosts talk direct, no AP</li>
+<li>Associate first (probe + auth) → then data</li>
 </ul>
 </section>
 
