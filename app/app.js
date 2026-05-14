@@ -2155,15 +2155,27 @@ function cheatInsertAuto(quiet=false) {
 
   let inserted = 0, skipped = 0, unmatched = 0;
 
-  // 1) Starred slides — merged into matching sections
+  // 1) Starred slides — embed the actual PPT image into matching section as <figure>
+  // Clean out any prior text-only star my-notes first so we don't have both text + image
+  host.querySelectorAll('.my-note[data-note-key^="star:"]').forEach(n => n.remove());
   loadStars().forEach(k => {
     const [f, p] = k.split(':');
     const e = (EXPL[f] || [])[parseInt(p) - 1] || {};
     const target = findSectionForLec(host, f, e.title || '') || ensureFallbackSection(host);
     if (!target) { unmatched++; return; }
     const key = `star:${k}`;
-    const html = `<span class="my-note-tag">⭐</span> <b>${escapeHtml(f)} p${p}</b> ${escapeHtml(e.title || '')}`;
-    if (insertNoteInto(target, key, html)) inserted++; else skipped++;
+    if (target.querySelector(`figure[data-note-key="${CSS.escape(key)}"]`)) { skipped++; return; }
+    const padP = String(p).padStart(2, '0');
+    const fig = document.createElement('figure');
+    fig.setAttribute('data-note-key', key);
+    fig.className = 'my-star-fig';
+    fig.contentEditable = 'false';
+    const title = e.title || '';
+    fig.innerHTML = `<img src="pages/${escapeHtml(f)}/p-${padP}.jpg" alt="${escapeHtml(f)} p${p}"><figcaption>⭐ ${escapeHtml(f)} p${p}${title ? ' · ' + escapeHtml(title) : ''}</figcaption>`;
+    const overlay = target.querySelector('.section-overlay');
+    if (overlay) target.insertBefore(fig, overlay);
+    else target.appendChild(fig);
+    inserted++;
   });
 
   // 2) Q&A entries — merged
