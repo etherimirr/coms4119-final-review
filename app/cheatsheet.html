@@ -20,23 +20,26 @@
 <div class="cols">
 
 <section>
-<h2>Delays &amp; Performance</h2>
+<h2>Delays &amp; Performance <span class="tag">mid Q2 Q4</span></h2>
 <ul>
 <li><b>Transmission</b> = L/R (size/bandwidth)</li>
 <li><b>Propagation</b> = d/v (light 3·10⁸ m/s, sound 1.5 km/s)</li>
 <li><b>Queuing</b>: depends on load</li>
-<li><b>End-to-end</b> = Σ(L/R + d/v) per link + queue</li>
-<li><b>Pipelined N pkts</b>: 1st full path + (N−1)·<span class="red">bottleneck</span> tx time</li>
+<li><b>End-to-end</b> (1 pkt) = Σ(L/R + d/v) per link + queue</li>
+<li><b>Pipelined N pkts</b>: 1st full path + (N−1)·<span class="red">bottleneck L/R</span></li>
+<li><b>Bottleneck</b> = min R = <b>max L/R</b> link <span class="red">(NOT propagation!)</span></li>
+<li>Propagation is paid <b>once</b> for 1st pkt; doesn't stack across N pkts</li>
 <li><b>BDP</b> = R · RTT (bits in pipe)</li>
 <li><b>Throughput</b> = min(per-link R) = bottleneck</li>
 </ul>
 </section>
 
 <section>
-<h2>Stop-and-Wait Utilization</h2>
+<h2>Stop-and-Wait Utilization <span class="tag">mid Q5</span></h2>
 <div class="formula">U = T_trans / (T_trans + 2·T_prop)</div>
 <ul>
 <li>T_trans = L/R</li>
+<li><span class="red">Denominator has 2·T_prop</span> — don't forget the ×2 (round-trip)</li>
 <li>When L small or distance long → U collapses → need sliding window</li>
 <li>Mid: 2 Kb @ 40 Kbps over 30 m acoustic + 3 km air → U≈0.54; @ 200 b → 0.11. <b>Not good.</b></li>
 </ul>
@@ -64,8 +67,9 @@
 </section>
 
 <section>
-<h2>HTTP RTTs <span class="tag">exam</span></h2>
+<h2>HTTP RTTs <span class="tag">mid Q1</span></h2>
 <ul>
+<li><b>Draw dependency tree</b>: base → inline siblings → CSS-referenced → JS-triggered</li>
 <li><b>Non-persistent</b>: each obj = 1 RTT TCP + 1 RTT GET = <span class="red">2 RTT/obj</span></li>
 <li><b>Persistent + pipelined</b>: base 2 RTT; same-layer inline 1 RTT; each nesting +1 RTT</li>
 <li><b>Persistent no pipeline</b>: each obj 1 RTT sequentially</li>
@@ -94,13 +98,16 @@
 </section>
 
 <section>
-<h2>P2P file distribution <span class="tag">exam</span></h2>
+<h2>P2P file distribution <span class="tag">mid Q7</span></h2>
 <div class="formula">CS:  T = max(NF/U_s, F/d_min)</div>
 <div class="formula">P2P: T = max(F/U_s, F/d_min, NF/(U_s + ΣU_i))</div>
 <ul>
+<li><b>CS time grows linearly with N</b> (server uploads N copies, is bottleneck)</li>
+<li><b>P2P time grows slowly with N</b> (collective upload also grows; denominator increases)</li>
+<li>N small: roughly tied. N large: P2P wins by a lot.</li>
+<li>Mid 1GB/100 users, 40 Mbps server: CS = 20000s; P2P ≈ 1000s. N ≥ 5 to outperform.</li>
 <li>BitTorrent: tit-for-tat + rarest-first + optimistic unchoke</li>
 <li>DHT: distributed hash for resource lookup</li>
-<li>P2P beats CS when N grows (server upload not multiplied)</li>
 </ul>
 </section>
 
@@ -147,7 +154,7 @@
 </section>
 
 <section>
-<h2>RDT: GBN vs SR <span class="tag">exam</span></h2>
+<h2>RDT: GBN vs SR <span class="tag">mid Q3</span></h2>
 <table>
 <tr><th></th><th>GBN</th><th>SR</th></tr>
 <tr><td>ACK</td><td>cumulative</td><td>per-packet</td></tr>
@@ -156,6 +163,7 @@
 <tr><td>ACK loss heavy</td><td><span class="green">good</span></td><td>bad (timeout)</td></tr>
 <tr><td>Buf at rcvr</td><td>none</td><td>required</td></tr>
 </table>
+<p class="mini"><b>Rule</b>: data-loss heavy → SR; ACK-loss heavy → GBN. <span class="red">Always write the reason</span> (otherwise lose marks).</p>
 <p class="mini">SR window ≤ N/2 (seq space ambiguity).</p>
 </section>
 
@@ -769,11 +777,24 @@ Transmit: 101011 110</pre>
 </section>
 
 <section>
-<h2>Bottleneck calc traps</h2>
+<h2>Bottleneck calc traps <span class="tag">mid Q2 Q4</span></h2>
 <ul>
 <li>N pkts pipelined: 1st pkt = full path; rest = (N−1)·bottleneck only</li>
 <li>Store-and-forward adds tx delay at EVERY hop</li>
 <li>Don't double-count propagation if asked for one-way vs round-trip</li>
+<li><span class="red">Propagation is NOT a bottleneck</span> — paid once for 1st pkt only, doesn't stack</li>
+<li>Bottleneck = link with <b>max L/R</b> = min R, not max d</li>
+</ul>
+</section>
+
+<section>
+<h2>SR Receive Buffer trap <span class="tag">mid Q6</span></h2>
+<ul>
+<li>Receive buffer is NOT a simple counter — it's <b>"hold until in-order delivery"</b></li>
+<li>If pkt 1 lost + pkts 2,3,4 fill buffer → buffer can't release → pkts 5+ dropped</li>
+<li>Advertised window <b>must ≤ buffer size</b>, else overflow drops</li>
+<li>Example: 10 pkts, buffer=4, pkt 1 lost → retransmit <b>7 pkts</b> (1 + 5–10)</li>
+<li>Initial handshake: rcvr should advertise rwnd = actual buffer capacity</li>
 </ul>
 </section>
 
@@ -879,6 +900,7 @@ Transmit: 101011 110</pre>
 <li>CWmin = 31 (b) / 15 (g)</li>
 </ul>
 </section>
+
 
 </div></div>
 
