@@ -1325,8 +1325,17 @@ async function renderCheatSheet() {
     </div>
     <div class="cheat-host" id="cheatHost">${bodyHtml}</div>`;
   attachCheatHandlers();
-  // auto-merge stars / QA / highlights / midterm-takeaways into sections (silent on load)
-  cheatInsertAuto(true);
+  // One-time localStorage cleanup: nuke stale Q&A and prune stars to allowlist.
+  // Runs only if 4119:ctpp-cleaned-v2 flag missing. Idempotent.
+  if (!localStorage.getItem('4119:ctpp-cleaned-v2')) {
+    try {
+      localStorage.removeItem('4119:qa');
+      const KEEP_STARS = ['lec14:6','lec14:7','lec14:20','lec18:27','lec18:38','lec19:25','lec21:2','lec23:27'];
+      localStorage.setItem('4119:stars', JSON.stringify(KEEP_STARS));
+      localStorage.setItem('4119:ctpp-cleaned-v2', '1');
+    } catch(e) {}
+  }
+  // NOTE: auto-merge disabled. Cheatsheet shows only file content. Click "Pull notes" to merge.
   cheatHistoryInit();
   if (window.renderMathInElement) {
     renderMathInElement(content, { delimiters: [
