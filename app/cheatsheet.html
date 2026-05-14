@@ -1,4 +1,4 @@
-<!-- CHEATSHEET_VERSION: 15 -->
+<!-- CHEATSHEET_VERSION: 18 -->
 <!--
   COMS 4119 FINAL CHEAT SHEET
   4 sheets organized by course chapter (Kurose-Ross order):
@@ -62,14 +62,15 @@
 
 <section data-key="packet-vs-circuit-switching">
 <h2>Packet vs Circuit Switching</h2>
+<ul>
+<li><b>Circuit</b>: source establish 连接 → 节点 reserve resources → send（无 dst 地址）→ tear down。复用：<b>TDM</b>（时分）/ <b>FDM</b>（频分）。</li>
+<li><b>Packet</b>: 切包带 header → 包独立 forward → 节点暂存 → dst 重组。<b>Best-effort</b>：可能 loss / corrupt / 乱序。</li>
+</ul>
 <table>
-<tbody><tr><th></th><th>Packet</th><th>Circuit</th></tr>
-<tr><td>BW</td><td>shared</td><td>reserved</td></tr>
-<tr><td>Bursty</td><td><span class="green">eff</span></td><td>waste</td></tr>
-<tr><td>Failure</td><td>robust</td><td>fragile</td></tr>
-<tr><td>Setup</td><td>none</td><td>required</td></tr>
-</tbody></table>
-<p class="mini">Internet uses packet switching = simple + robust.</p>
+<tr><th>Circuit ✅</th><th>Circuit ❌</th></tr>
+<tr><td class="mini">Guaranteed BW · 简单抽象 · 简单 forwarding · 低 per-pkt overhead</td><td class="mini"><span class="red">Bursty 浪费 BW</span> · Blocked connections · Set-up delay · Per-conn 状态</td></tr>
+</table>
+<p class="mini"><b>vs Packet</b>：packet 适合 <b>bursty</b>（resource sharing + 无 setup）；congestion → buffer overflow → delay/loss。Internet 选 packet。</p>
 </section>
 
 <section data-key="delays-performance-mid-q2-q4">
