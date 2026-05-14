@@ -31,7 +31,97 @@ class Handler(SimpleHTTPRequestHandler):
             return self._handle_upload()
         if self.path == "/api/save-cheatsheet":
             return self._handle_save_cheatsheet()
+        if self.path == "/api/patch-cheatsheet":
+            return self._handle_patch_cheatsheet()
         self.send_error(404, "POST not allowed for that path")
+
+    def _handle_patch_cheatsheet(self):
+        """Section-level patch.
+        Body: {ops: [{op:"upsert", key:"...", html:"<section ...>...</section>", sheet_idx?:0},
+                      {op:"delete", key:"..."}]}
+        Reads cheatsheet.html, applies ops by data-key, writes back.
+        Leaves all unmentioned sections untouched (so Claude's updates persist).
+        """
+        try:
+            body = self._read_json_body()
+        except Exception as exc:
+            return self._send_json({"error": f"bad JSON: {exc}"}, 400)
+        ops = body.get("ops") or []
+        if not isinstance(ops, list):
+            return self._send_json({"error": "ops must be array"}, 400)
+
+        here = os.path.dirname(os.path.abspath(__file__))
+        path = os.path.join(here, "cheatsheet.html")
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                html = f.read()
+        except Exception as exc:
+            return self._send_json({"error": f"read failed: {exc}"}, 500)
+
+        import re
+        applied = 0
+        for op in ops:
+            kind = op.get("op")
+            key = op.get("key") or ""
+            if not key:
+                continue
+            esc = re.escape(key)
+            # match: <section ... data-key="KEY" ...>...</section>  (sections don't nest)
+            pat = re.compile(
+                r'<section\b[^>]*\bdata-key=["\']' + esc + r'["\'][^>]*>.*?</section>',
+                re.DOTALL,
+            )
+            if kind == "upsert":
+                new_html = op.get("html") or ""
+                if not new_html.startswith("<section"):
+                    continue
+                if pat.search(html):
+                    html = pat.sub(lambda m: new_html, html, count=1)
+                else:
+                    # not in file — append to the corresponding sheet's .cols
+                    sheet_idx = int(op.get("sheet_idx") or 0)
+                    sheets = list(re.finditer(r'<div\s+class="sheet"[^>]*>', html))
+                    if not sheets:
+                        continue
+                    target = sheets[sheet_idx] if 0 <= sheet_idx < len(sheets) else sheets[-1]
+                    # find this sheet's first `<div class="cols"`
+                    after_sheet = html[target.end():]
+                    cols_m = re.search(r'<div\s+class="cols"[^>]*>', after_sheet)
+                    if not cols_m:
+                        continue
+                    # find next sheet boundary
+                    next_sheet_m = re.search(r'<div\s+class="sheet"', after_sheet)
+                    end_limit = next_sheet_m.start() if next_sheet_m else len(after_sheet)
+                    # find matching </div> of cols by simple bracket tracking from cols start
+                    # safer: insert before the closing tag of the cols block.
+                    # heuristic: find last </section> within this sheet and insert after it
+                    sheet_chunk = after_sheet[:end_limit]
+                    last_sec_end = sheet_chunk.rfind("</section>")
+                    if last_sec_end == -1:
+                        continue
+                    insert_pos = target.end() + last_sec_end + len("</section>")
+                    html = html[:insert_pos] + "\n" + new_html + "\n" + html[insert_pos:]
+                applied += 1
+            elif kind == "delete":
+                if pat.search(html):
+                    html = pat.sub("", html, count=1)
+                    applied += 1
+
+        # rolling backup
+        try:
+            with open(path + ".bak", "w", encoding="utf-8") as f:
+                pass  # touch
+            with open(path, "r", encoding="utf-8") as src, open(path + ".bak", "w", encoding="utf-8") as dst:
+                dst.write(src.read())
+        except Exception:
+            pass
+
+        try:
+            with open(path, "w", encoding="utf-8") as f:
+                f.write(html)
+        except Exception as exc:
+            return self._send_json({"error": f"write failed: {exc}"}, 500)
+        return self._send_json({"ok": True, "applied": applied})
 
     def _handle_save_cheatsheet(self):
         """Persist the browser's current cheatsheet body back to cheatsheet.html.

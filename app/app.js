@@ -972,6 +972,7 @@ function attachCheatHandlers() {
     overlay.contentEditable = 'false';
     overlay.innerHTML = `
       <button class="drag-handle" title="拖到任何 section/列上重排（跨页也行）" onmousedown="cheatDragStart(this); event.stopPropagation();" onmouseup="cheatDragEnd(this);">⠿</button>
+      <button title="🆕 从源文件拉取这一节最新版（覆盖当前）" onclick="cheatPullSection(this); event.stopPropagation();">🆕</button>
       <button title="让 AI 往这个 section 补内容" onclick="cheatLLMAddTo(this); event.stopPropagation();">🤖</button>
       <button title="加图" onclick="cheatAddImage(this); event.stopPropagation();">📷</button>
       <button title="删除" onclick="cheatDeleteSection(this); event.stopPropagation();">✕</button>`;
@@ -1215,47 +1216,101 @@ function cleanCheatHTML() {
   return clone.innerHTML;
 }
 
+const KEY_CHEAT_DELETED = '4119:cheatsheet:deleted-keys';
+
+function _loadDeletedKeys() {
+  try { return new Set(JSON.parse(localStorage.getItem(KEY_CHEAT_DELETED) || '[]')); }
+  catch { return new Set(); }
+}
+function _saveDeletedKeys(set) {
+  localStorage.setItem(KEY_CHEAT_DELETED, JSON.stringify([...set]));
+}
+function markSectionDeleted(key) {
+  if (!key) return;
+  const s = _loadDeletedKeys();
+  s.add(key);
+  _saveDeletedKeys(s);
+}
+
 function saveCheatSheet() {
   const html = cleanCheatHTML();
   if (!html) return;
   localStorage.setItem(KEY_CHEAT, html);
   cheatHistoryPush(html);
-  cheatPushToFile(html);   // auto-persist to cheatsheet.html on disk
+  cheatPatchToFile();   // section-level patch — only touches sections YOU modified
 }
 
-// Auto-write the cheatsheet HTML back to the source file so Claude works on top of user edits.
-// Debounced + concurrent-safe (queues at most one pending write while one is in flight).
-let _cheatFileWriteInFlight = false;
-let _cheatFilePending = null;
-function cheatPushToFile(html) {
-  _cheatFilePending = html;
-  if (_cheatFileWriteInFlight) return;
-  _cheatFlushToFile();
+// Build a list of ops (only modified sections + deleted keys) and POST as a patch.
+// File stays untouched for sections you haven't edited, so Claude's updates survive.
+let _cheatPatchInFlight = false;
+let _cheatPatchPending = false;
+function cheatPatchToFile() {
+  _cheatPatchPending = true;
+  if (_cheatPatchInFlight) return;
+  _cheatFlushPatch();
 }
-async function _cheatFlushToFile() {
-  if (_cheatFilePending == null) return;
-  _cheatFileWriteInFlight = true;
-  const html = _cheatFilePending;
-  _cheatFilePending = null;
+async function _cheatFlushPatch() {
+  if (!_cheatPatchPending) return;
+  _cheatPatchInFlight = true;
+  _cheatPatchPending = false;
+
+  const host = document.getElementById('cheatHost');
+  const ops = [];
+
+  // collect modified sections (with their outerHTML, cleaned of overlays/attrs)
+  if (host) {
+    host.querySelectorAll('section[data-modified="1"]').forEach(sec => {
+      const clone = sec.cloneNode(true);
+      clone.querySelectorAll('.section-overlay, .figure-overlay').forEach(o => o.remove());
+      clone.querySelectorAll('[contenteditable]').forEach(e => e.removeAttribute('contenteditable'));
+      clone.querySelectorAll('[data-wired]').forEach(e => e.removeAttribute('data-wired'));
+      clone.querySelectorAll('[data-fig-wired]').forEach(e => e.removeAttribute('data-fig-wired'));
+      clone.querySelectorAll('[spellcheck]').forEach(e => e.removeAttribute('spellcheck'));
+      clone.querySelectorAll('[draggable]').forEach(e => e.removeAttribute('draggable'));
+      clone.removeAttribute('data-modified');  // file shouldn't carry runtime flag
+      // determine sheet_idx in case it's a new section
+      const sheet = sec.closest('.sheet');
+      const sheets = [...host.querySelectorAll('.sheet')];
+      const sheetIdx = sheets.indexOf(sheet);
+      ops.push({
+        op: 'upsert',
+        key: sec.dataset.key || '',
+        html: clone.outerHTML,
+        sheet_idx: sheetIdx,
+      });
+    });
+  }
+
+  // collect deleted keys
+  const deleted = _loadDeletedKeys();
+  deleted.forEach(k => ops.push({ op: 'delete', key: k }));
+
+  if (ops.length === 0) {
+    _cheatPatchInFlight = false;
+    return;
+  }
+
   try {
-    const r = await fetch('/api/save-cheatsheet', {
+    const r = await fetch('/api/patch-cheatsheet', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ html }),  // version comment is already in html
+      body: JSON.stringify({ ops }),
     });
     if (r.ok) {
+      // success — clear deleted keys (they're now applied)
+      _saveDeletedKeys(new Set());
       const ind = document.getElementById('cheatSavedIndicator');
       if (ind) {
-        ind.textContent = '✓ 已写入文件';
+        ind.textContent = `✓ 同步 ${ops.length} 处改动到文件`;
         clearTimeout(ind._t);
-        ind._t = setTimeout(() => { ind.textContent = ''; }, 1600);
+        ind._t = setTimeout(() => { ind.textContent = ''; }, 1800);
       }
     }
   } catch (e) {
-    // silent — localStorage still has the data
+    // silent — localStorage still has the data; retry on next save
   } finally {
-    _cheatFileWriteInFlight = false;
-    if (_cheatFilePending != null) _cheatFlushToFile();
+    _cheatPatchInFlight = false;
+    if (_cheatPatchPending) _cheatFlushPatch();
   }
 }
 
@@ -1319,10 +1374,50 @@ function updateUndoButtons() {
   if (r) r.disabled = _cheatHistPos >= _cheatHistory.length - 1;
 }
 
+// Pull a single section's fresh content from cheatsheet.html (overwrites local).
+// Matches by data-key first, falls back to h2 text. Use for: see Claude's update to this specific section.
+async function cheatPullSection(btn) {
+  const section = btn.closest('section');
+  if (!section) return;
+  const key = section.dataset.key;
+  const h2text = (section.querySelector('h2')?.textContent || '').trim();
+  if (!confirm(`从源文件拉取这一节最新版？\n\n标题: ${h2text}\n（你对这节做的本地修改会被覆盖）`)) return;
+  try {
+    const fresh = await fetch('cheatsheet.html?t=' + Date.now()).then(r => r.text());
+    const tmp = document.createElement('div');
+    tmp.innerHTML = fresh;
+    _assignKeys(tmp);
+    // try data-key match first
+    let match = key ? tmp.querySelector(`section[data-key="${CSS.escape(key)}"]`) : null;
+    // fall back to h2 text
+    if (!match && h2text) {
+      match = [...tmp.querySelectorAll('section')].find(s =>
+        (s.querySelector('h2')?.textContent || '').trim() === h2text
+      );
+    }
+    if (!match) { alert('源文件中找不到匹配的 section'); return; }
+    const newSec = match.cloneNode(true);
+    if (key) newSec.dataset.key = key;
+    newSec.removeAttribute('data-modified');   // freshly pulled = unmodified
+    section.replaceWith(newSec);
+    attachCheatHandlers();
+    saveCheatSheet();
+    cheatInsertAuto();   // re-merge any 📝/⭐ notes for this section
+    const t = document.createElement('div');
+    t.className = 'cheat-toast';
+    t.textContent = `✓ "${h2text.slice(0, 40)}" 已更新为源文件最新版`;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 2800);
+  } catch (e) {
+    alert('拉取失败: ' + e.message);
+  }
+}
+
 function cheatDeleteSection(btn) {
   const section = btn.closest('section');
   const title = section.querySelector('h2')?.textContent || '(no title)';
   if (!confirm(`删除这个 section?\n\n标题: ${title}`)) return;
+  if (section.dataset.key) markSectionDeleted(section.dataset.key);
   section.remove();
   saveCheatSheet();
 }
