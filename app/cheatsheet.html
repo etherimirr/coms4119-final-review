@@ -1,4 +1,4 @@
-<!-- CHEATSHEET_VERSION: 26 -->
+<!-- CHEATSHEET_VERSION: 27 -->
 <!--
   COMS 4119 FINAL CHEAT SHEET
   4 sheets organized by course chapter (Kurose-Ross order):
@@ -39,9 +39,9 @@
 <section data-key="end-to-end-principle">
 <h2>End-to-End Principle</h2>
 <ul>
-<li>Complex functions go at <b>endpoints</b>, not in the network core</li>
-<li>e.g. reliability: TCP at hosts, not per-hop</li>
-<li>Drives many designs: best-effort IP, IPv6 (no router fragmentation), NAT controversy, RDT at transport</li>
+<li>Complex functions → <b>endpoints</b>, not core</li>
+<li>Reliability: TCP at hosts, not per-hop</li>
+<li>Drives: best-effort IP · IPv6 (no router frag) · NAT controversy · RDT at transport</li>
 </ul>
 </section>
 
@@ -49,8 +49,8 @@
 <section data-key="packet-vs-circuit-switching">
 <h2>Packet vs Circuit Switching</h2>
 <ul>
-<li><b>Circuit</b>: source establishes connection → nodes reserve resources → send (no dst addr) → tear down. Multiplex: <b>TDM</b> or <b>FDM</b>.</li>
-<li><b>Packet</b>: split into packets w/ header → independent forward → nodes may store → dst reassembles. <b>Best-effort</b>: may be lost / corrupted / out-of-order.</li>
+<li><b>Circuit</b>: establish → reserve → send (no dst addr) → tear down. Mux: <b>TDM</b> / <b>FDM</b></li>
+<li><b>Packet</b>: hdr-tagged → independent forward → store-and-fwd → reassemble. <b>Best-effort</b> (may lose / corrupt / reorder)</li>
 </ul>
 <table>
 <tr><th>Circuit ✅</th><th>Circuit ❌</th></tr>
@@ -68,8 +68,8 @@
 <li><b>End-to-end (1 pkt)</b> = Σ(L/R + d/v) per link + queue</li>
 <li><b>Pipelined N pkts</b>: 1st full path + (N−1)·<span class="red">bottleneck L/R</span></li>
 <li><b>Bottleneck</b> = link with <b>max L/R = min R</b> <span class="red">(NOT propagation!)</span></li>
-<li>Propagation paid <b>once</b> for 1st pkt; doesn't stack across N pkts</li>
-<li><b>Throughput</b> = min(per-link R) = bottleneck rate</li>
+<li>Propagation paid <b>once</b> for 1st pkt (no stack)</li>
+<li><b>Throughput</b> = min(R) = bottleneck rate</li>
 </ul>
 <div class="my-note" data-note-key="mid:1:takeaway"><span class="my-note-tag">📝</span> <b>mid Q2 要诀:</b> Store-and-forward 链路链：第 1 个包 = Σ 每段 L/R，后面的包 = 瓶颈段 L/R 累加。</div></section>
 
@@ -88,20 +88,19 @@
 <div class="formula">U = T_trans / (T_trans + 2·T_prop)</div>
 <ul>
 <li>T_trans = L/R</li>
-<li><span class="red">Denominator has 2·T_prop</span> — don't forget ×2 (round-trip)</li>
-<li>When L small or RTT large → U collapses → need sliding window</li>
-<li>2 Kb @ 40 Kbps over 30 m acoustic + 3 km air → U ≈ 0.54; @ 200 b → 0.11 (small packets tank utilization)</li>
+<li><span class="red">×2 T_prop</span> in denom (round-trip)</li>
+<li>L small / RTT large → U → 0 → need sliding window</li>
+<li>Ex: 2 Kb @ 40 Kbps · 30 m acoustic + 3 km air → U≈0.54; @ 200 b → 0.11</li>
 </ul>
 <div class="my-note" data-note-key="mid:4:takeaway"><span class="my-note-tag">📝</span> <b>mid Q5 要诀:</b> Stop-and-wait U 公式：分子 transmission，分母 transmission + 2·prop。包小 / RTT 大 → U 暴跌 → 必须用滑窗。</div></section>
 
 <section data-key="sliding-window">
 <h2>Sliding Window</h2>
 <ul>
-<li>Sender maintains window [base, base+N)</li>
-<li>Can send any unACKed packet in window without waiting</li>
-<li>ACK arrives → base slides forward</li>
-<li>Stop-and-wait = window of 1 (special case)</li>
-<li>Window size ≥ BDP keeps pipe full</li>
+<li>Window [base, base+N): send any unACKed in window</li>
+<li>ACK → base slides forward</li>
+<li>Stop-and-wait = window of 1</li>
+<li>Window ≥ BDP → full pipe</li>
 </ul>
 </section>
 
@@ -118,79 +117,77 @@
 <tr><td>Scale</td><td>limited by server</td><td><b>self-scaling</b> — each peer adds capacity</td></tr>
 <tr><td>Ex.</td><td>HTTP, DNS</td><td>BitTorrent</td></tr>
 </table>
-<p class="mini">P2P self-scaling: N peers join → upload capacity also grows N×.</p>
+<p class="mini">Self-scaling: N peers join → upload capacity grows N×</p>
 </section>
 
 <section data-key="http-rtt-counting-mid-q1">
 <h2>HTTP RTT Counting</h2>
 <ul>
-<li><b>Draw dependency tree</b>: base → inline siblings → CSS-referenced → JS-triggered</li>
-<li><b>Non-persistent</b>: each obj = 1 RTT TCP setup + 1 RTT GET = <span class="red">2 RTT/obj</span></li>
-<li><b>Persistent + pipelined</b>: base 2 RTT; same-layer inline 1 RTT; each nesting +1 RTT</li>
-<li><b>Persistent no pipeline</b>: each obj 1 RTT sequentially</li>
-<li>HTML + 4 jpg + 1 css(2 jpg), persistent pipelined = <b>4 RTT</b></li>
+<li><b>Dep tree</b>: base → inline → CSS-ref → JS-trig</li>
+<li><b>Non-persistent</b>: TCP setup 1 RTT + GET 1 RTT = <span class="red">2 RTT/obj</span></li>
+<li><b>Pers. + pipelined</b>: base 2 RTT · siblings 1 RTT · each nesting +1 RTT</li>
+<li><b>Pers. no pipeline</b>: 1 RTT/obj serially</li>
+<li>Ex: HTML + 4 jpg + 1 css(2 jpg), pers. pipelined = <b>4 RTT</b></li>
 </ul>
 <div class="my-note" data-note-key="mid:0:takeaway"><span class="my-note-tag">📝</span> <b>mid Q1 要诀:</b> 看到『UDP 多少 socket』→ 答 1；『TCP 多少 socket』→ 答 N+1。RTT 题画依赖树数层数。</div></section>
 
 <section data-key="http-persistence-cache">
 <h2>HTTP Persistence &amp; Cache</h2>
 <ul>
-<li>Non-persistent (HTTP/1.0): new TCP per object; 2 RTT/obj</li>
-<li>Persistent (HTTP/1.1): reuse TCP for all objects on same server</li>
-<li>Pipelining: client sends next request before getting previous response</li>
-<li><b>Web Cache (proxy)</b>: caches responses; cuts RTT + outbound BW; ISP often deploys</li>
-<li><b>Conditional GET</b>: client sends <code>If-Modified-Since: &lt;date&gt;</code>; server returns <b>304 Not Modified</b> (no body) if unchanged, else 200 + body</li>
+<li>Non-persistent (1.0): new TCP/obj → 2 RTT/obj</li>
+<li>Persistent (1.1): reuse TCP for all objs to same server</li>
+<li>Pipelining: send next req before prev resp</li>
+<li><b>Web Cache (proxy)</b>: cuts RTT + outbound BW</li>
+<li><b>Conditional GET</b>: <code>If-Modified-Since</code> → <b>304</b> (no body) if same, else 200 + body</li>
 </ul>
 </section>
 
 <section data-key="http-cookies">
 <h2>HTTP Cookies</h2>
 <ul>
-<li>HTTP is stateless; cookies add server-side state per user</li>
-<li>4 parts: <b>Set-Cookie</b> header in response → cookie file on client → <b>Cookie</b> header in next request → server backend DB</li>
-<li>First visit: server assigns ID (e.g. <code>amazon: 1678</code>); client sends ID on each subsequent request</li>
-<li>Uses: shopping cart, auth state, ad tracking</li>
-<li><b>GDPR</b>: EU regulation forces explicit consent</li>
+<li>HTTP stateless → cookies add per-user state</li>
+<li>Flow: <b>Set-Cookie</b> in resp → client file → <b>Cookie</b> in next req → server DB</li>
+<li>Uses: cart · auth · ad tracking</li>
 </ul>
 </section>
 
 <section data-key="http-2-http-3">
 <h2>HTTP/2 + HTTP/3</h2>
 <ul>
-<li><b>HTTP/1.1 problem</b>: FCFS server response → small obj blocked behind large (HOL)</li>
-<li><b>HTTP/2</b> (RFC 7540, 2015): single TCP; split objects into <b>frames</b>; client priority; can <b>push</b> unrequested objects; interleave frames mitigates HOL</li>
-<li><b>HTTP/2 limit</b>: still 1 TCP → TCP packet loss stalls all objects</li>
-<li><b>HTTP/3</b>: over UDP (QUIC); per-object congestion control + error recovery; adds TLS by default</li>
+<li><b>1.1 HOL</b>: FCFS → small obj waits behind large</li>
+<li><b>2</b>: single TCP · object frames · priority · push · interleave frames mitigates HOL</li>
+<li><b>2 limit</b>: 1 TCP → 1 lost pkt stalls all objs</li>
+<li><b>3</b>: over UDP (QUIC) · per-obj CC + recovery · TLS default</li>
 </ul>
 </section>
 
 <section data-key="video-dash">
 <h2>Video / DASH</h2>
 <ul>
-<li>Video chunked at multiple bitrates</li>
-<li>Client adapts based on observed BW</li>
-<li>HTTP-based; any CDN works</li>
+<li>Server: chunks at multiple bitrates</li>
+<li>Client picks next bitrate by observed BW</li>
+<li>HTTP-based → any CDN works</li>
 </ul>
 </section>
 
 <section data-key="sockets-mid-q1">
 <h2>Sockets</h2>
 <ul>
-<li><b>UDP server</b>: <span class="red">1</span> socket only (no connection)</li>
-<li><b>TCP server</b>: 1 welcome + N connection = <span class="red">N+1</span></li>
-<li>UDP distinguishes clients by (src IP, port) in datagram</li>
-<li>TCP: each accept() returns a new socket; listening socket stays</li>
+<li><b>UDP</b>: <span class="red">1 socket</span> total (no conn)</li>
+<li><b>TCP</b>: 1 welcome + N conn = <span class="red">N+1</span> sockets</li>
+<li>UDP demux: (src IP, src port)</li>
+<li>TCP: accept() → new socket; welcome stays</li>
 </ul>
 </section>
 
 <section data-key="dns">
 <h2>DNS</h2>
 <ul>
-<li>Hierarchy: local resolver → root → TLD(.com,.edu) → authoritative</li>
-<li>Recursive (resolve for me) vs iterative (tell me next hop)</li>
+<li>Hierarchy: local resolver → root → TLD (.com, .edu) → authoritative</li>
+<li><b>Recursive</b> ("resolve for me") vs <b>iterative</b> ("tell me next hop")</li>
 <li>Local resolver usually iterative</li>
-<li>RR types: A (IPv4), AAAA (IPv6), NS, MX, CNAME</li>
-<li>UDP 53 short query; falls back to TCP for large response</li>
+<li>RR: A (IPv4) · AAAA (IPv6) · NS · MX · CNAME</li>
+<li>UDP/53 short query; TCP fallback for large</li>
 </ul>
 </section>
 
@@ -199,20 +196,20 @@
 <div class="formula">CS:  T = max(NF/U_s, F/d_min)</div>
 <div class="formula">P2P: T = max(F/U_s, F/d_min, NF/(U_s + ΣU_i))</div>
 <ul>
-<li><b>CS time grows linearly with N</b> (server uploads N copies)</li>
-<li><b>P2P time grows slowly with N</b> (collective upload also grows; denom increases)</li>
-<li>Small N: tied. Large N: P2P wins.</li>
-<li>1GB/100u, 40Mbps server → CS = 20000s; P2P ≈ 1000s. N ≥ 5 to outperform.</li>
+<li><b>CS</b>: T grows linearly with N (server uploads N copies)</li>
+<li><b>P2P</b>: T grows slowly with N (collective upload also scales)</li>
+<li>Small N: tied · Large N: P2P wins</li>
+<li>Ex: 1 GB / 100 u, 40 Mbps server → CS 20000 s vs P2P ≈ 1000 s</li>
 </ul>
 <div class="my-note" data-note-key="mid:6:takeaway"><span class="my-note-tag">📝</span> <b>mid Q7 要诀:</b> Client-server 时间随 N 线性增（server 是瓶颈），P2P 时间随 N 微增（集体带宽也增）。N 大时 P2P 优势越来越明显。</div></section>
 
 <section data-key="bittorrent-dht">
 <h2>BitTorrent &amp; DHT</h2>
 <ul>
-<li><b>Rarest first</b>: prioritize chunks scarce in the swarm</li>
+<li><b>Rarest first</b>: pick chunks scarce in swarm</li>
 <li><b>Tit-for-tat</b>: upload to those who upload to you</li>
-<li><b>Optimistic unchoke</b>: every ~30 s gift bw to a new peer (explore)</li>
-<li><b>DHT</b>: distributed hash table → replaces central tracker</li>
+<li><b>Optimistic unchoke</b>: ~30 s gift BW to new peer (explore)</li>
+<li><b>DHT</b>: distributed hash table replaces central tracker</li>
 </ul>
 </section>
 
@@ -236,45 +233,43 @@
 <h2>TCP Segment Format</h2>
 <ul>
 <li>Src/dst port (16 b each)</li>
-<li>Seq #: first byte of data (32 b)</li>
-<li>ACK #: next expected byte (32 b)</li>
-<li>HLEN, flags: SYN/FIN/ACK/RST/PSH/URG/<b>CWR/ECE</b></li>
-<li><b>Receive window</b> rwnd (16 b) — flow control</li>
-<li>Checksum (16 b), urgent ptr</li>
+<li>Seq # = first byte (32 b) · ACK # = next expected (32 b)</li>
+<li>HLEN · flags: SYN/FIN/ACK/RST/PSH/URG/<b>CWR/ECE</b></li>
+<li><b>rwnd</b> (16 b) — flow control</li>
+<li>Checksum (16 b) · urgent ptr</li>
 </ul>
 </section>
 
 <section data-key="tcp-3whs-4-way-close">
 <h2>TCP 3WHS &amp; 4-Way Close</h2>
 <ol>
-<li><b>SYN</b> seq=x</li>
-<li><b>SYN-ACK</b> seq=y, ack=x+1</li>
-<li><b>ACK</b> seq=x+1, ack=y+1</li>
+<li>C→S: <b>SYN</b> seq=x</li>
+<li>S→C: <b>SYN-ACK</b> seq=y, ack=x+1</li>
+<li>C→S: <b>ACK</b> seq=x+1, ack=y+1</li>
 </ol>
-<p>Close = 4-way (FIN/ACK each direction). <b>TIME_WAIT</b> 2·MSL avoids stray old packets affecting new connection.</p>
+<p class="mini">Close = 4-way (FIN/ACK each dir). <b>TIME_WAIT</b> 2·MSL → avoid stray pkts in next conn.</p>
 </section>
 
 <section data-key="what-can-go-wrong-in-data-transmission">
 <h2>What Can Go Wrong in Data Transmission</h2>
-<p>5 problems RDT must handle (lec11):</p>
 <ol>
-<li><b>Bit errors</b> — flipped bits → detect w/ checksum</li>
-<li><b>Duplicate packets</b> — same pkt arrives twice → dedupe by seq #</li>
-<li><b>Packet losses</b> — pkt never arrives → timer + retransmit</li>
-<li><b>Packet delay</b> — arrives late → still need in-order delivery</li>
-<li><b>Out-of-order arrival</b> — reorder via seq #</li>
+<li><b>Bit errors</b> → checksum</li>
+<li><b>Duplicates</b> → seq # dedupe</li>
+<li><b>Losses</b> → timer + retransmit</li>
+<li><b>Delay</b> → still need in-order delivery</li>
+<li><b>Out-of-order</b> → seq # reorder</li>
 </ol>
-<p class="mini">Mechanism map: checksum (1) · ACK (1,3) · seq # (2,5) · timer (3,4) · receiver buffer (5)</p>
+<p class="mini">Map: checksum (1) · ACK (1, 3) · seq # (2, 5) · timer (3, 4) · rcvr buffer (5)</p>
 </section>
 
 <section data-key="rdt-evolution-1-0-3-0">
 <h2>RDT Evolution (1.0 → 3.0)</h2>
 <ul>
 <li><b>1.0</b>: perfect channel (useless)</li>
-<li><b>2.0</b>: + ACK/NAK + checksum (handles bit errors)</li>
-<li><b>2.1</b>: + seq # (handles ACK corruption)</li>
-<li><b>2.2</b>: NAK-free (use ACK + last good seq)</li>
-<li><b>3.0</b>: + timer (handles packet loss) — stop-and-wait</li>
+<li><b>2.0</b>: + ACK/NAK + checksum → bit errors</li>
+<li><b>2.1</b>: + seq # → ACK corruption</li>
+<li><b>2.2</b>: NAK-free (ACK + last good seq)</li>
+<li><b>3.0</b>: + timer → losses (= stop-and-wait)</li>
 <li>Pipelined: GBN / SR</li>
 </ul>
 </section>
@@ -293,21 +288,25 @@
 <div class="my-note" data-note-key="mid:2:takeaway"><span class="my-note-tag">📝</span> <b>mid Q3 要诀:</b> 判断哪个协议看『哪边在丢』。Data 丢 → SR；ACK 丢 → GBN。**永远要写出原因**，老师扣的就是『没解释』的分。</div></section>
 
 <section data-key="tcp-reliable-mechanisms" data-wired="1" contenteditable="true" spellcheck="false">
-<h2>TCP Reliable Mechanisms</h2><ul>
+<h2>TCP Reliable Mechanisms</h2>
+<div class="formula">RTO = EstRTT + 4·DevRTT</div>
+<ul>
+<li>EstRTT EWMA, α = 0.125</li>
+<li>DevRTT EWMA of |Sample − Est|, β = 0.25</li>
 <li><b>Fast retransmit</b>: 3 dup ACKs → immediate resend</li>
-<li>Exponential backoff after timeout (RTO doubles)</li>
+<li>After timeout: RTO doubles (exp backoff)</li>
 </ul>
 </section>
 
 <section data-key="tcp-flow-control-sr-buffer-trap-mid-q6">
 <h2>TCP Flow Control + SR Buffer Trap</h2>
 <ul>
-<li>Receiver advertises <b>rwnd</b> in every ACK</li>
-<li>Sender's inflight ≤ min(cwnd, rwnd)</li>
-<li><b>SR receive buffer</b> holds out-of-order packets — "hold until in-order delivery"</li>
-<li>If pkt 1 lost + pkts 2,3,4 fill buffer → buffer can't release → pkts 5+ <b>dropped</b></li>
-<li>10 pkts, buffer=4, pkt 1 lost → retransmit <b>7 pkts</b> (1 + 5–10)</li>
-<li>Advertised window <span class="red">must ≤ buffer size</span>, else overflow</li>
+<li>Rcvr advertises <b>rwnd</b> in every ACK</li>
+<li>Sender inflight ≤ min(cwnd, rwnd)</li>
+<li><b>SR rcv buffer</b> holds out-of-order → hold until in-order delivery</li>
+<li>Trap: pkt 1 lost + 2,3,4 fill buf → can't release → pkts 5+ <b>dropped</b></li>
+<li>Ex: 10 pkts, buf=4, pkt 1 lost → retransmit <b>7 pkts</b> (1 + 5–10)</li>
+<li>rwnd <span class="red">must ≤ buf size</span></li>
 </ul>
 <div class="my-note" data-note-key="mid:5:takeaway"><span class="my-note-tag">📝</span> <b>mid Q6 要诀:</b> Receive buffer 不是简单容量计数，是『等齐才交付』占用。Advertised window 必须 ≤ buffer，否则会丢包。</div></section>
 
@@ -317,8 +316,8 @@
 <section data-key="tcp-cwnd">
 <h2>TCP cwnd</h2>
 <ul>
-<li><b>Sender</b>: LastByteSent − LastByteAcked &lt; cwnd</li>
-<li>rate ≈ cwnd / RTT bytes/sec</li>
+<li>LastByteSent − LastByteAcked &lt; cwnd</li>
+<li>rate ≈ cwnd / RTT</li>
 <li>inflight ≤ min(cwnd, rwnd)</li>
 </ul>
 <div class="formula">throughput ≈ cwnd / RTT</div>
@@ -342,32 +341,32 @@
 <section data-key="aimd-fairness-exam">
 <h2>AIMD Fairness <span class="tag">exam</span></h2>
 <ul>
-<li>+a moves both up 45° (efficiency line)</li>
-<li>×b scales toward origin (keeps ratio)</li>
+<li>+a → both move up 45° (efficiency line)</li>
+<li>×b → toward origin, ratio kept</li>
 <li>Spiral converges to x1=x2 ∩ x1+x2=1</li>
-<li><b>Only AIMD</b> achieves both fairness and efficiency</li>
+<li><b>Only AIMD</b> → both fairness + efficiency</li>
 </ul>
-<div class="formula">avg cwnd = 3W/4 ⇒ R = 3W/(4·RTT)</div>
+<div class="formula">avg cwnd = 3W/4 → R = 3W/(4·RTT)</div>
 <div class="my-note" data-note-key="star:lec14:6"><span class="my-note-tag">⭐</span> <b>lec14 p6</b> AIMD — 唯一收敛公平 ✨ ⭐⭐</div></section>
 
 <section data-key="end-end-vs-network-assisted-congestion-control">
 <h2>End-end vs Network-assisted CC</h2>
 <table>
-<tr><th></th><th>End-end CC</th><th>Network-assisted CC</th></tr>
-<tr><td>Feedback</td><td>no explicit signal from network</td><td>router directly signals the host</td></tr>
-<tr><td>Detect congestion</td><td>infer from observed loss / delay</td><td>router tells you (level or rate)</td></tr>
-<tr><td>Ex.</td><td>TCP (default)</td><td>TCP ECN, ATM, DECbit</td></tr>
+<tr><th></th><th>End-end</th><th>Net-assisted</th></tr>
+<tr><td>Signal</td><td>none from net</td><td>router signals host</td></tr>
+<tr><td>Detect</td><td>infer from loss/delay</td><td>router tells (level/rate)</td></tr>
+<tr><td>Ex.</td><td>TCP (default)</td><td>ECN, ATM, DECbit</td></tr>
 </table>
-<p class="mini">Modern Internet is mostly end-end (TCP loss-based) + optional network-assisted (ECN).</p>
+<p class="mini">Internet: end-end (loss-based) + optional ECN.</p>
 </section>
 
 <section data-key="cc-variants">
 <h2>CC variants</h2>
 <ul>
-<li><b>CUBIC</b> (Linux default): W(t) = C(t−K)³ + Wmax. Fast climb back to Wmax, slow probe past.</li>
-<li><b>Delay-based</b> (Vegas): detect via rising RTT; <span class="red">starves</span> alongside loss-based.</li>
-<li><b>BBR</b> (Google): model BtlBw + RTprop, inflight = BDP</li>
-<li><b>ECN</b>: router marks IP ToS 2 bits at queue threshold; rcvr ACK ECE=1; sender halves cwnd, no drop</li>
+<li><b>CUBIC</b> (Linux): W(t) = C(t−K)³ + Wmax · fast climb to Wmax, slow probe past</li>
+<li><b>Vegas</b> (delay-based): rising RTT → cong; <span class="red">starves</span> vs loss-based</li>
+<li><b>BBR</b> (Google): model BtlBw + RTprop · inflight = BDP</li>
+<li><b>ECN</b>: router marks IP ToS 2 b at queue thresh → rcvr ACK ECE=1 → sender halves cwnd (no drop)</li>
 </ul>
 </section>
 
@@ -376,7 +375,7 @@
 <ul>
 <li>UDP doesn't CC → grabs unfair share</li>
 <li>K parallel TCPs → one app gets K/(K+others)</li>
-<li>Different RTTs → shorter RTT wins</li>
+<li>Diff RTTs → shorter RTT wins</li>
 <li>"No Internet police"</li>
 </ul>
 </section>
@@ -384,9 +383,9 @@
 <section data-key="loss-congestion-final-q1">
 <h2>Loss ≠ Congestion</h2>
 <ul>
-<li>Bit error → checksum fails → silently dropped (no ACK)</li>
+<li>Bit error → checksum fails → silent drop (no ACK)</li>
 <li>Common on wireless links</li>
-<li>TCP misreads as congestion, halves cwnd → wireless throughput tanks</li>
+<li>TCP misreads as congestion → halves cwnd → wireless throughput tanks</li>
 <li>Fix: ECN (see CC variants)</li>
 </ul>
 <div class="my-note" data-note-key="star:lec14:7"><span class="my-note-tag">⭐</span> <b>lec14 p7</b> TCP cwnd 工作机制</div><div class="my-note" data-note-key="star:lec14:9"><span class="my-note-tag">⭐</span> <b>lec14 p9</b> Timeout 处理</div><div class="my-note" data-note-key="star:lec14:10"><span class="my-note-tag">⭐</span> <b>lec14 p10</b> Slow Start → CA 切换 ⭐</div><div class="my-note" data-note-key="star:lec14:11"><span class="my-note-tag">⭐</span> <b>lec14 p11</b> Timeout 后重启 slow start</div><div class="my-note" data-note-key="star:lec14:12"><span class="my-note-tag">⭐</span> <b>lec14 p12</b> TCP CC FSM 总图 ⭐⭐⭐</div><div class="my-note" data-note-key="star:lec14:13"><span class="my-note-tag">⭐</span> <b>lec14 p13</b> TCP CUBIC — 直觉</div><div class="my-note" data-note-key="star:lec14:19"><span class="my-note-tag">⭐</span> <b>lec14 p19</b> Model-based (BBR) ⭐</div><div class="my-note" data-note-key="star:lec14:20"><span class="my-note-tag">⭐</span> <b>lec14 p20</b> ECN ⭐</div><div class="my-note" data-note-key="final:0:gotcha"><span class="my-note-tag">⚠️</span> <b>final Q1 易错:</b> 考试时如果题目让你举一个例子，最稳的答法就是『链路层 bit error → checksum 失败 → 丢弃』。</div></section>
@@ -406,22 +405,22 @@
 <section data-key="data-plane-vs-control-plane">
 <h2>Data Plane vs Control Plane ⭐</h2>
 <table>
-<tbody><tr><th>Data Plane</th><th>Control Plane</th></tr>
+<tr><th>DP</th><th>CP</th></tr>
 <tr><td>Per-router, local</td><td>Network-wide</td></tr>
-<tr><td>Hardware, ns scale</td><td>Software, ms scale</td></tr>
-<tr><td>Match + action on header</td><td>Compute paths</td></tr>
+<tr><td>HW, ns</td><td>SW, ms</td></tr>
+<tr><td>Match + action</td><td>Compute paths</td></tr>
 <tr><td>Forwarding</td><td>Routing</td></tr>
-<tr><td>OpenFlow flow table</td><td>OSPF / BGP algorithm</td></tr>
-</tbody></table>
-<p class="mini">Classic: per-router CP. <b>SDN</b>: CP centralized to remote controller; switches just execute FTs (DP).</p>
+<tr><td>Flow table</td><td>OSPF / BGP</td></tr>
+</table>
+<p class="mini">Classic: per-router CP. <b>SDN</b>: CP centralized in controller; switches just run FTs (DP).</p>
 <div class="my-note" data-note-key="star:lec16:2"><span class="my-note-tag">⭐</span> <b>lec16 p2</b> TCP 公平性 — 目标</div></section>
 
 <section data-key="forwarding-vs-routing">
 <h2>Forwarding vs Routing</h2>
 <ul>
-<li><b>Forwarding</b>: getting through single router (DP)</li>
-<li><b>Routing</b>: source → destination path planning (CP)</li>
-<li>Analogy: forwarding = one intersection; routing = whole trip</li>
+<li><b>Forwarding</b>: 1 router (DP)</li>
+<li><b>Routing</b>: src → dst path planning (CP)</li>
+<li>Analogy: forwarding = 1 intersection · routing = whole trip</li>
 </ul>
 </section>
 
@@ -441,24 +440,22 @@
 <section data-key="internet-structure-as">
 <h2>Internet Structure (AS)</h2>
 <ul>
-<li>~100 K Autonomous Systems (AS)</li>
-<li><b>Tier-1</b> ISPs: global backbones (e.g., AT&amp;T, Sprint)</li>
-<li><b>Tier-2</b>: regional, peer with tier-1</li>
-<li><b>Tier-3 / access</b>: end-user connectivity</li>
-<li><b>IXP</b>: Internet Exchange Point — ASes peer</li>
-<li>AS = a.k.a. "domain". All routers in an AS run the same intra-domain protocol; different ASes can run different ones</li>
-<li>Gateway router sits at AS edge, runs both inter-domain (BGP) and intra-domain</li>
+<li>~100 K Autonomous Systems (AS) = "domains"</li>
+<li><b>Tier-1</b>: global backbones · <b>Tier-2</b>: regional, peer w/ tier-1 · <b>Tier-3</b>: end-user access</li>
+<li><b>IXP</b>: where ASes peer</li>
+<li>Same AS → same intra-domain proto; diff ASes can differ</li>
+<li><b>Gateway router</b>: AS edge, runs both inter-domain (BGP) + intra</li>
 </ul>
 </section>
 
 <section data-key="router-architecture">
 <h2>Router Architecture</h2>
 <ul>
-<li>Input ports: link, lookup (LPM), queue</li>
-<li>Switch fabric: memory / bus / interconnection (Crossbar, Clos)</li>
-<li>Output ports: queue, scheduler, link</li>
-<li><b>HOL blocking</b>: head-of-line stuck → rest waits. Fix: VOQ</li>
-<li>Fabric needs N·R speed for full line-rate N inputs</li>
+<li>Input: link → LPM → queue</li>
+<li>Fabric: memory / bus / crossbar / Clos</li>
+<li>Output: queue → scheduler → link</li>
+<li><b>HOL blocking</b>: head stuck → rest waits. Fix: <b>VOQ</b></li>
+<li>Fabric needs N·R speed for full line-rate</li>
 </ul>
 </section>
 
