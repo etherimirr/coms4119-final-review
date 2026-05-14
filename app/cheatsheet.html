@@ -1,4 +1,4 @@
-<!-- CHEATSHEET_VERSION: 8 -->
+<!-- CHEATSHEET_VERSION: 9 -->
 <!--
   COMS 4119 FINAL CHEAT SHEET
   4 sheets organized by course chapter (Kurose-Ross order):
@@ -27,18 +27,14 @@
 
 <section data-key="layering-encapsulation">
 <h2>Layering &amp; Encapsulation</h2>
-<table>
-<tr><th>Layer</th><th>PDU</th><th>Protocol / Addr</th></tr>
-<tr><td><b>L7 App</b></td><td><b>Message</b></td><td>HTTP / DNS / SMTP</td></tr>
-<tr><td><b>L4 Transport</b></td><td><b>Segment</b> (TCP) / <b>Datagram</b> (UDP)</td><td>port</td></tr>
-<tr><td><b>L3 Network</b></td><td><b>(IP) Datagram / Packet</b></td><td>IP addr</td></tr>
-<tr><td><b>L2 Data Link</b></td><td><b>Frame</b></td><td>MAC addr (Eth / 802.11)</td></tr>
-<tr><td><b>L1 Physical</b></td><td><b>Bits</b></td><td>signals on wire / air</td></tr>
-</table>
 <ul>
-<li>每下一层 <b>加自己的 header</b> 把上层 PDU 包起来（encapsulation）</li>
-<li><b>Demux 上行</b>：Ethertype (L2) → IP protocol (L3) → port (L4) → app</li>
+<li><b>Application</b>: <b>Message</b> — HTTP / DNS / SMTP</li>
+<li><b>Transport</b>: <b>Segment</b> (TCP) / <b>Datagram</b> (UDP) — port 寻址</li>
+<li><b>Network</b>: <b>(IP) Datagram / Packet</b> — IP addr</li>
+<li><b>Data Link</b>: <b>Frame</b> — MAC addr (Eth / 802.11)</li>
+<li><b>Physical</b>: <b>Bits</b> — 线/空气信号</li>
 </ul>
+<p class="mini">下一层加 header 把上层 PDU 包起来（encapsulation）。Demux 上行：Ethertype → IP protocol → port → app。</p>
 <div class="my-note" data-note-key="qa:final-preview:5:0"><span class="my-note-tag">💬</span> <b>Q:</b> ecn怎么工作<br><b>A:</b> ECN（Explicit Congestion Notification）是一种网络拥塞控制机制，旨在通过提前通知端点来避免数据包丢失。 **工作原理**： 1. **标记**：当网络设备（如路由器）检测到拥塞时，它不会丢弃数据包，而是将数据包的头部中的ECN字段标记为“标记”状态（通常是“ECN-Echo”）。 2. **反馈**：接收方在收到带有ECN标记的数据包后，会在其返回的ACK中设置ECN-Echo标志，告知发送方网络出现了…</div></section>
 
 
