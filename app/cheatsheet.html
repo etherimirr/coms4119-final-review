@@ -1,4 +1,4 @@
-<!-- CHEATSHEET_VERSION: 13 -->
+<!-- CHEATSHEET_VERSION: 15 -->
 <!--
   COMS 4119 FINAL CHEAT SHEET
   4 sheets organized by course chapter (Kurose-Ross order):
@@ -36,6 +36,16 @@
 </ul>
 <p class="mini">下一层加 header 把上层 PDU 包起来（encapsulation）。Demux 上行：Ethertype → IP protocol → port → app。</p>
 <div class="my-note" data-note-key="qa:final-preview:5:0"><span class="my-note-tag">💬</span> <b>Q:</b> ecn怎么工作<br><b>A:</b> ECN（Explicit Congestion Notification）是一种网络拥塞控制机制，旨在通过提前通知端点来避免数据包丢失。 **工作原理**： 1. **标记**：当网络设备（如路由器）检测到拥塞时，它不会丢弃数据包，而是将数据包的头部中的ECN字段标记为“标记”状态（通常是“ECN-Echo”）。 2. **反馈**：接收方在收到带有ECN标记的数据包后，会在其返回的ACK中设置ECN-Echo标志，告知发送方网络出现了…</div></section>
+
+<section data-key="end-to-end-principle">
+<h2>End-to-End Principle</h2>
+<ul>
+<li>Complex functions go at <b>endpoints</b>, not in the network core</li>
+<li>e.g. reliability: TCP at hosts, not per-hop</li>
+<li>Drives many designs: best-effort IP, IPv6 (no router fragmentation), NAT controversy, RDT at L4</li>
+<li>Cite: Saltzer et al. "End-to-End Arguments in System Design" (1984)</li>
+</ul>
+</section>
 
 
 <section data-key="protocols-transport-mapping">
@@ -167,6 +177,15 @@
 </ul>
 </section>
 
+<section data-key="video-dash">
+<h2>Video / DASH</h2>
+<ul>
+<li>Video chunked at multiple bitrates</li>
+<li>Client adapts based on observed BW</li>
+<li>HTTP-based; any CDN works</li>
+</ul>
+</section>
+
 <section data-key="sockets-mid-q1">
 <h2>Sockets <span class="tag">mid Q1</span></h2>
 <ul>
@@ -209,16 +228,6 @@
 <li><b>DHT</b>: distributed hash table → replaces central tracker</li>
 </ul>
 </section>
-
-<section data-key="video-dash">
-<h2>Video / DASH</h2>
-<ul>
-<li>Video chunked at multiple bitrates</li>
-<li>Client adapts based on observed BW</li>
-<li>HTTP-based; any CDN works</li>
-</ul>
-</section>
-
 
 <!-- ============ Ch 3a: Transport — Basics ============ -->
 
@@ -406,27 +415,7 @@
 - 隐藏 = 在 sender 范围**外**，但在 receiver 干扰范围**内**
 - 暴露 = 在 sender 范围**内**，但自己的目标 receiver 在 sender 范围**外**
 
-别把两者弄反。</div></section><section data-key="end-to-end-principle">
-<h2>End-to-End Principle</h2>
-<ul>
-<li>Complex functions go at <b>endpoints</b>, not in the network core</li>
-<li>e.g. reliability: TCP at hosts, not per-hop</li>
-<li>Drives many designs: best-effort IP, IPv6 (no router fragmentation), NAT controversy, RDT at L4</li>
-<li>Cite: Saltzer et al. "End-to-End Arguments in System Design" (1984)</li>
-</ul>
-</section><section data-key="packet-vs-circuit-统计复用容量题-exam">
-<h2>Packet vs Circuit — 统计复用容量题 <span class="tag">exam</span></h2>
-<p class="mini"><b>典型题设</b>：链路 <code>C</code>；每个 user 活跃时占 <code>r</code>，空闲时占 0；活跃概率 <code>p</code>。问能支持几个 user？</p>
-<ul>
-<li><b>Circuit switching</b>（预留）：<span class="red">N_circ = ⌊C / r⌋</span>，不管 p 多大都给每人预留 r</li>
-<li><b>Packet switching</b>（统计复用）：找最大 N，使 <code>P(同时活跃 &gt; N_circ) ≤ ε</code>（ε 题目给，e.g. 0.0004）</li>
-<li><b>概率</b>：N 个 user 中 n 个同时活跃 = 二项分布 <code>C(N,n)·pⁿ·(1−p)^(N−n)</code></li>
-<li>用 <code>P(&gt; N_circ active) = Σ_{n=N_circ+1}^{N} C(N,n)·pⁿ·(1−p)^(N−n)</code></li>
-</ul>
-<div class="formula">N_circ = ⌊C / r⌋ &nbsp;|&nbsp; P(&gt; k active in N) ≤ ε</div>
-<p class="mini"><b>经典数</b>（lec2）：C=1 Mbps, r=100 Kbps, p=0.1 → <b>Circuit 10 人</b>；Packet 即使 35 人，P(&gt;10 同时活跃) ≈ 0.0004 → <b>Packet ~35 人</b>（3.5×）。</p>
-<p class="mini"><b>结论</b>：bursty 越强（p 越小、突发越短）→ packet 比 circuit 的优势越大。always-busy（p=1）两者一样。</p>
-</section></div></div>
+别把两者弄反。</div></section></div></div>
 
 
 <!-- ================================================================ -->
