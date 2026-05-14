@@ -915,9 +915,13 @@ async function renderPostMid() {
   const body = document.getElementById('postmidBody');
   body.innerHTML = marked.parse(md);
   // Add a checkbox + status badge to every numbered h3 concept (### N. ...)
-  body.querySelectorAll('h3').forEach(h3 => {
+  const allH3 = body.querySelectorAll('h3');
+  let cbAdded = 0;
+  console.log(`[postmid] found ${allH3.length} h3 elements`);
+  allH3.forEach(h3 => {
     const txt = h3.textContent;
     if (!/^\s*\d+\.\s/.test(txt)) return;
+    cbAdded++;
     const cleanTitle = txt.trim();
     const key = 'postmid:check:' + cleanTitle.slice(0, 80);
     const checked = localStorage.getItem(key) === '1';
@@ -936,6 +940,7 @@ async function renderPostMid() {
       wrap.querySelector('.postmid-status').textContent = '';
     });
   });
+  console.log(`[postmid] added ${cbAdded} checkboxes`);
   if (window.renderMathInElement) {
     try { window.renderMathInElement(body, {delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]}); } catch(e) {}
   }
