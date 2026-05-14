@@ -822,15 +822,16 @@ body {
   background: transparent;
   border: none;
   color: var(--text);
-  width: 28px;
   height: 28px;
-  border-radius: 50%;
+  border-radius: 14px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 12px;
+  font-weight: 500;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0;
+  padding: 0 10px;
+  white-space: nowrap;
 }
 .cheat-floatbar button:hover:not(:disabled) { background: var(--panel-2); }
 .cheat-floatbar button:disabled { opacity: 0.35; cursor: default; }

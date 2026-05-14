@@ -1313,15 +1313,15 @@ async function renderCheatSheet() {
   }
   // legacy: clear any stale full-HTML cache (we only need it for offline fallback above)
   localStorage.removeItem(KEY_CHEAT);
-  content.innerHTML = `<div class="cheat-floatbar" title="点击编辑 · ⠿ 拖动 · ⌘Z 撤回 · 自动保存到文件">
+  content.innerHTML = `<div class="cheat-floatbar" title="Click to edit · drag with ⠿ · ⌘Z to undo · auto-saves to file">
       <span id="cheatSavedIndicator" class="cheat-saved-ind"></span>
-      <button id="cheatUndoBtn" onclick="cheatUndo()" title="撤回（⌘Z）" disabled>↩️</button>
-      <button id="cheatRedoBtn" onclick="cheatRedo()" title="重做（⌘⇧Z）" disabled>↪️</button>
-      <button onclick="cheatInsertAuto()" title="📥 拉取你的收藏 / Q&A / 高亮笔记进对应 section">📥</button>
-      <button onclick="cheatAddSection()" title="➕ 加 Section">➕</button>
-      <button onclick="cheatExportHTML()" title="📄 下载 HTML 原文件备份（最准）">📄</button>
-      <button onclick="cheatExportDoc()" title="📝 下载 Word .doc（HTML-based，Word 可打开）">📝</button>
-      <button onclick="cheatExportPDF()" title="🖨️ 打印 / 存为 PDF">🖨️</button>
+      <button id="cheatUndoBtn" onclick="cheatUndo()" title="Undo (⌘Z)" disabled>Undo</button>
+      <button id="cheatRedoBtn" onclick="cheatRedo()" title="Redo (⌘⇧Z)" disabled>Redo</button>
+      <button onclick="cheatInsertAuto()" title="Pull your stars / Q&A / highlights into matching sections">Pull notes</button>
+      <button onclick="cheatAddSection()" title="Add a new section">+ Section</button>
+      <button onclick="cheatExportHTML()" title="Download standalone HTML (most accurate backup)">HTML</button>
+      <button onclick="cheatExportDoc()" title="Download Word .doc (HTML-based, opens in Word)">Word</button>
+      <button onclick="cheatExportPDF()" title="Print / Save as PDF">PDF</button>
     </div>
     <div class="cheat-host" id="cheatHost">${bodyHtml}</div>`;
   attachCheatHandlers();
