@@ -33,7 +33,29 @@ class Handler(SimpleHTTPRequestHandler):
             return self._handle_save_cheatsheet()
         if self.path == "/api/patch-cheatsheet":
             return self._handle_patch_cheatsheet()
+        if self.path == "/api/save-postmid-checks":
+            return self._handle_save_postmid_checks()
         self.send_error(404, "POST not allowed for that path")
+
+    def _handle_save_postmid_checks(self):
+        """Persist checked concepts from postmid summary so Claude can read which
+        items the user wants verified. Body: {checked: ["title1", "title2", ...]}.
+        Writes to app/data/postmid-checks.json (overwrite each time)."""
+        try:
+            body = self._read_json_body()
+        except Exception as exc:
+            return self._send_json({"error": f"bad JSON: {exc}"}, 400)
+        checked = body.get("checked")
+        if not isinstance(checked, list):
+            return self._send_json({"error": "checked must be array"}, 400)
+        here = os.path.dirname(os.path.abspath(__file__))
+        out = os.path.join(here, "data", "postmid-checks.json")
+        try:
+            with open(out, "w", encoding="utf-8") as f:
+                json.dump({"checked": checked}, f, ensure_ascii=False, indent=2)
+        except Exception as exc:
+            return self._send_json({"error": f"write failed: {exc}"}, 500)
+        return self._send_json({"ok": True, "count": len(checked)})
 
     def _handle_patch_cheatsheet(self):
         """Section-level patch.

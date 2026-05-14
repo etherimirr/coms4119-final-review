@@ -914,17 +914,25 @@ async function renderPostMid() {
   }
   const body = document.getElementById('postmidBody');
   body.innerHTML = marked.parse(md);
+  // pre-fetch any server-side persisted checks (so a fresh browser sees existing checks)
+  let serverChecks = new Set();
+  try {
+    const r = await fetch('data/postmid-checks.json?t=' + Date.now());
+    if (r.ok) {
+      const j = await r.json();
+      (j.checked || []).forEach(t => serverChecks.add(t));
+    }
+  } catch (e) {}
   // Add a checkbox + status badge to every numbered h3 concept (### N. ...)
-  const allH3 = body.querySelectorAll('h3');
-  let cbAdded = 0;
-  console.log(`[postmid] found ${allH3.length} h3 elements`);
-  allH3.forEach(h3 => {
+  body.querySelectorAll('h3').forEach(h3 => {
     const txt = h3.textContent;
     if (!/^\s*\d+\.\s/.test(txt)) return;
-    cbAdded++;
     const cleanTitle = txt.trim();
     const key = 'postmid:check:' + cleanTitle.slice(0, 80);
-    const checked = localStorage.getItem(key) === '1';
+    const localChecked = localStorage.getItem(key) === '1';
+    const serverChecked = serverChecks.has(cleanTitle);
+    const checked = localChecked || serverChecked;
+    if (serverChecked && !localChecked) localStorage.setItem(key, '1');
     const wrap = document.createElement('span');
     wrap.className = 'postmid-check-wrap';
     wrap.contentEditable = 'false';
@@ -938,9 +946,11 @@ async function renderPostMid() {
       localStorage.setItem(key, input.checked ? '1' : '0');
       wrap.querySelector('.cbox').textContent = input.checked ? '☑' : '☐';
       wrap.querySelector('.postmid-status').textContent = '';
+      postmidSyncChecksToServer();   // immediate auto-sync
     });
   });
-  console.log(`[postmid] added ${cbAdded} checkboxes`);
+  // initial server sync so the disk file always reflects what's checked
+  postmidSyncChecksToServer();
   if (window.renderMathInElement) {
     try { window.renderMathInElement(body, {delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]}); } catch(e) {}
   }
@@ -1020,6 +1030,24 @@ async function postmidCheckAll() {
   alert(summary);
 }
 
+// Push current checked items to server so Claude can read them
+let _postmidSyncTimer;
+function postmidSyncChecksToServer() {
+  clearTimeout(_postmidSyncTimer);
+  _postmidSyncTimer = setTimeout(async () => {
+    const titles = [...document.querySelectorAll('.postmid-view h3 .postmid-check-wrap input:checked')]
+      .map(input => input.closest('.postmid-check-wrap')?.dataset.title || '')
+      .filter(Boolean);
+    try {
+      await fetch('/api/save-postmid-checks', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ checked: titles }),
+      });
+    } catch (e) {}
+  }, 300);
+}
+
 function postmidClearChecks() {
   if (!confirm('清空所有勾选？')) return;
   document.querySelectorAll('.postmid-view h3 .postmid-check-wrap').forEach(wrap => {
@@ -1030,6 +1058,7 @@ function postmidClearChecks() {
     const key = 'postmid:check:' + (wrap.dataset.title || '').slice(0, 80);
     localStorage.removeItem(key);
   });
+  postmidSyncChecksToServer();
 }
 
 // ============ Cheat Sheet (interactive editor) ============
