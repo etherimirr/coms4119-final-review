@@ -719,7 +719,16 @@ function showMidterm() {
 function renderConcepts() {
   const content = document.getElementById('content');
   content.innerHTML = `<div class="toolbar">
-      <div class="title"><b>🧠 概念知识库</b> <span class="subtle">点击节点查看说明 · 拖动可重新布局 · 右下角 💬 问 AI</span></div>
+      <div class="title"><b>🧠 概念知识库</b> <span class="subtle">点击节点查看说明 · ▶️ 自动播放按顺序逐个长出来</span></div>
+      <div class="pager">
+        <button id="autoplayBtn" onclick="toggleConceptAutoplay()" title="自动播放：按 group 顺序逐个显示节点 + 右下角说明">▶️ 自动播放</button>
+        <select id="autoplaySpeed" onchange="conceptAutoplayState.delay = parseInt(this.value)" title="每个节点显示时间" style="background:var(--panel-2);border:1px solid var(--border);color:var(--text);padding:5px 8px;border-radius:6px;font-size:13px;margin-left:6px">
+          <option value="1500">快 1.5s</option>
+          <option value="2500" selected>中 2.5s</option>
+          <option value="4000">慢 4s</option>
+          <option value="7000">细嚼慢咽 7s</option>
+        </select>
+      </div>
     </div>
     <div class="graph-help">
       <div>提示：节点颜色 = 所属层；边表示「依赖 / 出自」。点击一个节点，右下角会弹出它的定义和它出现在哪几页。</div>
@@ -751,6 +760,8 @@ function renderConcepts() {
   }
   // clear loading placeholder
   container.innerHTML = '';
+  // ensure every edge has an id so vis DataSet.update can target it (for autoplay hide/show)
+  (CONCEPTS.edges || []).forEach((e, i) => { if (!e.id) e.id = `e${i}`; });
   const nodes = new vis.DataSet(CONCEPTS.nodes);
   const edges = new vis.DataSet(CONCEPTS.edges);
   const data = { nodes, edges };
@@ -795,12 +806,152 @@ function renderConcepts() {
     if (window.renderMathInElement) renderMathInElement(detail, {delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]});
   });
   network.on('deselectNode', ()=>{ detail.style.display='none'; });
+  // expose network + datasets globally for autoplay
+  window._conceptNetwork = network;
+  window._conceptNodes = nodes;
+  window._conceptEdges = edges;
   // wire concept Q&A widget
   const qaPanel = document.getElementById('conceptQAPanel');
   if (qaPanel) {
     renderAllQAIn(qaPanel);
     wireQAShortcuts(qaPanel);
   }
+}
+
+// ============ Concept graph autoplay ============
+// Reveals nodes one by one in a logical order (group → pre_mid/transport/network/link/wireless),
+// shows each node's description in the bottom-right panel, then animates the next node in.
+const conceptAutoplayState = {
+  running: false,
+  timer: null,
+  idx: 0,
+  order: [],          // [node objects in reveal order]
+  hiddenIds: [],      // node ids currently hidden
+  hiddenEdgeIds: [],  // edge ids currently hidden
+  delay: 2500,
+};
+
+function _groupOrder() {
+  return ['pre_mid', 'app', 'transport', 'network', 'link', 'wireless', 'general'];
+}
+
+function _buildAutoplayOrder() {
+  // group nodes by .group, follow group order, alphabetical within
+  const byGroup = {};
+  (CONCEPTS.nodes || []).forEach(n => {
+    const g = n.group || 'general';
+    (byGroup[g] = byGroup[g] || []).push(n);
+  });
+  const out = [];
+  _groupOrder().forEach(g => {
+    if (!byGroup[g]) return;
+    byGroup[g].sort((a, b) => (a.label || '').localeCompare(b.label || ''));
+    out.push(...byGroup[g]);
+  });
+  // tack on any groups we didn't enumerate
+  Object.keys(byGroup).forEach(g => {
+    if (!_groupOrder().includes(g)) out.push(...byGroup[g]);
+  });
+  return out;
+}
+
+function toggleConceptAutoplay() {
+  const btn = document.getElementById('autoplayBtn');
+  if (conceptAutoplayState.running) {
+    conceptAutoplayState.running = false;
+    clearTimeout(conceptAutoplayState.timer);
+    // restore all hidden nodes/edges
+    const nodes = window._conceptNodes, edges = window._conceptEdges;
+    conceptAutoplayState.hiddenIds.forEach(id => { try { nodes.update({ id, hidden: false }); } catch(e) {} });
+    conceptAutoplayState.hiddenEdgeIds.forEach(id => { try { edges.update({ id, hidden: false }); } catch(e) {} });
+    conceptAutoplayState.hiddenIds = [];
+    conceptAutoplayState.hiddenEdgeIds = [];
+    if (btn) btn.textContent = '▶️ 自动播放';
+    return;
+  }
+  // start autoplay: hide everything, then reveal one by one
+  if (!window._conceptNetwork || !CONCEPTS) return;
+  const nodes = window._conceptNodes, edges = window._conceptEdges;
+  conceptAutoplayState.order = _buildAutoplayOrder();
+  conceptAutoplayState.hiddenIds = conceptAutoplayState.order.map(n => n.id);
+  conceptAutoplayState.hiddenEdgeIds = (CONCEPTS.edges || []).map(e => e.id).filter(Boolean);
+  // hide all
+  conceptAutoplayState.hiddenIds.forEach(id => nodes.update({ id, hidden: true }));
+  conceptAutoplayState.hiddenEdgeIds.forEach(id => edges.update({ id, hidden: true }));
+  conceptAutoplayState.idx = 0;
+  conceptAutoplayState.running = true;
+  if (btn) btn.textContent = '⏸️ 暂停';
+  _stepAutoplay();
+}
+
+function _stepAutoplay() {
+  if (!conceptAutoplayState.running) return;
+  const { order, idx } = conceptAutoplayState;
+  if (idx >= order.length) {
+    // done — restore button
+    conceptAutoplayState.running = false;
+    const btn = document.getElementById('autoplayBtn');
+    if (btn) btn.textContent = '▶️ 自动播放';
+    return;
+  }
+  const node = order[idx];
+  const nodes = window._conceptNodes, edges = window._conceptEdges;
+  const network = window._conceptNetwork;
+  // reveal this node
+  try { nodes.update({ id: node.id, hidden: false }); } catch(e) {}
+  // reveal any edges where BOTH endpoints are already visible (current node id or any already revealed)
+  const revealedSet = new Set(order.slice(0, idx + 1).map(n => n.id));
+  (CONCEPTS.edges || []).forEach(e => {
+    if (!e.id) return;
+    if (revealedSet.has(e.from) && revealedSet.has(e.to)) {
+      try { edges.update({ id: e.id, hidden: false }); } catch(err) {}
+    }
+  });
+  // focus camera on the new node (gentle zoom-in)
+  try {
+    network.focus(node.id, { scale: 1.1, animation: { duration: 600, easingFunction: 'easeInOutQuad' } });
+    network.selectNodes([node.id]);
+  } catch(e) {}
+  // show its detail panel
+  const detail = document.getElementById('conceptDetail');
+  if (detail) {
+    let html = `<div style="font-size:11px;color:var(--subtle)">自动播放 ${idx + 1} / ${order.length}</div>
+      <h3 style="margin:4px 0 8px;color:var(--accent)">${node.label}</h3>
+      <div class="subtle" style="margin-bottom:8px">分类：${node.group || 'general'}</div>
+      ${node.desc ? `<div>${marked.parse(node.desc)}</div>` : '<div class="subtle">（无描述）</div>'}`;
+    if (node.formula) html += `<h4 style="color:var(--accent-2);margin-bottom:4px">公式</h4><div>${node.formula}</div>`;
+    if (node.refs && node.refs.length) {
+      html += `<h4 style="color:var(--accent-2);margin-bottom:4px">出现在</h4><ul style="margin:0;padding-left:18px">${node.refs.map(r => `<li>${r.file} 第 ${r.page} 页</li>`).join('')}</ul>`;
+    }
+    html += `<div style="margin-top:10px;display:flex;gap:6px;justify-content:flex-end">
+      <button onclick="_autoplaySkip(-1)" style="background:var(--panel-2);border:1px solid var(--border);color:var(--text);padding:4px 10px;border-radius:4px;cursor:pointer">⬅️ 上一个</button>
+      <button onclick="_autoplaySkip(1)" style="background:var(--panel-2);border:1px solid var(--border);color:var(--text);padding:4px 10px;border-radius:4px;cursor:pointer">下一个 ➡️</button>
+      <button onclick="toggleConceptAutoplay()" style="background:var(--accent);color:#0a0c12;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-weight:600">⏹️ 停止</button>
+    </div>`;
+    detail.innerHTML = html;
+    detail.style.display = 'block';
+    if (window.renderMathInElement) try { renderMathInElement(detail, {delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]}); } catch(e) {}
+  }
+  conceptAutoplayState.idx = idx + 1;
+  conceptAutoplayState.timer = setTimeout(_stepAutoplay, conceptAutoplayState.delay);
+}
+
+function _autoplaySkip(delta) {
+  if (!conceptAutoplayState.running) return;
+  clearTimeout(conceptAutoplayState.timer);
+  conceptAutoplayState.idx = Math.max(0, conceptAutoplayState.idx - 1 + delta);
+  // if going backward, hide nodes after new idx
+  const nodes = window._conceptNodes, edges = window._conceptEdges;
+  conceptAutoplayState.order.forEach((n, i) => {
+    nodes.update({ id: n.id, hidden: i >= conceptAutoplayState.idx });
+  });
+  // also re-hide edges that should not be visible
+  const visibleSet = new Set(conceptAutoplayState.order.slice(0, conceptAutoplayState.idx).map(n => n.id));
+  (CONCEPTS.edges || []).forEach(e => {
+    if (!e.id) return;
+    edges.update({ id: e.id, hidden: !(visibleSet.has(e.from) && visibleSet.has(e.to)) });
+  });
+  _stepAutoplay();
 }
 
 function toggleConceptQA() {
