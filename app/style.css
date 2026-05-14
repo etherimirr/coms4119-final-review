@@ -848,7 +848,7 @@ body {
 .cheat-saved-ind:empty { display: none; }
 @media print { .cheat-floatbar { display: none !important; } }
 .sheet {
-  width: 200mm;             /* = A4 width (210mm) − 2×5mm safe margins */
+  width: 200mm;
   box-sizing: border-box;
   background: #fff;
   color: #000;
@@ -858,8 +858,6 @@ body {
   font-size: 7.5pt;
   line-height: 1.2;
   flex-shrink: 0;
-  /* no overflow clipping — show ALL content; if it doesn't fit A4 height,
-     browser paginates naturally on print */
 }
 .cheat-pages > .sheet + .sheet { box-shadow: none; }  /* visual: continuous */
 /* Show sheets at exact A4 size (210mm × 297mm) on screen — no scaling at all.
@@ -869,7 +867,6 @@ body {
   column-count: 4;
   column-gap: 2.5mm;
   column-rule: 0.5px solid #ddd;
-  column-fill: auto;   /* sequential fill; supports multi-page paginated multicol better */
 }
 .sheet section {
   break-inside: avoid;
@@ -945,17 +942,8 @@ body {
   .sidebar, .toolbar, .pager, .subtle { display: none !important; }
   .content, .cheat-host { overflow: visible !important; padding: 0 !important; background: white !important; }
   .cheat-pages { gap: 0; }
-  .sheet {
-    box-shadow: none !important;
-    margin: 0 !important;
-    overflow: visible !important;   /* ensure print shows everything */
-    page-break-inside: auto;        /* allow content to break across pages */
-    break-inside: auto;
-  }
-  .sheet section {
-    break-inside: avoid;            /* but keep individual sections intact */
-    page-break-inside: avoid;
-  }
+  .sheet { box-shadow: none !important; margin: 0 !important; overflow: visible !important; }
+  .sheet section { break-inside: avoid; page-break-inside: avoid; }
 }
 
 ::-webkit-scrollbar { width: 10px; height: 10px; }
