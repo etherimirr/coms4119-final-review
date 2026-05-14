@@ -868,8 +868,8 @@ body {
 @media screen and (min-width: 1300px) and (max-width: 1500px) { .sheet { zoom: 0.95; } }
 .sheet h1 { display: none; }
 .sheet .cols {
-  column-count: 3;
-  column-gap: 3mm;
+  column-count: 4;
+  column-gap: 2.5mm;
   column-rule: 0.5px solid #ddd;
 }
 .sheet section {
