@@ -1,4 +1,4 @@
-<!-- CHEATSHEET_VERSION: 31 -->
+<!-- CHEATSHEET_VERSION: 32 -->
 <!--
   COMS 4119 FINAL CHEAT SHEET
   4 sheets organized by course chapter (Kurose-Ross order):
@@ -27,13 +27,13 @@
 <h2>Layering &amp; Encapsulation</h2>
 <ul>
 <li><b>Application</b> — Message. HTTP · DNS · SMTP · DHCP · <b>BGP</b></li>
-<li><b>Transport</b> — Segment (TCP &amp; UDP)</li>
+<li><b>Transport</b> — Segment&nbsp;</li>
 <li><b>Network</b> — (IP) Datagram. Direct-over-IP: <b>ICMP</b>, <b>OSPF</b>.</li>
 <li><b>Data Link</b> — Frame. MAC addr (Ethernet / 802.11). Direct-over-link: <b>ARP</b>.</li>
 <li><b>Physical</b> — Bits</li>
 </ul>
 <table>
-<tr><th></th><th>UDP</th><th>TCP</th></tr>
+<tbody><tr><th></th><th>UDP</th><th>TCP</th></tr>
 <tr><td>conn</td><td>none</td><td>3WHS</td></tr>
 <tr><td>reliable</td><td>no</td><td>yes</td></tr>
 <tr><td>order</td><td>no</td><td>yes</td></tr>
@@ -41,21 +41,20 @@
 <tr><td>cong ctrl</td><td>no</td><td>AIMD</td></tr>
 <tr><td>hdr</td><td>8 B</td><td>20 B</td></tr>
 <tr><td>uses</td><td>DNS, RTP, DHCP</td><td>HTTP, SMTP, BGP</td></tr>
-</table>
-<p class="mini">Encapsulation: lower layer wraps upper PDU. Demux up: Ethertype → IP proto → port → app.</p>
-<p class="mini">Transport map: HTTP / SMTP / FTP / BGP / BitTorrent → TCP · DNS (default) / DHCP / RTP → UDP · OSPF / ICMP → raw IP · ARP → link</p>
+</tbody></table>
+<p class="mini">Encapsulation: lower layer wraps upper PDU. Demux up</p>
 </section>
 
-<section data-key="packet-vs-circuit-switching">
+<section data-key="packet-vs-circuit-switching" data-wired="1" contenteditable="true" spellcheck="false">
 <h2>Packet vs Circuit Switching</h2>
 <ul>
-<li><b>Circuit</b>: establish → reserve → send (no dst addr) → tear down. Mux: <b>TDM</b> / <b>FDM</b></li>
-<li><b>Packet</b>: hdr-tagged → independent forward → store-and-fwd → reassemble. <b>Best-effort</b> (may lose / corrupt / reorder)</li>
+<li><b>Circuit</b>: Mux: <b>TDM</b> / <b>FDM</b></li>
+<li><b>Packet</b>:&nbsp;&nbsp;<b>Best-effort</b> (may lose / corrupt / reorder)</li>
 </ul>
 <table>
-<tr><th>Circuit ✅</th><th>Circuit ❌</th></tr>
+<tbody><tr><th>Circuit ✅</th><th>Circuit ❌</th></tr>
 <tr><td class="mini">Guaranteed BW · simple abstraction · simple forwarding · low per-pkt overhead</td><td class="mini"><span class="red">Wasted BW on bursty</span> · blocked connections · set-up delay · per-conn state</td></tr>
-</table>
+</tbody></table>
 <p class="mini"><b>vs Packet</b>: great for <b>bursty</b> (resource sharing, no setup); congestion → buffer overflow → delay/loss. Internet picks packet.</p>
 </section>
 
@@ -274,11 +273,7 @@
 <div class="my-note" data-note-key="mid:2:takeaway"><span class="my-note-tag">📝</span> <b>mid Q3 要诀:</b> 判断哪个协议看『哪边在丢』。Data 丢 → SR；ACK 丢 → GBN。**永远要写出原因**，老师扣的就是『没解释』的分。</div></section>
 
 <section data-key="tcp-reliable-mechanisms" data-wired="1" contenteditable="true" spellcheck="false">
-<h2>TCP Reliable Mechanisms</h2>
-<div class="formula">RTO = EstRTT + 4·DevRTT</div>
-<ul>
-<li>EstRTT EWMA, α = 0.125</li>
-<li>DevRTT EWMA of |Sample − Est|, β = 0.25</li>
+<h2>TCP Reliable Mechanisms</h2><ul>
 <li><b>Fast retransmit</b>: 3 dup ACKs → immediate resend</li>
 <li>After timeout: RTO doubles (exp backoff)</li>
 </ul>
@@ -388,16 +383,16 @@
 
 <!-- ============ Ch 4a: Data Plane ============ -->
 
-<section data-key="data-plane-vs-control-plane">
-<h2>Data Plane vs Control Plane ⭐</h2>
+<section data-key="data-plane-vs-control-plane" data-wired="1" contenteditable="true" spellcheck="false">
+<h2>Data Plane vs Control Plane&nbsp;</h2>
 <table>
-<tr><th>DP</th><th>CP</th></tr>
+<tbody><tr><th>DP</th><th>CP</th></tr>
 <tr><td>Per-router, local</td><td>Network-wide</td></tr>
 <tr><td>HW, ns</td><td>SW, ms</td></tr>
 <tr><td>Match + action</td><td>Compute paths</td></tr>
 <tr><td>Forwarding</td><td>Routing</td></tr>
 <tr><td>Flow table</td><td>OSPF / BGP</td></tr>
-</table>
+</tbody></table>
 <p class="mini">Classic: per-router CP. <b>SDN</b>: CP centralized in controller; switches just run FTs (DP).</p>
 </section>
 
@@ -511,7 +506,6 @@
 
 <section data-key="dhcp-dora">
 <h2>DHCP DORA</h2>
-<figure><img src="cheatsheet-assets/dhcp-dora.jpg"><figcaption>DHCP DORA timing</figcaption></figure>
 <ol>
 <li><b>Discover</b>: 0.0.0.0:68 → 255.255.255.255:67 (broadcast)</li>
 <li><b>Offer</b>: server proposes (yiaddr, lease)</li>
@@ -640,7 +634,6 @@
 <li>AS-PATH contains own AS → reject (loop)</li>
 <li><b>Route select</b>: 1) local pref → 2) shortest AS-PATH → 3) closest NEXT-HOP (hot potato) → 4) others</li>
 </ul>
-<figure><img src="cheatsheet-assets/bgp-route-select.jpg"><figcaption>BGP Route Selection 4-step priority</figcaption></figure>
 </section>
 
 <section data-key="bgp-policy-final-q3">
@@ -803,7 +796,6 @@ Transmit: 101011 110</pre>
 
 <section data-key="ethernet-frame">
 <h2>Ethernet Frame</h2>
-<figure><img src="cheatsheet-assets/ethernet-frame.jpg"><figcaption>Ethernet frame fields + lengths</figcaption></figure>
 <ul>
 <li>Preamble 7 B + SFD 1 B (clock sync)</li>
 <li>Dst MAC 6 B + Src MAC 6 B</li>
@@ -964,7 +956,6 @@ Transmit: 101011 110</pre>
 
 <section data-key="hidden-terminal-exam">
 <h2>Hidden Terminal <span class="tag">exam</span></h2>
-<figure><img src="cheatsheet-assets/hidden-terminal.jpg"><figcaption>Hidden terminal geometry</figcaption></figure>
 <p class="mini"><b>Def</b>: node <b>X</b> <b>outside</b> sender <b>A</b>'s range but <b>inside</b> receiver <b>B</b>'s interference range. X hears idle → sends → collides w/ A at B.</p>
 <ul>
 <li>Symptom: A transmits fine, B receives nothing</li>
