@@ -1,4 +1,4 @@
-<!-- CHEATSHEET_VERSION: 99 -->
+<!-- CHEATSHEET_VERSION: 31 -->
 <!--
   COMS 4119 FINAL CHEAT SHEET
   4 sheets organized by course chapter (Kurose-Ross order):
@@ -23,17 +23,27 @@
 
 <!-- ============ Ch 1: Basics & Performance ============ -->
 
-<section data-key="layering-encapsulation">
+<section data-key="layering-encapsulation" data-wired="1" contenteditable="true" spellcheck="false">
 <h2>Layering &amp; Encapsulation</h2>
 <ul>
-<li><b>Application</b> — Message. HTTP · DNS · SMTP / IMAP · FTP · DHCP · RTP · <b>BGP</b> · BitTorrent</li>
-<li><b>Transport</b> — Segment (TCP &amp; UDP). TCP: reliable, ordered. UDP: fast, no conn, no reliability.</li>
+<li><b>Application</b> — Message. HTTP · DNS · SMTP · DHCP · <b>BGP</b></li>
+<li><b>Transport</b> — Segment (TCP &amp; UDP)</li>
 <li><b>Network</b> — (IP) Datagram. Direct-over-IP: <b>ICMP</b>, <b>OSPF</b>.</li>
 <li><b>Data Link</b> — Frame. MAC addr (Ethernet / 802.11). Direct-over-link: <b>ARP</b>.</li>
 <li><b>Physical</b> — Bits</li>
 </ul>
+<table>
+<tr><th></th><th>UDP</th><th>TCP</th></tr>
+<tr><td>conn</td><td>none</td><td>3WHS</td></tr>
+<tr><td>reliable</td><td>no</td><td>yes</td></tr>
+<tr><td>order</td><td>no</td><td>yes</td></tr>
+<tr><td>flow ctrl</td><td>no</td><td>rwnd</td></tr>
+<tr><td>cong ctrl</td><td>no</td><td>AIMD</td></tr>
+<tr><td>hdr</td><td>8 B</td><td>20 B</td></tr>
+<tr><td>uses</td><td>DNS, RTP, DHCP</td><td>HTTP, SMTP, BGP</td></tr>
+</table>
 <p class="mini">Encapsulation: lower layer wraps upper PDU. Demux up: Ethertype → IP proto → port → app.</p>
-<p class="mini">Transport map: HTTP / SMTP / IMAP / FTP / BGP / BitTorrent → TCP · DNS (default) / DHCP / RTP → UDP · OSPF / ICMP → raw IP · ARP → link</p>
+<p class="mini">Transport map: HTTP / SMTP / FTP / BGP / BitTorrent → TCP · DNS (default) / DHCP / RTP → UDP · OSPF / ICMP → raw IP · ARP → link</p>
 </section>
 
 <section data-key="packet-vs-circuit-switching">
@@ -205,20 +215,6 @@
 
 <!-- ============ Ch 3a: Transport — Basics ============ -->
 
-<section data-key="udp-vs-tcp">
-<h2>UDP vs TCP</h2>
-<table>
-<tbody><tr><th></th><th>UDP</th><th>TCP</th></tr>
-<tr><td>conn</td><td>none</td><td>3WHS</td></tr>
-<tr><td>reliable</td><td>no</td><td>yes</td></tr>
-<tr><td>order</td><td>no</td><td>yes</td></tr>
-<tr><td>flow ctrl</td><td>no</td><td>rwnd</td></tr>
-<tr><td>cong ctrl</td><td>no</td><td>AIMD</td></tr>
-<tr><td>hdr</td><td>8 B</td><td>20 B</td></tr>
-<tr><td>uses</td><td>DNS, RTP, DHCP</td><td>HTTP, SSH</td></tr>
-</tbody></table>
-</section>
-
 <section data-key="tcp-segment-format">
 <h2>TCP Segment Format</h2>
 <ul>
@@ -313,9 +309,9 @@
 <div class="formula">throughput ≈ cwnd / RTT</div>
 </section>
 
-<section data-key="tcp-cc-fsm-exam">
+<section data-key="tcp-cc-fsm-exam" data-wired="1" contenteditable="true" spellcheck="false">
 <h2>TCP CC FSM <span class="tag">exam</span></h2>
-<figure><img src="cheatsheet-assets/tcp-cc-fsm.jpg"><figcaption>TCP CC state machine</figcaption></figure>
+
 <p class="mini"><b>Loss detection → recovery</b>:
 <span class="red">Timeout</span> ⇒ cwnd=1 + <b>slow start</b>;
 <span class="red">3 dup ACK</span> ⇒ cwnd/=2 + <b>fast recovery → CA</b>.</p>
