@@ -1,5 +1,8 @@
 // ============ Data registry ============
-const FILES = [
+// FILES, SPECIAL, LEC_TOPICS are course-specific defaults.
+// If /data/course.json exists, it overrides these at boot — making the app
+// repurposable for other courses by swapping that single config file.
+let FILES = [
   // 期中前
   { id: 'lec1-intro',       label: 'lec1 · Intro',           pages: 29, premid: true },
   { id: 'lec2-basics1',     label: 'lec2 · Basics 1',        pages: 36, premid: true },
@@ -35,7 +38,7 @@ const FILES = [
   { id: 'nyu-final_24s_solutions1',       label: 'NYU Final 24s',                 pages: 7, nyu: true },
 ];
 
-const SPECIAL = [
+let SPECIAL = [
   { id: 'overview',   label: '📚 总览',         pages: 0 },
   { id: 'stars',      label: '⭐ 收藏的重点',   pages: 0 },
   { id: 'final',      label: '🎯 Final Preview', pages: 14 },
@@ -300,6 +303,22 @@ let currentPage = 1; // will be restored per-file in selectTab
 
 // ============ Boot ============
 async function boot() {
+  // Load course config first — overrides FILES/SPECIAL/LEC_TOPICS so the app
+  // can be repurposed for another course just by swapping data/course.json
+  try {
+    const cfg = await fetch('data/course.json').then(r => r.json());
+    if (cfg.files && Array.isArray(cfg.files)) FILES = cfg.files;
+    if (cfg.special && Array.isArray(cfg.special)) SPECIAL = cfg.special;
+    if (cfg.lec_topics && typeof cfg.lec_topics === 'object') LEC_TOPICS = cfg.lec_topics;
+    if (cfg.course) {
+      if (cfg.course.title) document.title = cfg.course.title;
+      const h1 = document.querySelector('.sidebar header h1');
+      if (h1 && cfg.course.title) h1.textContent = cfg.course.title;
+      const sub = document.querySelector('.sidebar header .subtle');
+      if (sub && cfg.course.subtitle) sub.textContent = cfg.course.subtitle;
+    }
+  } catch (e) { /* fallback to hardcoded defaults */ }
+
   const [a,b,c,d] = await Promise.all([
     fetch('data/explanations.json').then(r=>r.json()).catch(()=>({})),
     fetch('data/finalpreview.json').then(r=>r.json()).catch(()=>([])),
@@ -2128,7 +2147,7 @@ async function cheatSyncTemplate(skipConfirm=false) {
 // Each lecture maps to one or more section-title keywords. When user clicks 📥, every
 // star/QA/highlight gets routed into the matching existing section as an inline
 // `.my-note` block (not a separate sheet). De-duped via data-note-key.
-const LEC_TOPICS = {
+let LEC_TOPICS = {
   'lec1-intro':        ['Layering','End-to-End','Encapsulation','Internet'],
   'lec2-basics1':      ['Packet vs Circuit','Delays','Performance','Throughput'],
   'lec3-basics2':      ['Layering','Encapsulation','Header'],
